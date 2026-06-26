@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NexoraOS — print</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="tokens.css" />
+
+  <style>
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { font-family: var(--font-sans); }
+
+    @page { size: 1600px 1100px; margin: 0; }
+
+    .print-page {
+      width: 1600px;
+      height: 1100px;
+      padding: 36px;
+      box-sizing: border-box;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      page-break-after: always;
+      break-after: page;
+      overflow: hidden;
+      position: relative;
+    }
+    .print-page:last-child { page-break-after: auto; break-after: auto; }
+
+    .print-header {
+      height: 56px;
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px 16px 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 24px;
+    }
+    .print-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+    .section-page,
+    .cover-page {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* In screen preview (non-print), stack pages with a gap so the user can scroll */
+    @media screen {
+      body { background: oklch(0.10 0.004 80); padding: 32px 0; }
+      .print-page { margin: 0 auto 28px; box-shadow: 0 14px 40px oklch(0 0 0 / 0.5); border-radius: 4px; }
+    }
+    @media print {
+      body { padding: 0; background: var(--bg); }
+      .print-page { margin: 0; box-shadow: none; border-radius: 0; }
+    }
+
+    /* Keep no scrollbars inside print artboards */
+    .print-artboard * { scrollbar-width: none !important; }
+    .print-artboard *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="icons.jsx"></script>
+  <script type="text/babel" src="components/foundation.jsx"></script>
+  <script type="text/babel" src="components/primitives.jsx"></script>
+  <script type="text/babel" src="components/sidebar-rail.jsx"></script>
+  <script type="text/babel" src="components/sidebar.jsx"></script>
+  <script type="text/babel" src="screens/dashboard-top.jsx"></script>
+  <script type="text/babel" src="screens/dashboard-mid.jsx"></script>
+  <script type="text/babel" src="screens/dashboard-bottom.jsx"></script>
+  <script type="text/babel" src="screens/dashboard.jsx"></script>
+  <script type="text/babel" src="screens/today.jsx"></script>
+  <script type="text/babel" src="screens/inbox.jsx"></script>
+  <script type="text/babel" src="screens/calendar.jsx"></script>
+  <script type="text/babel" src="screens/sidebar-variants.jsx"></script>
+  <script type="text/babel" src="screens/task-drawer.jsx"></script>
+  <script type="text/babel" src="screens/project-detail.jsx"></script>
+  <script type="text/babel" src="screens/personal-car.jsx"></script>
+  <script type="text/babel" src="screens/personal-girl.jsx"></script>
+  <script type="text/babel" src="screens/personal-home.jsx"></script>
+  <script type="text/babel" src="screens/notes.jsx"></script>
+  <script type="text/babel" src="screens/journal.jsx"></script>
+  <script type="text/babel" src="screens/files.jsx"></script>
+  <script type="text/babel" src="screens/crm.jsx"></script>
+  <script type="text/babel" src="screens/gantt.jsx"></script>
+  <script type="text/babel" src="screens/kanban.jsx"></script>
+  <script type="text/babel" src="screens/brand.jsx"></script>
+  <script type="text/babel" src="screens/finances.jsx"></script>
+  <script type="text/babel" src="screens/goals.jsx"></script>
+  <script type="text/babel" src="print-app.jsx"></script>
+</body>
+</html>

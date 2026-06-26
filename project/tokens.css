@@ -1,0 +1,117 @@
+/* Design tokens — NexoraOS, dark theme */
+:root {
+  /* Surfaces (warm-leaning near-black) */
+  --bg:         oklch(0.155 0.005 80);
+  --bg-elev-1:  oklch(0.185 0.006 80);
+  --bg-elev-2:  oklch(0.215 0.007 80);
+  --bg-elev-3:  oklch(0.245 0.008 80);
+  --bg-hover:   oklch(0.225 0.007 80);
+  --bg-active:  oklch(0.27  0.008 80);
+
+  /* Borders */
+  --border-subtle: oklch(0.27 0.007 80);
+  --border:        oklch(0.32 0.008 80);
+  --border-strong: oklch(0.40 0.010 80);
+
+  /* Text */
+  --text:        oklch(0.96 0.004 80);
+  --text-2:      oklch(0.78 0.006 80);
+  --text-3:      oklch(0.60 0.007 80);
+  --text-muted:  oklch(0.46 0.007 80);
+
+  /* Project accents (harmonious mid-chroma OKLCH) */
+  --p-youmin:    oklch(0.74 0.13 295);   /* фиолетовый — QA */
+  --p-openresto: oklch(0.78 0.11 195);   /* бирюзовый — Dev */
+  --p-diploma:   oklch(0.76 0.14 35);    /* коралл — дипломы */
+  --p-sites:     oklch(0.72 0.13 245);   /* синий — сайты */
+  --p-bots:      oklch(0.78 0.13 350);   /* розовый — боты */
+  --p-girl:      oklch(0.84 0.07 15);    /* нежно-розовый */
+  --p-family:    oklch(0.78 0.11 145);   /* тёплый зелёный */
+  --p-car:       oklch(0.66 0.018 270);  /* графит */
+  --p-home:      oklch(0.80 0.13 75);    /* янтарный */
+  --p-health:    oklch(0.82 0.13 130);   /* салатовый */
+
+  /* Semantic */
+  --success: oklch(0.78 0.13 150);
+  --warn:    oklch(0.82 0.13 75);
+  --danger:  oklch(0.72 0.17 25);
+  --info:    oklch(0.72 0.13 245);
+
+  /* Radii */
+  --r-2: 6px;
+  --r-3: 8px;
+  --r-4: 10px;
+  --r-5: 12px;
+  --r-6: 16px;
+  --r-full: 999px;
+
+  /* Shadows (very subtle in dark) */
+  --shadow-1: 0 1px 0 0 oklch(0.10 0 0 / 0.4), 0 1px 2px oklch(0 0 0 / 0.25);
+  --shadow-2: 0 6px 20px -8px oklch(0 0 0 / 0.5), 0 2px 6px -2px oklch(0 0 0 / 0.35);
+  --shadow-modal: 0 24px 60px -20px oklch(0 0 0 / 0.7);
+
+  /* Spacing scale (used inline mostly) */
+  --s-1: 4px;  --s-2: 8px; --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-7: 32px; --s-8: 40px;
+
+  /* Type */
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* Light theme tokens — exposed but app defaults to dark */
+[data-theme="light"] {
+  --bg:         oklch(0.985 0.003 80);
+  --bg-elev-1:  oklch(1     0     0);
+  --bg-elev-2:  oklch(0.975 0.004 80);
+  --bg-elev-3:  oklch(0.955 0.005 80);
+  --bg-hover:   oklch(0.96  0.005 80);
+  --bg-active:  oklch(0.93  0.006 80);
+  --border-subtle: oklch(0.92 0.005 80);
+  --border:        oklch(0.88 0.006 80);
+  --border-strong: oklch(0.78 0.007 80);
+  --text:        oklch(0.18 0.005 80);
+  --text-2:      oklch(0.35 0.006 80);
+  --text-3:      oklch(0.50 0.007 80);
+  --text-muted:  oklch(0.62 0.008 80);
+}
+
+/* Reset-lite */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  color: var(--text);
+  background: var(--bg);
+}
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+input, textarea { font: inherit; color: inherit; }
+ul, ol { list-style: none; padding: 0; margin: 0; }
+
+/* Scrollbars in app surfaces */
+.ws-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.ws-scroll::-webkit-scrollbar-thumb { background: var(--bg-elev-3); border-radius: 999px; }
+.ws-scroll::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+.ws-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* App shell surface used on every screen artboard */
+.app-surface {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  width: 100%;
+  height: 100%;
+}
+
+/* Utility for muted dividers used inline */
+.hr {
+  height: 1px;
+  background: var(--border-subtle);
+  width: 100%;
+  border: 0;
+}

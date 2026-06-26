@@ -1,0 +1,100 @@
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext.jsx';
+
+import Login     from './screens/Login.jsx';
+import Dashboard from './screens/Dashboard.jsx';
+import Today     from './screens/Today.jsx';
+import Inbox     from './screens/Inbox.jsx';
+import Calendar  from './screens/Calendar.jsx';
+import Notes     from './screens/Notes.jsx';
+import Journal   from './screens/Journal.jsx';
+import Files     from './screens/Files.jsx';
+import Finances  from './screens/Finances.jsx';
+import CRM       from './screens/CRM.jsx';
+import Kanban    from './screens/Kanban.jsx';
+import Gantt     from './screens/Gantt.jsx';
+import Goals     from './screens/Goals.jsx';
+import Projects  from './screens/Projects.jsx';
+import Settings  from './screens/Settings.jsx';
+import Vault        from './screens/Vault.jsx';
+import Cinema       from './screens/Cinema.jsx';
+import CinemaPublic from './screens/CinemaPublic.jsx';
+
+/* Redirects to /login if not authenticated; shows spinner while loading session */
+function AuthGuard() {
+  const { session, loading } = useAuth();
+
+  if (loading) return <AppLoader />;
+  if (!session) return <Navigate to="/login" replace />;
+  return <Outlet />;
+}
+
+/* Redirects logged-in users away from /login */
+function GuestGuard() {
+  const { session, loading } = useAuth();
+
+  if (loading) return <AppLoader />;
+  if (session) return <Navigate to="/dashboard" replace />;
+  return <Outlet />;
+}
+
+function AppLoader() {
+  return (
+    <div style={{
+      height: '100vh', width: '100vw',
+      background: 'var(--bg)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        width: 40, height: 40, borderRadius: 10,
+        background: 'linear-gradient(135deg, color-mix(in oklab, var(--p-openresto) 60%, var(--bg)), color-mix(in oklab, var(--p-youmin) 60%, var(--bg)))',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 18, fontWeight: 600, color: 'var(--text)',
+        animation: 'pulse 1.2s ease-in-out infinite',
+      }}>
+        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }`}</style>
+        N
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Fully public — no auth required */}
+        <Route path="/cinema/public/:userId" element={<CinemaPublic />} />
+
+        {/* Public */}
+        <Route element={<GuestGuard />}>
+          <Route path="/login" element={<Login />} />
+        </Route>
+
+        {/* Protected */}
+        <Route element={<AuthGuard />}>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/today"     element={<Today />} />
+          <Route path="/inbox"     element={<Inbox />} />
+          <Route path="/calendar"  element={<Calendar />} />
+          <Route path="/notes"     element={<Notes />} />
+          <Route path="/journal"   element={<Journal />} />
+          <Route path="/files"     element={<Files />} />
+          <Route path="/finances"  element={<Finances />} />
+          <Route path="/crm"       element={<CRM />} />
+          <Route path="/kanban"    element={<Kanban />} />
+          <Route path="/gantt"     element={<Gantt />} />
+          <Route path="/goals"     element={<Goals />} />
+          <Route path="/projects"  element={<Projects />} />
+          <Route path="/settings"  element={<Settings />} />
+          <Route path="/vault"     element={<Vault />} />
+          <Route path="/cinema"    element={<Cinema />} />
+        </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
