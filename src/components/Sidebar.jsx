@@ -1379,7 +1379,7 @@ function PanelByPath({ pathname }) {
     case '/finances':  return <FinancesPanel />;
     case '/crm':       return <CrmPanel />;
     case '/goals':     return <GoalsPanel />;
-    case '/cinema':    return <CinemaPanel />;
+    case '/cinema':    return null;
     case '/kanban':    return <KanbanPanel />;
     case '/gantt':     return <GanttPanel />;
     case '/settings':  return <SettingsPanel />;

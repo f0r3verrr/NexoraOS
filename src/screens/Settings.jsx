@@ -324,6 +324,7 @@ function ProfileSection({ user }) {
       const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
       const url = `${data.publicUrl}?t=${Date.now()}`;
       await supabase.auth.updateUser({ data: { avatar_url: url } });
+      await supabase.from('profiles').upsert({ id: user.id, avatar_url: url }, { onConflict: 'id' });
       setAvatar(url);
       closeCrop();
     } catch (err) {
@@ -335,13 +336,16 @@ function ProfileSection({ user }) {
 
   const removeAvatar = async () => {
     await supabase.auth.updateUser({ data: { avatar_url: null } });
+    await supabase.from('profiles').upsert({ id: user.id, avatar_url: null }, { onConflict: 'id' });
     setAvatar('');
   };
 
   const save = async () => {
     setSaving(true); setStatus(null);
     try {
-      await supabase.auth.updateUser({ data: { display_name: name.trim() } });
+      const trimmed = name.trim();
+      await supabase.auth.updateUser({ data: { display_name: trimmed } });
+      await supabase.from('profiles').upsert({ id: user.id, display_name: trimmed }, { onConflict: 'id' });
       setStatus({ type: 'success', msg: 'Изменения сохранены' });
       setTimeout(() => setStatus(null), 3000);
     } catch (err) {

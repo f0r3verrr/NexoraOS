@@ -76,7 +76,6 @@ const ICON_PATHS = {
   tv:          <><rect x="2" y="7" width="20" height="13" rx="2"/><path d="m8 3 4 4 4-4"/></>,
   star_filled: <path d="m12 3 2.7 5.7L21 9.6l-4.5 4.4 1 6.3L12 17.6 6.5 20.3l1-6.3L3 9.6l6.3-.9z" fill="currentColor" stroke="none"/>,
   list:        <><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="3" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="3" cy="18" r="1.2" fill="currentColor" stroke="none"/></>,
-  grid:        <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>,
 };
 
 export function Icon({ name, size = 16, stroke = 1.5, className = '', style = {} }) {

@@ -1,0 +1,132 @@
+/* Design tokens — NexoraOS, dark theme */
+:root {
+  --bg:         oklch(0.155 0.005 80);
+  --bg-elev-1:  oklch(0.185 0.006 80);
+  --bg-elev-2:  oklch(0.215 0.007 80);
+  --bg-elev-3:  oklch(0.245 0.008 80);
+  --bg-hover:   oklch(0.225 0.007 80);
+  --bg-active:  oklch(0.27  0.008 80);
+
+  --border-subtle: oklch(0.27 0.007 80);
+  --border:        oklch(0.32 0.008 80);
+  --border-strong: oklch(0.40 0.010 80);
+
+  --text:        oklch(0.96 0.004 80);
+  --text-2:      oklch(0.78 0.006 80);
+  --text-3:      oklch(0.60 0.007 80);
+  --text-muted:  oklch(0.46 0.007 80);
+
+  --p-youmin:    oklch(0.74 0.13 295);
+  --p-openresto: oklch(0.78 0.11 195);
+  --p-diploma:   oklch(0.76 0.14 35);
+  --p-sites:     oklch(0.72 0.13 245);
+  --p-bots:      oklch(0.78 0.13 350);
+  --p-girl:      oklch(0.84 0.07 15);
+  --p-family:    oklch(0.78 0.11 145);
+  --p-car:       oklch(0.66 0.018 270);
+  --p-home:      oklch(0.80 0.13 75);
+  --p-health:    oklch(0.82 0.13 130);
+
+  --success: oklch(0.78 0.13 150);
+  --warn:    oklch(0.82 0.13 75);
+  --danger:  oklch(0.72 0.17 25);
+  --info:    oklch(0.72 0.13 245);
+
+  --r-2: 6px;  --r-3: 8px;  --r-4: 10px;
+  --r-5: 12px; --r-6: 16px; --r-full: 999px;
+
+  --shadow-1: 0 1px 0 0 oklch(0.10 0 0 / 0.4), 0 1px 2px oklch(0 0 0 / 0.25);
+  --shadow-2: 0 6px 20px -8px oklch(0 0 0 / 0.5), 0 2px 6px -2px oklch(0 0 0 / 0.35);
+  --shadow-modal: 0 24px 60px -20px oklch(0 0 0 / 0.7);
+
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-7: 32px; --s-8: 40px;
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  color: var(--text);
+  background: var(--bg);
+  zoom: 1.1;
+}
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+input, textarea { font: inherit; color: inherit; }
+ul, ol { list-style: none; padding: 0; margin: 0; }
+
+.ws-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.ws-scroll::-webkit-scrollbar-thumb { background: var(--bg-elev-3); border-radius: 999px; }
+.ws-scroll::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+.ws-scroll::-webkit-scrollbar-track { background: transparent; }
+
+.app-surface {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Global animations ---- */
+@keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:.45} }
+@keyframes spin    { to { transform: rotate(360deg) } }
+@keyframes fadein  { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }
+@keyframes slideup { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:translateY(0) } }
+@keyframes scalein { from { opacity:0; transform:scale(0.96) } to { opacity:1; transform:scale(1) } }
+
+/* ---- Placeholder ---- */
+::placeholder         { color: var(--text-muted); opacity: 1; }
+:-ms-input-placeholder{ color: var(--text-muted); }
+
+/* ---- Input / textarea focus ring ---- */
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--border-strong) !important;
+  box-shadow: 0 0 0 2.5px color-mix(in oklab, var(--text) 11%, transparent) !important;
+}
+
+/* ---- Modal enter animation ---- */
+.modal-enter { animation: scalein 140ms ease-out; }
+
+/* ---- Select dark base ---- */
+select option {
+  background: var(--bg-elev-2);
+  color: var(--text);
+}
+
+/* ---- Range input ---- */
+input[type="range"] {
+  -webkit-appearance: none;
+  height: 5px;
+  background: var(--bg-elev-3);
+  border-radius: 999px;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 999px;
+  background: var(--text);
+  cursor: pointer;
+  transition: transform 120ms;
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+/* ---- Page-level fade-in (only main content, sidebar stays still) ---- */
+@keyframes pagefade { from { opacity:0 } to { opacity:1 } }
+.app-surface > main { animation: pagefade 120ms ease-out; }
+
+/* ---- Scrollbar ---- */
+.ws-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+.ws-scroll::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 999px; }
+.ws-scroll::-webkit-scrollbar-thumb:hover { background: var(--border); }
