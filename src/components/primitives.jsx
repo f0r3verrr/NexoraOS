@@ -1,6 +1,6 @@
 import { Icon } from '../icons.jsx';
 
-export function Button({ variant = 'ghost', size = 'md', icon, trailing, children, style, onClick }) {
+export function Button({ variant = 'ghost', size = 'md', icon, trailing, children, style, onClick, disabled = false }) {
   const sizes = {
     sm: { h: 28, padX: 10, fs: 13, gap: 6, iconSize: 14, radius: 8 },
     md: { h: 32, padX: 12, fs: 13, gap: 8, iconSize: 15, radius: 8 },
@@ -20,6 +20,7 @@ export function Button({ variant = 'ghost', size = 'md', icon, trailing, childre
   }[variant];
 
   function handleMouseEnter(e) {
+    if (disabled) return;
     if (variant === 'primary')   { e.currentTarget.style.boxShadow = '0 2px 16px -4px color-mix(in oklab, var(--text) 44%, transparent)'; return; }
     if (variant === 'secondary') { e.currentTarget.style.background = 'var(--bg-elev-3)'; return; }
     if (variant === 'ghost')     { e.currentTarget.style.background = 'var(--bg-elev-2)'; return; }
@@ -33,7 +34,7 @@ export function Button({ variant = 'ghost', size = 'md', icon, trailing, childre
   }
 
   return (
-    <button onClick={onClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} style={{
+    <button onClick={onClick} disabled={disabled} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} style={{
       display: 'inline-flex', alignItems: 'center',
       gap: sizes.gap, height: sizes.h,
       padding: `0 ${sizes.padX}px`,
@@ -41,6 +42,7 @@ export function Button({ variant = 'ghost', size = 'md', icon, trailing, childre
       fontSize: sizes.fs, fontWeight: 500,
       letterSpacing: '-0.005em', whiteSpace: 'nowrap',
       transition: 'background 120ms ease-out, border-color 120ms ease-out, box-shadow 150ms ease-out',
+      opacity: disabled ? 0.5 : 1, cursor: disabled ? 'default' : 'pointer',
       ...variants, ...style,
     }}>
       {icon && <Icon name={icon} size={sizes.iconSize} />}

@@ -267,3 +267,15 @@ export function useDeleteTask() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
   });
 }
+
+/* Generic patch — title, notes, priority, due_at, project_id, kanban_status, etc. */
+export function useUpdateTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...patch }) => {
+      const { error } = await supabase.from('tasks').update(patch).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+}

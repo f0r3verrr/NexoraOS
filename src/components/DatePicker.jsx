@@ -65,11 +65,21 @@ export function DatePicker({ value, onChange, placeholder = 'Выбрать да
   useLayoutEffect(() => {
     if (!open || !popupRef.current || !triggerRef.current) return;
 
-    const trigger  = triggerRef.current.getBoundingClientRect();
+    /* body may have a non-1 CSS `zoom` (app-wide zoom setting, see Settings.jsx).
+       getBoundingClientRect()/innerWidth report real screen pixels, but this
+       popup is portalled into that same zoomed body, so inline top/left are
+       re-scaled by `zoom` again on render. Divide by zoom to cancel that out —
+       same fix as RowMenu in Finances.jsx. */
+    const zoom     = parseFloat(getComputedStyle(document.body).zoom) || 1;
+    const triggerR = triggerRef.current.getBoundingClientRect();
+    const trigger  = {
+      left: triggerR.left / zoom, right: triggerR.right / zoom,
+      top: triggerR.top / zoom, bottom: triggerR.bottom / zoom,
+    };
     const popW     = popupRef.current.offsetWidth;
     const popH     = popupRef.current.offsetHeight;
-    const vw       = window.innerWidth;
-    const vh       = window.innerHeight;
+    const vw       = window.innerWidth / zoom;
+    const vh       = window.innerHeight / zoom;
 
     /* ── Horizontal ────────────────────────────────────────
        Prefer: align left edge of popup to left edge of trigger.

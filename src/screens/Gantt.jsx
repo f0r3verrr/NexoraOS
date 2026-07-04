@@ -18,7 +18,16 @@ import {
 ═══════════════════════════════════════════════════════════════ */
 function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
 function addMonths(d, n) { const r = new Date(d); r.setMonth(r.getMonth() + n); return r; }
-function isoDate(d) { return d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10); }
+function isoDate(d) {
+  if (!(d instanceof Date)) return String(d).slice(0, 10);
+  // Local calendar date, not UTC — .toISOString() would roll back a day for
+  // any positive-UTC-offset timezone whenever `d` is a local-midnight Date
+  // (e.g. colToDate() results), which broke drag/resize date saving.
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 function parseDate(s) { if (!s) return null; const d = new Date(s); d.setHours(12, 0, 0, 0); return d; }
 
 function getMonday(d = new Date()) {
@@ -445,7 +454,7 @@ function ContextMenu({ x, y, item, onClose, onAction }) {
 /* ═══════════════════════════════════════════════════════════════
    TASK DRAWER
 ═══════════════════════════════════════════════════════════════ */
-function TaskDrawer({ item, projects, onClose }) {
+function TaskDrawer({ item, projects, deps = [], onAddDependency, onDeleteDependency, onClose }) {
   const updateDates = useUpdateTaskDates();
   const updateMs    = useUpdateMilestone();
   const [localStart, setLocalStart] = useState('');
@@ -520,7 +529,6 @@ function TaskDrawer({ item, projects, onClose }) {
                     P{d.priority}
                   </span>
                 )}
-                {d.done && <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 500, background: 'color-mix(in oklab, var(--success) 14%, transparent)', color: 'var(--success)', border: '1px solid color-mix(in oklab, var(--success) 30%, transparent)' }}>Готово</span>}
               </div>
               {d.notes && <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6, padding: '10px 12px', background: 'var(--bg-elev-2)', borderRadius: 8 }}>{d.notes}</div>}
             </>
@@ -569,6 +577,10 @@ function TaskDrawer({ item, projects, onClose }) {
               </div>
             </div>
           )}
+
+          {isTask && (
+            <TaskDependencies task={d} deps={deps} onAdd={onAddDependency} onDelete={onDeleteDependency} />
+          )}
         </div>
 
         {/* Footer */}
@@ -580,6 +592,51 @@ function TaskDrawer({ item, projects, onClose }) {
       </div>
     </>,
     document.body
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TASK DEPENDENCIES (list + add, shown inside TaskDrawer)
+═══════════════════════════════════════════════════════════════ */
+function TaskDependencies({ task, deps, onAdd, onDelete }) {
+  const incoming = deps.filter(dep => dep.to_task === task.id);   // this task depends on others
+  const outgoing = deps.filter(dep => dep.from_task === task.id); // this task blocks others
+  const depTypeLabel = (key) => DEP_TYPES.find(t => t.key === key)?.label ?? key;
+
+  const row = (dep, label, relatedTitle, flip) => (
+    <div key={dep.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-2)', padding: '6px 8px', background: 'var(--bg-elev-2)', borderRadius: 6 }}>
+      <Icon name="arrow_right" size={12} style={{ color: 'var(--text-muted)', flex: 'none', transform: flip ? 'rotate(180deg)' : 'none' }} />
+      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {label} «{relatedTitle ?? '—'}» ({depTypeLabel(dep.dep_type)})
+      </span>
+      <button onClick={() => onDelete(dep.id)} title="Удалить зависимость"
+        style={{ color: 'var(--text-muted)', flex: 'none', cursor: 'pointer', display: 'flex' }}
+        onMouseEnter={e => e.currentTarget.style.color = 'var(--danger)'}
+        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+        <Icon name="x" size={12} />
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Зависимости</div>
+        <button onClick={() => onAdd(task)} style={{ fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-3)'}>
+          <Icon name="link" size={12} /> Добавить
+        </button>
+      </div>
+      {incoming.length === 0 && outgoing.length === 0 ? (
+        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Нет связей</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {incoming.map(dep => row(dep, 'Зависит от', dep.fromTask?.title, true))}
+          {outgoing.map(dep => row(dep, 'Блокирует', dep.toTask?.title, false))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -599,16 +656,18 @@ function DepsOverlay({ deps, barRects, colMeta, colW, totalHeight }) {
         const fromR = barRects[dep.from_task];
         const toR   = barRects[dep.to_task];
         if (!fromR || !toR) return null;
+        // fromR.y / toR.y are already the bar's vertical CENTER (see onBarRectUpdate),
+        // so no extra "+ h/2" here — that was double-offsetting the endpoint downward.
         let sx, sy, ex, ey;
         if (dep.dep_type === 'finish_to_start' || dep.dep_type === 'finish_to_finish') {
-          sx = fromR.x + fromR.w; sy = fromR.y + fromR.h / 2;
+          sx = fromR.x + fromR.w; sy = fromR.y;
         } else {
-          sx = fromR.x; sy = fromR.y + fromR.h / 2;
+          sx = fromR.x; sy = fromR.y;
         }
         if (dep.dep_type === 'finish_to_start' || dep.dep_type === 'start_to_start') {
-          ex = toR.x; ey = toR.y + toR.h / 2;
+          ex = toR.x; ey = toR.y;
         } else {
-          ex = toR.x + toR.w; ey = toR.y + toR.h / 2;
+          ex = toR.x + toR.w; ey = toR.y;
         }
         const cx = (sx + ex) / 2;
         return (
@@ -878,6 +937,13 @@ export default function Gantt() {
   const totalRowsH = useMemo(() => rows.reduce((s, r) => s + ROW_H[r.type], 0), [rows]);
   const totalH = HEADER_H + totalRowsH;
 
+  /* ─── Cumulative row top offsets (row heights vary by type,
+     so a row's on-screen Y is NOT idx * rowH) — used for dependency arrows. ── */
+  const rowTops = useMemo(() => {
+    let acc = 0;
+    return rows.map(r => { const top = acc; acc += ROW_H[r.type]; return top; });
+  }, [rows]);
+
   /* ─── Render column backgrounds ─────────────────────────── */
   const renderColBgs = (rowH, lineOpacity = 0.4) => (
     <>
@@ -942,7 +1008,10 @@ export default function Gantt() {
         <ContextMenu x={ctxMenu.x} y={ctxMenu.y} item={ctxMenu.item} onClose={() => setCtxMenu(null)} onAction={handleCtxAction} />
       )}
       {drawer && (
-        <TaskDrawer item={drawer} projects={projects} onClose={() => setDrawer(null)} />
+        <TaskDrawer item={drawer} projects={projects} deps={deps}
+          onAddDependency={(task) => setAddDepModal(task)}
+          onDeleteDependency={(id) => deleteDep.mutate(id)}
+          onClose={() => setDrawer(null)} />
       )}
 
       <div className="app-surface" style={{ display: 'flex', height: '100%' }}>
@@ -1131,7 +1200,7 @@ export default function Gantt() {
                     </div>
                   ) : rows.map((row, idx) => (
                     <TimelineRow key={row.type + '-' + row.data.id}
-                      row={row} idx={idx}
+                      row={row} idx={idx} top={rowTops[idx]}
                       colMeta={colMeta} colW={colW} COLS={COLS}
                       viewStart={viewStart} scaleKey={scaleKey}
                       renderColBgs={renderColBgs}
@@ -1351,7 +1420,7 @@ function LeftRow({ row, expanded, toggle, selected, setSelected, LABEL_W, STATUS
 /* ═══════════════════════════════════════════════════════════════
    TIMELINE ROW
 ═══════════════════════════════════════════════════════════════ */
-function TimelineRow({ row, idx, colMeta, colW, COLS, viewStart, scaleKey, renderColBgs, dragGhost, onBarMouseDown, onBarRectUpdate, onContextMenu, onClick, setEditProject, onMilestoneClick }) {
+function TimelineRow({ row, idx, top, colMeta, colW, COLS, viewStart, scaleKey, renderColBgs, dragGhost, onBarMouseDown, onBarRectUpdate, onContextMenu, onClick, setEditProject, onMilestoneClick }) {
   const { type, data: d, project: p } = row;
   const rowH = ROW_H[type];
   const barRef = useRef(null);
@@ -1395,17 +1464,14 @@ function TimelineRow({ row, idx, colMeta, colW, COLS, viewStart, scaleKey, rende
 
   /* Notify parent of bar rect */
   useEffect(() => {
-    if (!barRef.current || !barPos || barPos.isMilestone) return;
-    const el = barRef.current;
-    const parent = el.offsetParent;
-    const parentTop = parent ? 0 : 0;
+    if (!barPos || barPos.isMilestone) return;
     onBarRectUpdate(d.id, {
       x: barPos.left,
-      y: idx * rowH + rowH / 2,
+      y: top + rowH / 2,
       w: barPos.width,
       h: type === 'project' ? 22 : 16,
     });
-  }, [barPos, idx, rowH, d.id, type, onBarRectUpdate]);
+  }, [barPos, top, rowH, d.id, type, onBarRectUpdate]);
 
   const isOverdue = type === 'task' && !d.done && d.due_at && new Date(d.due_at) < new Date();
   const isDone    = type === 'task' && d.done;

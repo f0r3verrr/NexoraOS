@@ -1320,6 +1320,7 @@ function GoalsPanel() {
 }
 
 function KanbanPanel() {
+  const navigate = useNavigate();
   const { data: projects = [], isLoading } = useProjects();
   const { data: tasks = [] } = useKanbanTasks();
 
@@ -1336,7 +1337,7 @@ function KanbanPanel() {
     <PanelChrome
       title="Доски"
       sub={isLoading ? '…' : `${ru.tasks(openTotal)} открыто`}
-      primaryAction={<PanelButton primary icon="plus">Задача</PanelButton>}
+      primaryAction={<PanelButton primary icon="plus" onClick={() => navigate('/kanban?new=1')}>Задача</PanelButton>}
     >
       <PanelGroupLabel>Проекты</PanelGroupLabel>
       {isLoading ? (
@@ -1353,10 +1354,6 @@ function KanbanPanel() {
           />
         ))
       )}
-      <PanelGroupLabel>Виды</PanelGroupLabel>
-      <PanelRow icon="layers"      label="Канбан"    active />
-      <PanelRow icon="calendar"    label="Календарь" />
-      <PanelRow icon="trending_up" label="Гантт" />
     </PanelChrome>
   );
 }
