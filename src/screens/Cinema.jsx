@@ -29,7 +29,6 @@ const MEDIA_TYPES = [
   { key: 'series',      label: 'Сериалы' },
   { key: 'anime',       label: 'Аниме' },
   { key: 'cartoon',     label: 'Мультфильмы' },
-  { key: 'documentary', label: 'Документальное' },
 ];
 const MOOD_LABEL = ['', 'Ужасно', 'Плохо', 'Нормально', 'Хорошо', 'Восторг'];
 const MOOD_COLOR = ['', '#EF4444', '#F97316', '#EAB308', '#84CC16', '#22C55E'];
@@ -67,6 +66,136 @@ const inputSx = {
   outline: 'none', boxSizing: 'border-box',
 };
 
+/* ─── DatePicker ────────────────────────────────────────────── */
+const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const DAYS_RU   = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+function DatePicker({ value, onChange, style = {} }) {
+  const [open, setOpen]         = useState(false);
+  const [viewYear, setViewYear] = useState(() => value ? new Date(value).getFullYear() : new Date().getFullYear());
+  const [viewMonth, setViewMonth] = useState(() => value ? new Date(value).getMonth() : new Date().getMonth());
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const triggerRef = useRef(null);
+  const popupRef   = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onMouseDown = (e) => {
+      if (
+        triggerRef.current && !triggerRef.current.contains(e.target) &&
+        popupRef.current   && !popupRef.current.contains(e.target)
+      ) setOpen(false);
+    };
+    const onScroll = () => setOpen(false);
+    document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('scroll', onScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('scroll', onScroll, true);
+    };
+  }, [open]);
+
+  const CALENDAR_H = 340;
+  const CALENDAR_W = 260;
+
+  const handleOpen = () => {
+    if (!open && value) { const d = new Date(value); setViewYear(d.getFullYear()); setViewMonth(d.getMonth()); }
+    if (!open && triggerRef.current) {
+      const r = triggerRef.current.getBoundingClientRect();
+      // Use nearest scrollable ancestor bottom (e.g. modal body) to avoid overlapping sticky footers
+      let containerBottom = window.innerHeight;
+      let el = triggerRef.current.parentElement;
+      while (el && el !== document.body) {
+        const s = getComputedStyle(el);
+        if (/auto|scroll/.test(s.overflow + s.overflowY)) {
+          containerBottom = el.getBoundingClientRect().bottom;
+          break;
+        }
+        el = el.parentElement;
+      }
+      const spaceBelow = containerBottom - r.bottom;
+      let top = spaceBelow >= CALENDAR_H + 10 ? r.bottom + 6 : r.top - CALENDAR_H - 6;
+      top = Math.max(8, Math.min(top, window.innerHeight - CALENDAR_H - 8));
+      const left = Math.min(r.left, window.innerWidth - CALENDAR_W - 8);
+      setCoords({ top, left });
+    }
+    setOpen(v => !v);
+  };
+
+  const selected = value ? new Date(value + 'T00:00:00') : null;
+  const today    = new Date(); today.setHours(0,0,0,0);
+
+  const prevMonth = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); } else setViewMonth(m => m - 1); };
+  const nextMonth = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); } else setViewMonth(m => m + 1); };
+  const goToday   = () => { const n = new Date(); setViewYear(n.getFullYear()); setViewMonth(n.getMonth()); onChange(n.toISOString().substring(0,10)); setOpen(false); };
+  const clear     = () => { onChange(''); setOpen(false); };
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const offset   = firstDay === 0 ? 6 : firstDay - 1;
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const cells = Array.from({ length: Math.ceil((offset + daysInMonth) / 7) * 7 }, (_, i) => {
+    const d = i - offset + 1;
+    return d >= 1 && d <= daysInMonth ? d : null;
+  });
+
+  const displayStr = selected
+    ? selected.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '';
+
+  const calendar = (
+    <div ref={popupRef} style={{ position: 'fixed', top: coords.top, left: coords.left, zIndex: 99999, width: 260, background: 'oklch(0.19 0.007 80)', border: '1px solid oklch(0.30 0.008 80)', borderRadius: 14, boxShadow: '0 16px 48px rgba(0,0,0,.6)', overflow: 'hidden' }}>
+      {/* header */}
+      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 14px 8px', gap: 4 }}>
+        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'oklch(0.88 0.006 80)' }}>{MONTHS_RU[viewMonth]} {viewYear}</span>
+        <button onClick={prevMonth} style={{ width: 28, height: 28, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: 'oklch(0.60 0.007 80)', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='oklch(0.26 0.007 80)'} onMouseLeave={e => e.currentTarget.style.background='transparent'}><Icon name="chevron_up" size={15} /></button>
+        <button onClick={nextMonth} style={{ width: 28, height: 28, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: 'oklch(0.60 0.007 80)', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='oklch(0.26 0.007 80)'} onMouseLeave={e => e.currentTarget.style.background='transparent'}><Icon name="chevron_down" size={15} /></button>
+      </div>
+      {/* day names */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', padding: '0 10px', marginBottom: 4 }}>
+        {DAYS_RU.map(d => <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 600, color: 'oklch(0.48 0.007 80)', padding: '4px 0', letterSpacing: '.04em' }}>{d}</div>)}
+      </div>
+      {/* cells */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', padding: '0 10px 10px', gap: 2 }}>
+        {cells.map((d, i) => {
+          if (!d) return <div key={i} />;
+          const date   = new Date(viewYear, viewMonth, d);
+          const isSel  = selected && date.getTime() === selected.getTime();
+          const isTod  = date.getTime() === today.getTime();
+          return (
+            <button key={i} onClick={() => { onChange(date.toISOString().substring(0,10)); setOpen(false); }}
+              style={{ height: 30, borderRadius: 7, fontSize: 13, fontWeight: isSel ? 700 : 400, cursor: 'pointer', border: 'none', fontFamily: 'inherit',
+                background: isSel ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'transparent',
+                color: isSel ? '#fff' : isTod ? '#a78bfa' : 'oklch(0.82 0.006 80)',
+                outline: isTod && !isSel ? '1px solid rgba(139,92,246,.4)' : 'none',
+              }}
+              onMouseEnter={e => { if (!isSel) e.currentTarget.style.background='oklch(0.26 0.007 80)'; }}
+              onMouseLeave={e => { if (!isSel) e.currentTarget.style.background='transparent'; }}
+            >{d}</button>
+          );
+        })}
+      </div>
+      {/* footer */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 14px', borderTop: '1px solid oklch(0.26 0.007 80)' }}>
+        <button onClick={clear} style={{ fontSize: 12, color: 'oklch(0.55 0.007 80)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }} onMouseEnter={e => e.currentTarget.style.color='oklch(0.75 0.007 80)'} onMouseLeave={e => e.currentTarget.style.color='oklch(0.55 0.007 80)'}>Очистить</button>
+        <button onClick={goToday} style={{ fontSize: 12, color: '#a78bfa', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }} onMouseEnter={e => e.currentTarget.style.color='#c4b5fd'} onMouseLeave={e => e.currentTarget.style.color='#a78bfa'}>Сегодня</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div ref={triggerRef} style={{ position: 'relative', ...style }}>
+      <div
+        onClick={handleOpen}
+        style={{ ...inputSx, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none', color: displayStr ? 'var(--text)' : 'var(--text-muted)', background: open ? 'var(--bg-elev-3)' : 'var(--bg-elev-2)' }}
+      >
+        <span style={{ fontSize: 13 }}>{displayStr || 'Выбрать дату'}</span>
+        <Icon name="calendar" size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+      </div>
+      {open && createPortal(calendar, document.body)}
+    </div>
+  );
+}
+
 /* ─── Stepper ───────────────────────────────────────────────── */
 function Stepper({ value, onChange, min = 0, placeholder = '–' }) {
   const n = value === '' || value == null ? '' : Number(value);
@@ -84,7 +213,7 @@ function Stepper({ value, onChange, min = 0, placeholder = '–' }) {
           const raw = e.target.value.replace(/\D/g, '');
           onChange(raw === '' ? '' : Number(raw));
         }}
-        style={{ width: 40, background: 'transparent', border: 'none', textAlign: 'center', fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: 'var(--font-mono)', outline: 'none', padding: 0 }}
+        style={{ width: 40, background: 'transparent', border: 'none', textAlign: 'center', fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: 'var(--font-mono)', outline: 'none', boxShadow: 'none', WebkitAppearance: 'none', padding: 0 }}
       />
       <button type="button" onClick={inc} style={{ width: 32, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderLeft: '1px solid oklch(0.28 0.007 80)', color: 'oklch(0.58 0.007 80)', cursor: 'pointer', fontSize: 18, padding: 0, lineHeight: 1, fontFamily: 'inherit', flexShrink: 0 }}>+</button>
     </div>
@@ -142,6 +271,8 @@ function NumberRating({ value, onChange }) {
 /* ─── PosterCard ────────────────────────────────────────────── */
 function PosterCard({ entry, onOpen, onEdit, onDelete, onToggleFav }) {
   const [hover, setHover] = useState(false);
+  const [isFav, setIsFav] = useState(entry.is_favorite);
+  useEffect(() => setIsFav(entry.is_favorite), [entry.is_favorite]);
   const isSeries = SERIES_TYPES.includes(entry.media_type);
   const hasEp = isSeries && (entry.season || entry.episode);
   const pct = entry.episodes_total && entry.episode ? Math.round(entry.episode / entry.episodes_total * 100) : null;
@@ -180,15 +311,13 @@ function PosterCard({ entry, onOpen, onEdit, onDelete, onToggleFav }) {
         <span style={{ fontSize: 10, fontWeight: 600, color: 'oklch(0.86 0.006 80)' }}>{meta.label}</span>
       </div>
 
-      {/* fav */}
-      {(entry.is_favorite || hover) && (
-        <button
-          onClick={e => { e.stopPropagation(); onToggleFav(entry); }}
-          style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 99, background: 'rgba(12,12,16,.62)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(244,63,94,.3)', cursor: 'pointer', padding: 0, lineHeight: 0 }}
-        >
-          <HeartIcon size={13} filled={entry.is_favorite} />
-        </button>
-      )}
+      {/* fav — always in DOM, z-index above hover overlay */}
+      <button
+        onClick={e => { e.stopPropagation(); setIsFav(v => !v); onToggleFav(entry); }}
+        style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 99, background: 'rgba(12,12,16,.62)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${isFav ? 'rgba(244,63,94,.5)' : 'rgba(255,255,255,.15)'}`, cursor: 'pointer', padding: 0, lineHeight: 0, transition: 'opacity .15s, border-color .15s', zIndex: 2, opacity: isFav || hover ? 1 : 0 }}
+      >
+        <HeartIcon size={13} filled={isFav} />
+      </button>
 
       {/* bottom info */}
       <div style={{ position: 'absolute', left: 13, right: 13, bottom: 0, paddingBottom: 14 }}>
@@ -500,11 +629,17 @@ function CinemaDetailModal({ entry, onEdit, onDelete, onClose, onToggleFav, onUp
             )}
 
             {/* watch service link */}
-            {entry.watch_service && entry.watch_url && (
+            {(entry.watch_service || entry.watch_url) && (
               <div style={{ marginBottom: 18 }}>
-                <a href={entry.watch_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#fff', textDecoration: 'none', background: service?.color ?? '#6366f1', padding: '6px 14px', borderRadius: 20, fontWeight: 500 }}>
-                  <Icon name="link" size={11} />{entry.watch_service}
-                </a>
+                {entry.watch_url ? (
+                  <a href={entry.watch_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#fff', textDecoration: 'none', background: service?.color ?? '#6366f1', padding: '6px 14px', borderRadius: 20, fontWeight: 500 }}>
+                    <Icon name="link" size={11} />{entry.watch_service || 'Смотреть'}
+                  </a>
+                ) : (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#fff', background: service?.color ?? '#6366f1', padding: '6px 14px', borderRadius: 20, fontWeight: 500 }}>
+                    {entry.watch_service}
+                  </span>
+                )}
               </div>
             )}
 
@@ -524,7 +659,7 @@ function CinemaDetailModal({ entry, onEdit, onDelete, onClose, onToggleFav, onUp
                     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                       <div style={{ flex: 1, minWidth: 120 }}>
                         <label style={{ ...labelSx, marginBottom: 4 }}>Дата</label>
-                        <input type="date" value={rwDate} onChange={e => setRwDate(e.target.value)} style={{ ...inputSx, height: 32, fontSize: 12 }} />
+                        <DatePicker value={rwDate} onChange={setRwDate} />
                       </div>
                       <div>
                         <label style={{ ...labelSx, marginBottom: 4 }}>Настроение</label>
@@ -544,15 +679,27 @@ function CinemaDetailModal({ entry, onEdit, onDelete, onClose, onToggleFav, onUp
                 )}
                 {history.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {[...history].reverse().map((w, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px', background: 'oklch(0.20 0.007 80)', borderRadius: 7, border: '1px solid oklch(0.28 0.007 80)' }}>
-                        <span style={{ fontSize: 12, color: 'oklch(0.66 0.007 80)', fontFamily: 'var(--font-mono)', flex: 1 }}>
-                          {new Date(w.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
-                        </span>
-                        {w.mood && <span style={{ fontSize: 10, fontWeight: 600, color: MOOD_COLOR[w.mood], background: `${MOOD_COLOR[w.mood]}22`, padding: '1px 6px', borderRadius: 20 }}>{MOOD_LABEL[w.mood]}</span>}
-                        <span style={{ fontSize: 10, color: 'oklch(0.48 0.007 80)' }}>#{history.length - i}</span>
-                      </div>
-                    ))}
+                    {[...history].reverse().map((w, i) => {
+                      const realIdx = history.length - 1 - i;
+                      return (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px', background: 'oklch(0.20 0.007 80)', borderRadius: 7, border: '1px solid oklch(0.28 0.007 80)' }}>
+                          <span style={{ fontSize: 12, color: 'oklch(0.66 0.007 80)', fontFamily: 'var(--font-mono)', flex: 1 }}>
+                            {w.date ? new Date(w.date + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Дата не указана'}
+                          </span>
+                          {w.mood && <span style={{ fontSize: 10, fontWeight: 600, color: MOOD_COLOR[w.mood], background: `${MOOD_COLOR[w.mood]}22`, padding: '1px 6px', borderRadius: 20 }}>{MOOD_LABEL[w.mood]}</span>}
+                          <span style={{ fontSize: 10, color: 'oklch(0.48 0.007 80)' }}>#{i + 1}</span>
+                          <button
+                            onClick={() => onUpdate({ watch_history: history.filter((_, idx) => idx !== realIdx) })}
+                            style={{ width: 22, height: 22, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: 'oklch(0.48 0.007 80)', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+                            onMouseEnter={e => { e.currentTarget.style.color = '#f43f5e'; e.currentTarget.style.background = 'rgba(244,63,94,.1)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.color = 'oklch(0.48 0.007 80)'; e.currentTarget.style.background = 'transparent'; }}
+                            title="Удалить запись"
+                          >
+                            <Icon name="x" size={12} />
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -564,15 +711,6 @@ function CinemaDetailModal({ entry, onEdit, onDelete, onClose, onToggleFav, onUp
                 <Icon name="trash" size={13} />Удалить
               </button>
               <div style={{ flex: 1 }} />
-              <button
-                onClick={onToggleFav}
-                title={entry.is_favorite ? 'Убрать из избранного' : 'Добавить в избранное'}
-                style={{ width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: entry.is_favorite ? 'rgba(244,63,94,.15)' : 'var(--bg-elev-2)', border: entry.is_favorite ? '1px solid rgba(244,63,94,.35)' : '1px solid var(--border)', cursor: 'pointer', padding: 0, lineHeight: 0 }}
-                onMouseEnter={e => e.currentTarget.style.background = entry.is_favorite ? 'rgba(244,63,94,.25)' : 'var(--bg-hover)'}
-                onMouseLeave={e => e.currentTarget.style.background = entry.is_favorite ? 'rgba(244,63,94,.15)' : 'var(--bg-elev-2)'}
-              >
-                <HeartIcon size={16} filled={entry.is_favorite} />
-              </button>
               <button onClick={onEdit} style={{ height: 38, padding: '0 18px', borderRadius: 10, background: '#fff', color: 'oklch(0.14 0.005 80)', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
                 <Icon name="edit" size={13} />Редактировать
               </button>
@@ -755,8 +893,8 @@ function AddMovieModal({ entry, defaultStatus, onClose, onSave }) {
                     <label style={labelSx}>Год</label>
                     <input value={year} onChange={e => setYear(e.target.value)} placeholder="2024" type="number" style={inputSx} />
                   </div>
-                  <div style={{ width: 32, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 2 }}>
-                    <button onClick={() => setIsFav(v => !v)} title={isFav ? 'Убрать из избранного' : 'В избранное'} style={{ width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isFav ? 'rgba(244,63,94,0.15)' : 'var(--bg-elev-2)', border: isFav ? '1px solid rgba(244,63,94,0.3)' : '1px solid var(--border-subtle)', cursor: 'pointer', color: isFav ? '#F43F5E' : 'var(--text-muted)', transition: 'all 120ms' }}>
+                  <div style={{ flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 2, paddingRight: 2 }}>
+                    <button onClick={() => setIsFav(v => !v)} title={isFav ? 'Убрать из избранного' : 'В избранное'} style={{ width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isFav ? 'rgba(244,63,94,0.15)' : 'var(--bg-elev-2)', border: isFav ? '1px solid rgba(244,63,94,0.3)' : '1px solid var(--border-subtle)', cursor: 'pointer', color: isFav ? '#F43F5E' : 'var(--text-muted)', transition: 'all 120ms' }}>
                       <Icon name={isFav ? 'heart_filled' : 'heart'} size={14} />
                     </button>
                   </div>
@@ -842,7 +980,7 @@ function AddMovieModal({ entry, defaultStatus, onClose, onSave }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'start' }}>
                 <div>
                   <label style={labelSx}>Дата просмотра</label>
-                  <input type="date" value={watchedDate} onChange={e => setWatchedDate(e.target.value)} style={inputSx} />
+                  <DatePicker value={watchedDate} onChange={setWatchedDate} />
                 </div>
                 <div>
                   <label style={labelSx}>Настроение</label>
@@ -958,7 +1096,7 @@ export default function Cinema() {
 
   const handleSave = async (data) => {
     if (modal) await updateEntry.mutateAsync({ id: modal.id, ...data });
-    else       await createEntry.mutateAsync({ ...data, status: status === 'all' ? 'watched' : status });
+    else       await createEntry.mutateAsync(data);
     setModal(null);
   };
 
@@ -970,8 +1108,8 @@ export default function Cinema() {
 
   const handleToggleFav = async (entry) => {
     const next = { ...entry, is_favorite: !entry.is_favorite };
-    await updateEntry.mutateAsync({ id: entry.id, is_favorite: !entry.is_favorite });
     if (detailModal?.id === entry.id) setDetailModal(next);
+    updateEntry.mutate({ id: entry.id, is_favorite: !entry.is_favorite });
   };
 
   const openDetail = (entry) => setDetailModal(entry);
@@ -999,7 +1137,7 @@ export default function Cinema() {
       {modal !== null && (
         <AddMovieModal
           entry={modal || null}
-          defaultStatus={status === 'all' ? 'watched' : status}
+          defaultStatus={status === 'all' ? 'watchlist' : status}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
@@ -1128,9 +1266,9 @@ export default function Cinema() {
                   );
                 })}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 2 }}>
                 <button onClick={() => setFavOnly(v => !v)} title="Избранное" style={{ width: 42, height: 42, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: favOnly ? 'rgba(244,63,94,.14)' : 'oklch(0.18 0.006 80)', border: `1px solid ${favOnly ? 'rgba(244,63,94,.4)' : 'oklch(0.26 0.007 80)'}`, color: favOnly ? '#f43f5e' : 'oklch(0.6 0.007 80)', transition: 'all .15s' }}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill={favOnly ? '#f43f5e' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.4-7-10a4.5 4.5 0 0 1 8.5-2A4.5 4.5 0 0 1 22 10c0 5.6-7 10-7 10"/></svg>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill={favOnly ? '#f43f5e' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.4-7-10a4.5 4.5 0 0 1 8.5-2A4.5 4.5 0 0 1 22 10c0 5.6-10 10-10 10Z"/></svg>
                 </button>
                 <div style={{ position: 'relative', height: 42 }}>
                   <select value={sort} onChange={e => setSort(e.target.value)} style={{ height: 42, padding: '0 34px 0 14px', borderRadius: 11, background: 'oklch(0.18 0.006 80)', border: '1px solid oklch(0.26 0.007 80)', color: 'oklch(0.82 0.006 80)', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer', outline: 'none', appearance: 'none' }}>

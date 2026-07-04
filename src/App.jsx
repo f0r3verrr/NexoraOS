@@ -14,7 +14,8 @@ import CRM       from './screens/CRM.jsx';
 import Kanban    from './screens/Kanban.jsx';
 import Gantt     from './screens/Gantt.jsx';
 import Goals     from './screens/Goals.jsx';
-import Projects  from './screens/Projects.jsx';
+import Projects       from './screens/Projects.jsx';
+import ProjectDetail  from './screens/ProjectDetail.jsx';
 import Settings  from './screens/Settings.jsx';
 import Vault        from './screens/Vault.jsx';
 import Cinema       from './screens/Cinema.jsx';
@@ -86,7 +87,8 @@ export default function App() {
           <Route path="/kanban"    element={<Kanban />} />
           <Route path="/gantt"     element={<Gantt />} />
           <Route path="/goals"     element={<Goals />} />
-          <Route path="/projects"  element={<Projects />} />
+          <Route path="/projects"      element={<Projects />} />
+          <Route path="/projects/:id"  element={<ProjectDetail />} />
           <Route path="/settings"  element={<Settings />} />
           <Route path="/vault"     element={<Vault />} />
           <Route path="/cinema"    element={<Cinema />} />

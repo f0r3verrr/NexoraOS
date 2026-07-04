@@ -162,12 +162,7 @@ export default function Files() {
         <TopBar
           title="Файлы"
           sub={isLoading ? '…' : `${ru.files(items.length)} · ${fmtSize(totalSize)}`}
-          right={<>
-            <input ref={fileInput} type="file" style={{ display: 'none' }} onChange={handleUpload} />
-            <Button variant="secondary" size="sm" icon="paperclip" onClick={() => fileInput.current?.click()}>
-              {upload.isPending ? 'Загрузка…' : 'Загрузить'}
-            </Button>
-          </>}
+          right={<input ref={fileInput} type="file" style={{ display: 'none' }} onChange={handleUpload} />}
         />
 
         <div className="ws-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 28px' }}>

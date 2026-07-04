@@ -987,7 +987,6 @@ export default function CRM() {
                 </button>
               </div>
 
-              <Button variant="secondary" size="sm" icon="plus" onClick={() => setModalContact(false)}>Новый контакт</Button>
             </>}
           />
 

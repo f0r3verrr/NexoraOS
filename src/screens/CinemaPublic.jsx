@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -23,14 +23,62 @@ function usePublicProfile(userId) {
 
 const STATUS_ORDER = ['watching', 'watched', 'watchlist', 'waiting', 'dropped'];
 const STATUS_META = {
-  watching:  { label: 'Смотрю сейчас',    color: '#8b5cf6' },
-  watched:   { label: 'Просмотрено',      color: '#34d399' },
-  watchlist: { label: 'Хочу посмотреть',  color: '#60a5fa' },
-  waiting:   { label: 'Жду новый сезон',  color: '#fbbf24' },
-  dropped:   { label: 'Брошено',          color: '#9ca3af' },
+  watching:  { label: 'Смотрю сейчас',   color: '#8b5cf6' },
+  watched:   { label: 'Просмотрено',     color: '#34d399' },
+  watchlist: { label: 'Хочу посмотреть', color: '#60a5fa' },
+  waiting:   { label: 'Жду новый сезон', color: '#fbbf24' },
+  dropped:   { label: 'Брошено',         color: '#9ca3af' },
 };
 const TYPE_LABEL = { movie: 'Фильм', series: 'Сериал', anime: 'Аниме', cartoon: 'Мультфильм', documentary: 'Документалка' };
 const SERIES_TYPES = ['series', 'anime', 'cartoon', 'documentary'];
+
+const TYPE_FILTERS = [
+  { key: 'all',         label: 'Всё' },
+  { key: 'movie',       label: 'Фильмы' },
+  { key: 'series',      label: 'Сериалы' },
+  { key: 'anime',       label: 'Аниме' },
+  { key: 'cartoon',     label: 'Мультфильмы' },
+  { key: 'documentary', label: 'Документалки' },
+];
+
+/* ── Collapse ──────────────────────────────────────────────── */
+function Collapse({ open, children }) {
+  const ref    = useRef(null);
+  const isFirst = useRef(true);
+
+  useEffect(() => {
+    if (isFirst.current) { isFirst.current = false; return; }
+    const el = ref.current;
+    if (!el) return;
+
+    if (open) {
+      // measure, then expand from 0 → real height
+      el.style.transition = 'none';
+      el.style.height     = '0px';
+      el.style.opacity    = '0';
+      el.getBoundingClientRect(); // force reflow
+      el.style.transition = 'height 360ms cubic-bezier(0,0,.2,1), opacity 280ms ease';
+      el.style.height     = el.scrollHeight + 'px';
+      el.style.opacity    = '1';
+      const done = () => { el.style.height = 'auto'; el.style.transition = ''; };
+      el.addEventListener('transitionend', done, { once: true });
+    } else {
+      // pin to real height first, then collapse to 0
+      el.style.transition = 'none';
+      el.style.height     = el.scrollHeight + 'px';
+      el.getBoundingClientRect(); // force reflow
+      el.style.transition = 'height 300ms cubic-bezier(.4,0,1,1), opacity 180ms ease';
+      el.style.height     = '0px';
+      el.style.opacity    = '0';
+    }
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ overflow: 'hidden', height: open ? 'auto' : '0px', opacity: open ? 1 : 0 }}>
+      {children}
+    </div>
+  );
+}
 
 /* ── PublicPosterCard ──────────────────────────────────────── */
 function PublicPosterCard({ entry, onOpen }) {
@@ -63,24 +111,26 @@ function PublicPosterCard({ entry, onOpen }) {
       }
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, oklch(0.10 0.004 80 / .96) 3%, oklch(0.10 0.004 80 / .32) 42%, transparent 66%)' }} />
 
-      {/* episode badge */}
       {epLabel && (
         <div style={{ position: 'absolute', top: 10, left: 10 }}>
           <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 600, color: '#c4b5fd', background: 'rgba(12,12,16,.6)', backdropFilter: 'blur(8px)', padding: '3px 8px', borderRadius: 7, border: '1px solid rgba(255,255,255,.08)' }}>{epLabel}</span>
         </div>
       )}
 
-      {/* fav */}
       {entry.is_favorite && (
         <div style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: 99, background: 'rgba(12,12,16,.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(244,63,94,.3)' }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="#f43f5e" stroke="none"><path d="M12 20s-7-4.4-7-10a4.5 4.5 0 0 1 8.5-2A4.5 4.5 0 0 1 22 10c0 5.6-7 10-7 10"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#f43f5e" stroke="none"><path d="M12 20s-7-4.4-7-10a4.5 4.5 0 0 1 8.5-2A4.5 4.5 0 0 1 22 10c0 5.6-10 10-10 10Z"/></svg>
         </div>
       )}
 
-      {/* bottom info */}
       <div style={{ position: 'absolute', left: 13, right: 13, bottom: 0, paddingBottom: 14 }}>
         {entry.my_rating != null && (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: 'monospace', fontSize: 12, fontWeight: 700, color: '#F5C518', marginBottom: 6 }}>★ {entry.my_rating}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: 'monospace', fontSize: 12, fontWeight: 700, color: '#F5C518' }}>★ {entry.my_rating}</span>
+            {entry.kp_rating != null && (
+              <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 600, color: '#FF9000', background: 'rgba(255,144,0,.12)', padding: '1px 6px', borderRadius: 5 }}>КП {entry.kp_rating}</span>
+            )}
+          </div>
         )}
         <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.25, color: '#fff', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textShadow: '0 1px 8px rgba(0,0,0,.5)' }}>{entry.title}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 4, fontSize: 11, color: 'oklch(0.62 0.007 80)' }}>
@@ -154,7 +204,7 @@ function PublicDetailModal({ entry, onClose }) {
                     <span style={{ fontSize: 24, fontWeight: 800, fontFamily: 'monospace', color: '#F5C518' }}>{entry.my_rating}</span>
                     <span style={{ fontSize: 12, color: 'oklch(0.55 0.007 80)' }}>/10</span>
                   </div>
-                  <div style={{ fontSize: 10, letterSpacing: '.05em', textTransform: 'uppercase', color: 'oklch(0.58 0.007 80)', marginTop: 3 }}>оценка куратора</div>
+                  <div style={{ fontSize: 10, letterSpacing: '.05em', textTransform: 'uppercase', color: 'oklch(0.58 0.007 80)', marginTop: 3 }}>моя оценка</div>
                 </div>
               )}
               {entry.kp_rating != null && (
@@ -221,10 +271,20 @@ export default function CinemaPublic() {
   const { userId } = useParams();
   const { data: entries = [], isLoading, isError } = usePublicCinema(userId);
   const { data: profile } = usePublicProfile(userId);
-  const [sel, setSel] = useState(null);
+  const [sel, setSel]             = useState(null);
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [collapsed, setCollapsed]   = useState(new Set());
+
+  const toggleSection = (key) => setCollapsed(prev => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
+
+  const filteredEntries = typeFilter === 'all' ? entries : entries.filter(e => e.media_type === typeFilter);
 
   const grouped = STATUS_ORDER
-    .map(key => ({ key, items: entries.filter(e => e.status === key) }))
+    .map(key => ({ key, items: filteredEntries.filter(e => e.status === key) }))
     .filter(g => g.items.length > 0);
 
   const watchedCount = entries.filter(e => e.status === 'watched').length;
@@ -241,12 +301,17 @@ export default function CinemaPublic() {
     ...(favCount > 0 ? [{ value: String(favCount), unit: '', label: 'Любимое', color: '#f43f5e' }] : []),
   ];
 
+  // Which type filters actually have entries
+  const activeTypeKeys = new Set(entries.map(e => e.media_type));
+  const visibleFilters = TYPE_FILTERS.filter(f => f.key === 'all' || activeTypeKeys.has(f.key));
+
   return (
     <div style={{ minHeight: '100vh', background: 'oklch(0.135 0.005 80)', color: 'oklch(0.96 0.004 80)', fontFamily: "'Geist', system-ui, sans-serif", fontFeatureSettings: "'ss01'", WebkitFontSmoothing: 'antialiased' }}>
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes nxFloat { 0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,-26px)} }
         @keyframes pub-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+        @keyframes pub-section-in { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: oklch(0.30 0.008 80); border-radius: 99px; }
@@ -256,23 +321,20 @@ export default function CinemaPublic() {
 
       {/* ── Hero ── */}
       <div style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid oklch(0.22 0.007 80)', background: 'linear-gradient(150deg, oklch(0.18 0.02 285) 0%, oklch(0.145 0.01 300) 45%, oklch(0.135 0.005 250) 100%)' }}>
-        {/* floating orbs */}
         <div style={{ position: 'absolute', top: -120, left: '8%', width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,92,246,.22), transparent 68%)', animation: 'nxFloat 11s ease-in-out infinite', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: -80, right: '12%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,.16), transparent 68%)', animation: 'nxFloat 14s ease-in-out infinite reverse', pointerEvents: 'none' }} />
 
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '78px 40px 50px', position: 'relative' }}>
-          {/* public badge */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px 5px 11px', borderRadius: 99, background: 'rgba(139,92,246,.12)', border: '1px solid rgba(139,92,246,.3)', marginBottom: 24 }}>
             <span style={{ width: 6, height: 6, borderRadius: 99, background: '#8b5cf6', boxShadow: '0 0 8px #8b5cf6' }} />
             <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.12em', color: '#c4b5fd' }}>ПУБЛИЧНАЯ КОЛЛЕКЦИЯ</span>
           </div>
 
-          {/* title */}
           <h1 style={{ fontSize: 60, fontWeight: 800, letterSpacing: '-.035em', lineHeight: .98, marginBottom: 18 }}>
             <span style={{ background: 'linear-gradient(115deg,#fff 30%,#c4b5fd)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>Watchlist</span>
           </h1>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: 'oklch(0.70 0.007 80)', maxWidth: 540, marginBottom: 28 }}>
-            Фильмы и сериалы из личной коллекции. Подборка обновляется регулярно.
+            Делюсь тем, что смотрю. Подборка обновляется по мере просмотра.
           </p>
 
           {/* owner */}
@@ -316,7 +378,35 @@ export default function CinemaPublic() {
       </div>
 
       {/* ── Content ── */}
-      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '46px 40px 90px' }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '36px 40px 90px' }}>
+
+        {/* type filter chips */}
+        {!isLoading && entries.length > 0 && visibleFilters.length > 2 && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 36 }}>
+            {visibleFilters.map(f => {
+              const active = typeFilter === f.key;
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => setTypeFilter(f.key)}
+                  style={{
+                    padding: '7px 16px', borderRadius: 99, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    border: active ? '1px solid rgba(139,92,246,.6)' : '1px solid oklch(0.27 0.007 80)',
+                    background: active ? 'rgba(139,92,246,.18)' : 'oklch(0.19 0.007 80)',
+                    color: active ? '#c4b5fd' : 'oklch(0.72 0.007 80)',
+                    transition: 'all 150ms',
+                    fontFamily: 'inherit',
+                  }}
+                  onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = 'oklch(0.36 0.007 80)'; e.currentTarget.style.color = 'oklch(0.88 0.006 80)'; } }}
+                  onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'oklch(0.27 0.007 80)'; e.currentTarget.style.color = 'oklch(0.72 0.007 80)'; } }}
+                >
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {isLoading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16 }}>
             {Array.from({ length: 12 }, (_, i) => (
@@ -331,27 +421,46 @@ export default function CinemaPublic() {
           <div style={{ textAlign: 'center', padding: '80px 0', color: 'oklch(0.46 0.007 80)', fontSize: 15 }}>
             Коллекция пока пустая
           </div>
+        ) : grouped.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '80px 0', color: 'oklch(0.46 0.007 80)', fontSize: 15 }}>
+            Нет записей в этой категории
+          </div>
         ) : (
           grouped.map(g => {
             const meta = STATUS_META[g.key];
+            const isCollapsed = collapsed.has(g.key);
             return (
-              <section key={g.key} style={{ marginBottom: 52 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 22 }}>
+              <section key={g.key} style={{ marginBottom: 48, animation: 'pub-section-in 200ms ease-out' }}>
+                {/* section header — clickable to collapse */}
+                <button
+                  onClick={() => toggleSection(g.key)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 13, marginBottom: isCollapsed ? 0 : 22, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'left' }}
+                >
                   <span style={{ width: 9, height: 9, borderRadius: 99, background: meta.color, boxShadow: `0 0 10px ${meta.color}`, flexShrink: 0 }} />
-                  <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'oklch(0.82 0.006 80)' }}>{meta.label}</h2>
+                  <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'oklch(0.82 0.006 80)' }}>{meta.label}</span>
                   <span style={{ fontFamily: 'monospace', fontSize: 12, color: 'oklch(0.55 0.007 80)', background: 'oklch(0.20 0.007 80)', padding: '2px 9px', borderRadius: 99 }}>{g.items.length}</span>
                   <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, oklch(0.28 0.007 80), transparent)' }} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16 }}>
-                  {g.items.map(e => <PublicPosterCard key={e.id} entry={e} onOpen={setSel} />)}
-                </div>
+                  {/* chevron */}
+                  <svg
+                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.50 0.007 80)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ flexShrink: 0, transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 250ms cubic-bezier(.4,0,.2,1)' }}
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+
+                <Collapse open={!isCollapsed}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16, paddingBottom: 4 }}>
+                    {g.items.map(e => <PublicPosterCard key={e.id} entry={e} onOpen={setSel} />)}
+                  </div>
+                </Collapse>
               </section>
             );
           })
         )}
 
         {/* footer */}
-        <div style={{ textAlign: 'center', paddingTop: 30, borderTop: '1px solid oklch(0.20 0.007 80)' }}>
+        <div style={{ textAlign: 'center', paddingTop: 30, borderTop: '1px solid oklch(0.20 0.007 80)', marginTop: 20 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'oklch(0.46 0.007 80)', letterSpacing: '.04em' }}>
             <span style={{ width: 18, height: 18, borderRadius: 6, background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#fff' }}>N</span>
             Создано в Nexora OS

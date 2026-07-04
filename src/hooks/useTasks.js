@@ -51,6 +51,21 @@ export function useUndatedTasks() {
   });
 }
 
+/* All tasks for Gantt — includes done tasks for correct progress calculation */
+export function useGanttTasks() {
+  return useQuery({
+    queryKey: ['tasks', 'gantt'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select(TASK_SELECT)
+        .order('due_at', { ascending: true, nullsLast: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 /* All incomplete tasks — used by Kanban, Gantt etc. */
 export function useAllTasks() {
   return useQuery({

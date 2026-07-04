@@ -82,6 +82,23 @@ export function useJournalStreak() {
   });
 }
 
+/* Delete entry for a date */
+export function useDeleteJournalEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (date) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('date', date);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['journal'] }); },
+  });
+}
+
 /* Create or update entry for a date */
 export function useUpsertJournalEntry() {
   const qc = useQueryClient();

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Icon } from '../icons.jsx';
 import { Button, IconButton, Badge, Progress } from '../components/primitives.jsx';
@@ -767,6 +767,13 @@ export default function Goals() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [goalModal,     setGoalModal]     = useState(null);
 
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setGoalModal(false);
+      setSearchParams(p => { p.delete('new'); return p; }, { replace: true });
+    }
+  }, [searchParams]);
+
   const horizonTypes = [...new Set(goals.map(g => g.goal_type))];
 
   const filtered = goals
@@ -799,7 +806,6 @@ export default function Goals() {
                 size="sm" icon="trending_up"
                 onClick={() => setShowAnalytics(a => !a)}
               >Аналитика</Button>
-              <Button variant="secondary" size="sm" icon="plus" onClick={() => setGoalModal(false)}>Новая цель</Button>
             </>}
           />
 

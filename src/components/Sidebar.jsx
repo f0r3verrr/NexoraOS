@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Icon } from '../icons.jsx';
 import { Avatar, IconButton } from './primitives.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useProjects } from '../hooks/useProjects.js';
 import { useInboxItems } from '../hooks/useInbox.js';
-import { useTodayTasks, useFrogTask, useKanbanTasks, useAllTasks } from '../hooks/useTasks.js';
+import { useTodayTasks, useFrogTask, useKanbanTasks, useAllTasks, useGanttTasks } from '../hooks/useTasks.js';
 import { useNotes, useFolders } from '../hooks/useNotes.js';
 import { useGoals } from '../hooks/useGoals.js';
 import { useHabits } from '../hooks/useHabits.js';
@@ -14,7 +14,7 @@ import { useOrders } from '../hooks/useOrders.js';
 import { useCinema } from '../hooks/useCinema.js';
 import { useContacts } from '../hooks/useContacts.js';
 import { useSegments, useCreateSegment, useUpdateSegment, useDeleteSegment } from '../hooks/useSegments.js';
-import { useRecentJournalEntries, useJournalStreak } from '../hooks/useJournal.js';
+import { useJournalEntries, useJournalStreak } from '../hooks/useJournal.js';
 import { ru } from '../lib/plural.js';
 
 /* ---- Rail ---- */
@@ -99,7 +99,7 @@ function RailDot({ item, active }) {
 
 function SidebarRail() {
   const { pathname } = useLocation();
-  const activeKey = PATH_TO_KEY[pathname] || 'home';
+  const activeKey = PATH_TO_KEY[pathname] || (pathname.startsWith('/projects/') ? 'projects' : 'home');
 
   const { data: inboxItems = [] } = useInboxItems();
   const { data: todayTasks = [] } = useTodayTasks();
@@ -120,11 +120,6 @@ function SidebarRail() {
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       padding: '12px 0', gap: 4,
     }}>
-      <img src="/logo.png" alt="NexoraOS" title="NexoraOS" style={{
-        width: 68,
-        display: 'block', marginBottom: 10,
-        filter: 'drop-shadow(0 0 10px color-mix(in oklab, var(--p-openresto) 55%, transparent))',
-      }} />
 
       {railTopWithCounts.map((n) => (
         <RailDot key={n.key} item={n} active={n.key === activeKey} />
@@ -546,6 +541,8 @@ function CalendarPanel() {
 
 function ProjectsPanel() {
   const { data: projects = [], isLoading } = useProjects();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
   const grouped = projects.reduce((acc, p) => {
     const area = p.area || 'Личное';
     if (!acc[area]) acc[area] = [];
@@ -559,7 +556,7 @@ function ProjectsPanel() {
     <PanelChrome
       title="Проекты"
       sub={isLoading ? '…' : `${ru.projects(projects.length)}`}
-      primaryAction={<PanelButton primary icon="plus">Новый проект</PanelButton>}
+      primaryAction={<PanelButton primary icon="plus" onClick={() => navigate('/projects?new=1')}>Новый проект</PanelButton>}
     >
       {isLoading ? (
         <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -574,7 +571,13 @@ function ProjectsPanel() {
           <div key={area}>
             <PanelGroupLabel action={<Icon name="plus" size={11} style={{ color: 'var(--text-muted)' }} />}>{area}</PanelGroupLabel>
             {grouped[area].map(p => (
-              <PanelRow key={p.id} dot={p.color_token} label={p.name} />
+              <PanelRow
+                key={p.id}
+                dot={p.color_token}
+                label={p.name}
+                active={pathname === `/projects/${p.id}`}
+                onClick={() => navigate(`/projects/${p.id}`)}
+              />
             ))}
           </div>
         ))
@@ -608,48 +611,112 @@ function NotesPanel() {
 }
 
 function JournalPanel() {
-  const { data: recent = [], isLoading } = useRecentJournalEntries(7);
   const { data: streak = 0 } = useJournalStreak();
+  const { data: allEntries = [] } = useJournalEntries();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
 
-  const fmtDate = (dateStr) => {
-    const d = new Date(dateStr + 'T00:00:00');
-    return d.toLocaleDateString('ru', { day: 'numeric', month: 'short', weekday: 'short' });
+  const now = new Date();
+  const [viewYear,  setViewYear]  = useState(now.getFullYear());
+  const [viewMonth, setViewMonth] = useState(now.getMonth());
+
+  const prevMonth = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); } else setViewMonth(m => m - 1); };
+  const nextMonth = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); } else setViewMonth(m => m + 1); };
+
+  // Build date → mood map
+  const entryMap = {};
+  for (const e of allEntries) entryMap[e.date] = e.mood ?? 0;
+
+  const todayKey   = now.toISOString().slice(0, 10);
+  const firstDow   = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7; // Mon=0
+  const daysInMon  = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const cellCount  = Math.ceil((firstDow + daysInMon) / 7) * 7;
+
+  const monthLabel = new Date(viewYear, viewMonth, 1)
+    .toLocaleDateString('ru', { month: 'long', year: 'numeric' });
+
+  const handleDayClick = (dateKey) => {
+    if (pathname === '/journal') {
+      // Already on journal — use search param to open modal
+      navigate(`/journal?date=${dateKey}`, { replace: true });
+    } else {
+      navigate(`/journal?date=${dateKey}`);
+    }
+  };
+
+  const moodBg = (mood) => {
+    if (!mood) return 'var(--bg-elev-3)';
+    const pct = 20 + mood * 16;
+    return `color-mix(in oklab, var(--p-health) ${pct}%, transparent)`;
   };
 
   return (
     <PanelChrome
       title="Дневник"
-      sub={streak > 0 ? `стрик · ${streak} ${streak === 1 ? 'день' : streak < 5 ? 'дня' : 'дней'}` : 'записей нет'}
-      primaryAction={<PanelButton primary icon="edit">Запись на сегодня</PanelButton>}
+      sub={streak > 0 ? `стрик · ${streak} ${streak === 1 ? 'день' : streak < 5 ? 'дня' : 'дней'}` : undefined}
     >
-      <div style={{ padding: '8px 8px 8px' }}><MiniCal highlightWeek={false} /></div>
-      {recent.length > 0 && <PanelGroupLabel>Недавние записи</PanelGroupLabel>}
-      {isLoading ? (
-        <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {[1,2,3].map(i => <div key={i} style={{ height: 12, borderRadius: 4, background: 'var(--bg-elev-3)', width: `${60 + i * 8}%` }} />)}
-        </div>
-      ) : recent.length === 0 ? (
-        <div style={{ padding: '12px 10px', fontSize: 12, color: 'var(--text-muted)' }}>Нет записей</div>
-      ) : (
-        recent.slice(0, 5).map((entry, i) => {
-          const today = new Date().toISOString().slice(0, 10);
-          const isToday = entry.date === today;
-          const moodColor = entry.mood ? ['var(--danger)','var(--warn)','var(--text-3)','var(--p-health)','var(--p-openresto)'][entry.mood - 1] : 'var(--text-3)';
+      {/* Calendar header */}
+      <div style={{ display: 'flex', alignItems: 'center', padding: '8px 10px 4px', gap: 4 }}>
+        <span style={{ flex: 1, fontSize: 12, fontWeight: 500, color: 'var(--text-2)', textTransform: 'capitalize' }}>{monthLabel}</span>
+        <button onClick={prevMonth} style={{ width: 22, height: 22, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', color: 'var(--text-3)', cursor: 'pointer' }}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-elev-2)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          <Icon name="chevron_left" size={13} />
+        </button>
+        <button onClick={nextMonth} style={{ width: 22, height: 22, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', color: 'var(--text-3)', cursor: 'pointer' }}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-elev-2)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          <Icon name="chevron_right" size={13} />
+        </button>
+      </div>
+
+      {/* Calendar grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, padding: '0 8px 8px' }}>
+        {['пн','вт','ср','чт','пт','сб','вс'].map(d => (
+          <span key={d} style={{ fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', padding: '2px 0 4px' }}>{d}</span>
+        ))}
+        {Array.from({ length: cellCount }, (_, i) => {
+          const day = i - firstDow + 1;
+          const valid = day >= 1 && day <= daysInMon;
+          const dateKey = valid
+            ? `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+            : null;
+          const isToday   = dateKey === todayKey;
+          const mood      = dateKey ? entryMap[dateKey] : undefined;
+          const hasEntry  = mood !== undefined;
+          const isFuture  = dateKey && dateKey > todayKey;
+
           return (
-            <button key={entry.date} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              width: '100%', padding: '8px 10px', borderRadius: 6,
-              background: isToday ? 'var(--bg-elev-2)' : 'transparent', textAlign: 'left',
-            }}>
-              <span style={{ width: 8, height: 8, borderRadius: 999, background: moodColor, flex: 'none' }} />
-              <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ fontSize: 13, color: isToday ? 'var(--text)' : 'var(--text-2)' }}>{fmtDate(entry.date)}</span>
-                {entry.mood && <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{MOOD_EMOJI[entry.mood] || ''} настроение {entry.mood}/5</span>}
-              </span>
+            <button
+              key={i}
+              disabled={!valid || isFuture}
+              onClick={valid && !isFuture ? () => handleDayClick(dateKey) : undefined}
+              style={{
+                height: 26, borderRadius: 5, fontSize: 11,
+                fontFamily: 'var(--font-mono)',
+                textAlign: 'center',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2,
+                background: isToday ? 'var(--text)' : 'transparent',
+                color: !valid ? 'transparent' : isToday ? 'var(--bg)' : isFuture ? 'var(--text-muted)' : 'var(--text-2)',
+                cursor: valid && !isFuture ? 'pointer' : 'default',
+                position: 'relative',
+                border: 'none',
+              }}
+              onMouseEnter={e => { if (valid && !isFuture && !isToday) e.currentTarget.style.background = 'var(--bg-hover)'; }}
+              onMouseLeave={e => { if (!isToday) e.currentTarget.style.background = 'transparent'; }}
+            >
+              {valid ? day : ''}
+              {valid && !isToday && hasEntry && (
+                <span style={{
+                  width: 4, height: 4, borderRadius: 99,
+                  background: moodBg(mood),
+                  position: 'absolute', bottom: 2,
+                }} />
+              )}
             </button>
           );
-        })
-      )}
+        })}
+      </div>
     </PanelChrome>
   );
 }
@@ -1172,7 +1239,7 @@ function GoalsPanel() {
     <PanelChrome
       title="Цели и привычки"
       sub={streak > 0 ? `стрик · ${ru.days(streak)}` : undefined}
-      primaryAction={<PanelButton primary icon="plus" onClick={() => navigate('/goals')}>Цель</PanelButton>}
+      primaryAction={<PanelButton primary icon="plus" onClick={() => navigate('/goals?new=1')}>Цель</PanelButton>}
       onSearch={() => {
         setShowSearch(s => !s);
         if (showSearch) { setLocalQ(''); updateParams({ q: null }); }
@@ -1295,8 +1362,12 @@ function KanbanPanel() {
 }
 
 function GanttPanel() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data: projects = [], isLoading } = useProjects();
-  const { data: tasks = [] } = useAllTasks();
+  const { data: tasks = [] } = useGanttTasks();
+
+  const currentScale = searchParams.get('scale') ?? 'week';
 
   const tasksByProject = tasks.reduce((acc, t) => {
     if (t.project_id) {
@@ -1307,17 +1378,42 @@ function GanttPanel() {
     return acc;
   }, {});
 
+  const SCALES = [
+    { key: 'day',     icon: 'calendar', label: 'День'    },
+    { key: 'week',    icon: 'calendar', label: 'Неделя'  },
+    { key: 'month',   icon: 'layers',   label: 'Месяц'   },
+    { key: 'quarter', icon: 'layers',   label: 'Квартал' },
+    { key: 'year',    icon: 'layers',   label: 'Год'     },
+  ];
+
+  const viewMode = searchParams.get('view') ?? 'all';
+  const focusPid = searchParams.get('pid') ?? null;
+
+  const setViewAll = () => navigate('/gantt?view=all');
+  const setViewProject = (pid) => navigate(`/gantt?view=project&pid=${pid}&scale=${currentScale}`);
+
   return (
     <PanelChrome
       title="План · Гантт"
       sub={isLoading ? '…' : ru.projects(projects.length)}
-      primaryAction={<PanelButton primary icon="plus">Веха</PanelButton>}
+      primaryAction={
+        <PanelButton primary icon="flag" onClick={() => navigate('/gantt?milestone=1')}>
+          Веха
+        </PanelButton>
+      }
     >
       <PanelGroupLabel>Масштаб</PanelGroupLabel>
-      <PanelRow icon="clock"    label="День" />
-      <PanelRow icon="calendar" label="Неделя" active />
-      <PanelRow icon="layers"   label="Месяц" />
-      <PanelRow icon="archive"  label="Квартал" />
+      {SCALES.map(s => (
+        <PanelRow
+          key={s.key}
+          icon={s.icon}
+          label={s.label}
+          active={currentScale === s.key}
+          onClick={() => navigate(`/gantt?scale=${s.key}`)}
+        />
+      ))}
+      <PanelGroupLabel>Вид</PanelGroupLabel>
+      <PanelRow icon="layers" label="Все проекты" active={viewMode === 'all'} onClick={setViewAll} />
       <PanelGroupLabel>Проекты</PanelGroupLabel>
       {isLoading ? (
         <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1329,7 +1425,16 @@ function GanttPanel() {
         projects.map(p => {
           const stats = tasksByProject[p.id];
           const sub = stats ? `${stats.done}/${stats.total} задач` : undefined;
-          return <PanelRow key={p.id} dot={p.color_token} label={p.name} sub={sub} />;
+          return (
+            <PanelRow
+              key={p.id}
+              dot={p.color_token}
+              label={p.name}
+              sub={sub}
+              active={viewMode === 'project' && focusPid === p.id}
+              onClick={() => setViewProject(p.id)}
+            />
+          );
         })
       )}
     </PanelChrome>
@@ -1367,13 +1472,14 @@ function SettingsPanel() {
 
 /* ---- Sidebar assembly ---- */
 function PanelByPath({ pathname }) {
+  if (pathname.startsWith('/projects/')) return <ProjectsPanel />;
   switch (pathname) {
     case '/dashboard': return <HomePanel />;
     case '/inbox':     return <InboxPanel />;
     case '/today':     return <TodayPanel />;
     case '/calendar':  return <CalendarPanel />;
     case '/projects':  return <ProjectsPanel />;
-    case '/notes':     return <NotesPanel />;
+    case '/notes':     return null;
     case '/journal':   return <JournalPanel />;
     case '/files':     return <FilesPanel />;
     case '/finances':  return <FinancesPanel />;
@@ -1419,3 +1525,4 @@ export function TopBar({ title, breadcrumb, right, sub }) {
     </div>
   );
 }
+
