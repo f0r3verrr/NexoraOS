@@ -1,5 +1,49 @@
 import { Icon } from '../icons.jsx';
 
+/* Числовое поле с кастомным компактным спинером (нативные стрелки скрыты в index.css) */
+export function SpinInput({ value, onChange, placeholder, min, step = 1, autoFocus, onKeyDown, style }) {
+  const num = () => { const n = parseFloat(value); return Number.isFinite(n) ? n : null; };
+  const bump = (dir) => {
+    let next = num() == null ? (min ?? (dir > 0 ? step : 0)) : num() + dir * step;
+    if (min != null && next < min) next = min;
+    onChange(String(next));
+  };
+
+  const arrowSx = {
+    flex: 1, width: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: 'var(--text-muted)', background: 'transparent', border: 'none',
+    cursor: 'pointer', padding: 0, transition: 'color 100ms, background 100ms',
+  };
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'stretch', height: 36,
+      background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)',
+      borderRadius: 8, overflow: 'hidden', boxSizing: 'border-box', width: '100%',
+      ...style,
+    }}>
+      <input
+        type="number" className="no-ring"
+        value={value} placeholder={placeholder} min={min} autoFocus={autoFocus} onKeyDown={onKeyDown}
+        onChange={e => onChange(e.target.value)}
+        style={{ flex: 1, minWidth: 0, padding: '0 12px', background: 'none', border: 'none', outline: 'none', fontSize: 13, color: 'var(--text)', fontFamily: 'var(--font-mono)' }}
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', borderLeft: '1px solid var(--border-subtle)', flex: 'none' }}>
+        <button type="button" tabIndex={-1} onClick={() => bump(1)} style={arrowSx}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'var(--bg-elev-3)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}>
+          <Icon name="chevron_up" size={10} />
+        </button>
+        <button type="button" tabIndex={-1} onClick={() => bump(-1)} style={{ ...arrowSx, borderTop: '1px solid var(--border-subtle)' }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'var(--bg-elev-3)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}>
+          <Icon name="chevron_down" size={10} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function Button({ variant = 'ghost', size = 'md', icon, trailing, children, style, onClick, disabled = false }) {
   const sizes = {
     sm: { h: 28, padX: 10, fs: 13, gap: 6, iconSize: 14, radius: 8 },
@@ -103,7 +147,7 @@ export function Kbd({ children }) {
   );
 }
 
-export function Badge({ tone = 'neutral', variant = 'soft', children, dot, icon }) {
+export function Badge({ tone = 'neutral', variant = 'soft', children, dot, icon, style }) {
   const toneColors = {
     neutral: 'var(--text-2)', success: 'var(--success)',
     warn: 'var(--warn)',       danger: 'var(--danger)', info: 'var(--info)',
@@ -121,7 +165,7 @@ export function Badge({ tone = 'neutral', variant = 'soft', children, dot, icon 
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
       height: 22, padding: '0 8px', borderRadius: 999,
-      fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', ...styles,
+      fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', ...styles, ...style,
     }}>
       {dot && <span style={{ width: 6, height: 6, borderRadius: 999, background: c }} />}
       {icon && <Icon name={icon} size={12} />}

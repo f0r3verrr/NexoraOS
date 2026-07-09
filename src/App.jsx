@@ -1,5 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext.jsx';
+import { useHiddenPages } from './hooks/useHiddenPages.js';
+import { pageKeyByPath } from './lib/pages.js';
 
 import Login     from './screens/Login.jsx';
 import Dashboard from './screens/Dashboard.jsx';
@@ -20,6 +22,9 @@ import Settings  from './screens/Settings.jsx';
 import Vault        from './screens/Vault.jsx';
 import Cinema       from './screens/Cinema.jsx';
 import CinemaPublic from './screens/CinemaPublic.jsx';
+import PersonalCar  from './screens/PersonalCar.jsx';
+import PersonalGirl from './screens/PersonalGirl.jsx';
+import PersonalHome from './screens/PersonalHome.jsx';
 
 /* Redirects to /login if not authenticated; shows spinner while loading session */
 function AuthGuard() {
@@ -27,6 +32,16 @@ function AuthGuard() {
 
   if (loading) return <AppLoader />;
   if (!session) return <Navigate to="/login" replace />;
+  return <HiddenPageGuard />;
+}
+
+/* Отключённая в настройках страница → редирект на дашборд */
+function HiddenPageGuard() {
+  const { pathname } = useLocation();
+  const { data: hidden = [] } = useHiddenPages();
+
+  const key = pageKeyByPath(pathname);
+  if (key && hidden.includes(key)) return <Navigate to="/dashboard" replace />;
   return <Outlet />;
 }
 
@@ -92,6 +107,9 @@ export default function App() {
           <Route path="/settings"  element={<Settings />} />
           <Route path="/vault"     element={<Vault />} />
           <Route path="/cinema"    element={<Cinema />} />
+          <Route path="/personal/car"     element={<PersonalCar />} />
+          <Route path="/personal/partner" element={<PersonalGirl />} />
+          <Route path="/personal/home"    element={<PersonalHome />} />
         </Route>
 
         {/* Fallback */}

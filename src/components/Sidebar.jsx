@@ -4,8 +4,10 @@ import { Icon } from '../icons.jsx';
 import { Avatar, IconButton } from './primitives.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useProjects } from '../hooks/useProjects.js';
-import { useInboxItems } from '../hooks/useInbox.js';
+import { useInboxItems, useSnoozedItems } from '../hooks/useInbox.js';
+import { useHiddenPages } from '../hooks/useHiddenPages.js';
 import { useTodayTasks, useFrogTask, useKanbanTasks, useAllTasks, useGanttTasks } from '../hooks/useTasks.js';
+import { useKanbanColumns } from '../hooks/useKanbanColumns.js';
 import { useNotes, useFolders } from '../hooks/useNotes.js';
 import { useGoals } from '../hooks/useGoals.js';
 import { useHabits } from '../hooks/useHabits.js';
@@ -36,6 +38,11 @@ const RAIL_LIBRARY = [
   { key: 'goals',    path: '/goals',     icon: 'target',      label: 'Цели' },
   { key: 'cinema',   path: '/cinema',    icon: 'film',        label: 'Watchlist' },
 ];
+const RAIL_PERSONAL = [
+  { key: 'car',     path: '/personal/car',     icon: 'car',   label: 'Машина' },
+  { key: 'partner', path: '/personal/partner', icon: 'heart', label: 'Отношения' },
+  { key: 'homemod', path: '/personal/home',    icon: 'home',  label: 'Дом и подписки' },
+];
 const RAIL_BOTTOM = [
   { key: 'vault',    path: '/vault',     icon: 'lock',        label: 'Vault' },
   { key: 'settings', path: '/settings', icon: 'settings',    label: 'Настройки' },
@@ -47,6 +54,7 @@ const PATH_TO_KEY = {
   '/projects': 'projects', '/notes': 'notes', '/journal': 'journal',
   '/files': 'files', '/finances': 'finances', '/crm': 'crm',
   '/goals': 'goals', '/cinema': 'cinema', '/settings': 'settings', '/vault': 'vault',
+  '/personal/car': 'car', '/personal/partner': 'partner', '/personal/home': 'homemod',
 };
 
 function RailDot({ item, active }) {
@@ -103,14 +111,20 @@ function SidebarRail() {
 
   const { data: inboxItems = [] } = useInboxItems();
   const { data: todayTasks = [] } = useTodayTasks();
+  const { data: hidden = [] }     = useHiddenPages();
   const inboxCount = inboxItems.length;
   const todayCount = todayTasks.filter(t => !t.done).length;
 
-  const railTopWithCounts = RAIL_TOP.map(n => {
+  const visible = (items) => items.filter(n => !hidden.includes(n.key));
+
+  const railTop = visible(RAIL_TOP).map(n => {
     if (n.key === 'inbox') return { ...n, badge: inboxCount || undefined };
     if (n.key === 'today') return { ...n, badge: todayCount || undefined };
     return n;
   });
+  const railLibrary  = visible(RAIL_LIBRARY);
+  const railPersonal = visible(RAIL_PERSONAL);
+  const railBottom   = visible(RAIL_BOTTOM);
 
   return (
     <div style={{
@@ -121,19 +135,29 @@ function SidebarRail() {
       padding: '12px 0', gap: 4,
     }}>
 
-      {railTopWithCounts.map((n) => (
+      {railTop.map((n) => (
         <RailDot key={n.key} item={n} active={n.key === activeKey} />
       ))}
 
-      <div style={{ height: 1, width: 28, background: 'linear-gradient(90deg, transparent, var(--border), transparent)', margin: '8px 0' }} />
+      {railLibrary.length > 0 && (
+        <div style={{ height: 1, width: 28, background: 'linear-gradient(90deg, transparent, var(--border), transparent)', margin: '8px 0' }} />
+      )}
 
-      {RAIL_LIBRARY.map((n) => (
+      {railLibrary.map((n) => (
+        <RailDot key={n.key} item={n} active={n.key === activeKey} />
+      ))}
+
+      {railPersonal.length > 0 && (
+        <div style={{ height: 1, width: 28, background: 'linear-gradient(90deg, transparent, var(--border), transparent)', margin: '8px 0' }} />
+      )}
+
+      {railPersonal.map((n) => (
         <RailDot key={n.key} item={n} active={n.key === activeKey} />
       ))}
 
       <div style={{ flex: 1 }} />
 
-      {RAIL_BOTTOM.map((n) => (
+      {railBottom.map((n) => (
         <RailDot key={n.key} item={n} active={n.key === activeKey} />
       ))}
 
@@ -366,17 +390,14 @@ function PanelRow({ icon, dot, label, sub, badge, active, indent = 0, onClick })
 }
 
 /* ---- Dynamic mini calendar ---- */
-function MiniCal({ highlightWeek = true }) {
+function MiniCal({ year, month, todayStr, highlightedDates = new Set(), onDayClick }) {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const today = now.getDate();
-  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7; // Mon=0
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const dayOfWeek = (now.getDay() + 6) % 7;
-  const weekStart = today - dayOfWeek;
-  const weekEnd = weekStart + 6;
-  const cellCount = Math.ceil((firstDow + daysInMonth) / 7) * 7;
+  const y = year ?? now.getFullYear();
+  const m = month ?? now.getMonth();
+  const td = todayStr ?? now.toISOString().slice(0, 10);
+  const firstDow    = (new Date(y, m, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const cellCount   = Math.ceil((firstDow + daysInMonth) / 7) * 7;
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, padding: '0 4px' }}>
@@ -386,15 +407,21 @@ function MiniCal({ highlightWeek = true }) {
       {Array.from({ length: cellCount }, (_, i) => {
         const day = i - firstDow + 1;
         const valid = day >= 1 && day <= daysInMonth;
-        const isToday = valid && day === today;
-        const inWeek = highlightWeek && valid && day >= weekStart && day <= weekEnd;
+        if (!valid) return <span key={i} />;
+        const dateStr = `${y}-${String(m + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const isToday = dateStr === td;
+        const inHighlight = highlightedDates.has(dateStr);
         return (
-          <span key={i} style={{
-            fontSize: 11, fontFamily: 'var(--font-mono)',
-            textAlign: 'center', padding: '4px 0', borderRadius: 5,
-            color: !valid ? 'transparent' : isToday ? 'var(--bg)' : inWeek ? 'var(--text)' : 'var(--text-3)',
-            background: isToday ? 'var(--text)' : inWeek ? 'var(--bg-elev-2)' : 'transparent',
-          }}>{valid ? day : ''}</span>
+          <span key={i}
+            onClick={() => onDayClick?.(dateStr)}
+            onMouseEnter={e => { if (!isToday) e.currentTarget.style.background = 'var(--bg-elev-3)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = isToday ? 'var(--text)' : inHighlight ? 'var(--bg-elev-2)' : 'transparent'; }}
+            style={{
+              fontSize: 11, fontFamily: 'var(--font-mono)',
+              textAlign: 'center', padding: '4px 0', borderRadius: 5, cursor: 'pointer', transition: 'background 80ms',
+              color: isToday ? 'var(--bg)' : inHighlight ? 'var(--text)' : 'var(--text-3)',
+              background: isToday ? 'var(--text)' : inHighlight ? 'var(--bg-elev-2)' : 'transparent',
+            }}>{day}</span>
         );
       })}
     </div>
@@ -436,102 +463,225 @@ function HomePanel() {
 }
 
 function InboxPanel() {
-  const { data: items = [], isLoading } = useInboxItems();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { data: items   = [], isLoading } = useInboxItems();
+  const { data: snoozed = [] }            = useSnoozedItems();
+
+  const view   = searchParams.get('view')   ?? 'unresolved';
+  const source = searchParams.get('source') ?? null;
+
   const tgCount    = items.filter(i => i.source === 'telegram').length;
   const webCount   = items.filter(i => i.source === 'web').length;
   const emailCount = items.filter(i => i.source === 'email').length;
   const voiceCount = items.filter(i => i.source === 'voice').length;
+  const hasAnySrc  = tgCount + webCount + emailCount + voiceCount > 0;
+
+  const goView = (v) => navigate(`/inbox?view=${v}${source ? `&source=${source}` : ''}`);
+  const goSrc  = (src) => navigate(`/inbox?view=${view}&source=${src}`);
+  const clearSrc = () => navigate(`/inbox?view=${view}`);
 
   return (
     <PanelChrome
       title="Inbox"
-      sub={isLoading ? '…' : `${items.length} в очереди`}
-      primaryAction={<PanelButton primary icon="zap" kbd="⌘I">Захватить мысль</PanelButton>}
+      sub={isLoading ? '…' : items.length > 0 ? `${items.length} не разобрано` : 'Inbox чист'}
     >
       <PanelGroupLabel>Виды</PanelGroupLabel>
-      <PanelRow icon="inbox"   label="Не разобрано"       badge={isLoading ? '…' : items.length} active />
-      <PanelGroupLabel>Источники</PanelGroupLabel>
-      {tgCount    > 0 && <PanelRow icon="send"    label="Telegram-бот" badge={tgCount} />}
-      {emailCount > 0 && <PanelRow icon="message" label="Email"        badge={emailCount} />}
-      {webCount   > 0 && <PanelRow icon="globe"   label="Web · браузер" badge={webCount} />}
-      {voiceCount > 0 && <PanelRow icon="mic"     label="Голос"        badge={voiceCount} />}
-      {!isLoading && tgCount === 0 && emailCount === 0 && webCount === 0 && voiceCount === 0 && (
-        <div style={{ padding: '8px 10px', fontSize: 12, color: 'var(--text-muted)' }}>
-          {items.length === 0 ? 'Inbox пуст' : 'Все через web'}
-        </div>
+      <PanelRow icon="inbox"  label="Не разобрано" badge={isLoading ? '…' : items.length || undefined}   active={view === 'unresolved'} onClick={() => goView('unresolved')} />
+      <PanelRow icon="check"  label="Разобрано"                                                           active={view === 'resolved'}   onClick={() => goView('resolved')}   />
+      <PanelRow icon="snooze" label="Отложенные"   badge={snoozed.length || undefined}                   active={view === 'snoozed'}    onClick={() => goView('snoozed')}    />
+
+      {hasAnySrc && (
+        <>
+          <PanelGroupLabel>Источники</PanelGroupLabel>
+          <PanelRow icon="inbox"   label="Все источники" active={!source} onClick={clearSrc} />
+          {tgCount    > 0 && <PanelRow icon="send"    label="Telegram" badge={tgCount}    active={source === 'telegram'} onClick={() => goSrc('telegram')} />}
+          {emailCount > 0 && <PanelRow icon="message" label="Email"    badge={emailCount} active={source === 'email'}    onClick={() => goSrc('email')}    />}
+          {webCount   > 0 && <PanelRow icon="globe"   label="Web"      badge={webCount}   active={source === 'web'}      onClick={() => goSrc('web')}      />}
+          {voiceCount > 0 && <PanelRow icon="mic"     label="Голос"    badge={voiceCount} active={source === 'voice'}    onClick={() => goSrc('voice')}    />}
+        </>
       )}
     </PanelChrome>
   );
 }
 
 function TodayPanel() {
+  const navigate = useNavigate();
   const { data: tasks = [], isLoading } = useTodayTasks();
   const { data: frog } = useFrogTask();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const now = new Date();
   const dateStr = now.toLocaleDateString('ru', { weekday: 'long', day: 'numeric', month: 'long' });
-  const timeStr = now.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
 
-  const morning = tasks.filter(t => { const h = t.due_at ? new Date(t.due_at).getHours() : -1; return h >= 0 && h < 12 && !t.done; });
-  const day_    = tasks.filter(t => { const h = t.due_at ? new Date(t.due_at).getHours() : -1; return h >= 12 && h < 18 && !t.done; });
-  const evening = tasks.filter(t => { const h = t.due_at ? new Date(t.due_at).getHours() : -1; return h >= 18 && !t.done; });
+  const done     = tasks.filter(t => t.done).length;
+  const total    = tasks.length;
+  const overdue  = tasks.filter(t => t.due_at && new Date(t.due_at) < now && !t.done).length;
+  const morning  = tasks.filter(t => { const h = t.due_at ? new Date(t.due_at).getHours() : -1; return h >= 0  && h < 12 && !t.done; });
+  const day_     = tasks.filter(t => { const h = t.due_at ? new Date(t.due_at).getHours() : -1; return h >= 12 && h < 18 && !t.done; });
+  const evening  = tasks.filter(t => { const h = t.due_at ? new Date(t.due_at).getHours() : -1; return h >= 18 && !t.done; });
+
+  const goGroup = (groupBy) => {
+    navigate(`/today?group=${groupBy}`);
+  };
 
   return (
     <PanelChrome
       title="Сегодня"
-      sub={`${dateStr} · ${timeStr}`}
-      primaryAction={<PanelButton primary icon="plus" kbd="N">Задача</PanelButton>}
+      sub={dateStr}
+      primaryAction={
+        <PanelButton primary icon="plus" onClick={() => navigate('/today?new=1')}>
+          Задача
+        </PanelButton>
+      }
     >
-      {frog && (
+      {/* Progress */}
+      {!isLoading && total > 0 && (
+        <div style={{ padding: '4px 10px 10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+            <span style={{ fontSize: 11, color: 'var(--text-3)' }}>Выполнено</span>
+            <span style={{ fontSize: 11, color: 'var(--text-2)', fontFamily: 'var(--font-mono)' }}>{done}/{total}</span>
+          </div>
+          <div style={{ height: 3, borderRadius: 999, background: 'var(--bg-elev-3)', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${total ? done / total * 100 : 0}%`, background: done === total ? 'var(--success)' : 'var(--p-openresto)', borderRadius: 999, transition: 'width 300ms' }} />
+          </div>
+          {overdue > 0 && (
+            <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--danger)' }}>
+              <Icon name="bell" size={11} />
+              {overdue} просроченных
+            </div>
+          )}
+        </div>
+      )}
+
+      {frog && !frog.done && (
         <>
           <PanelGroupLabel>Главная задача</PanelGroupLabel>
           <PanelRow icon="zap" label={frog.title} sub={frog.project?.name} active />
         </>
       )}
-      <PanelGroupLabel>Группы</PanelGroupLabel>
-      {morning.length > 0 && <PanelRow icon="sun_today" label="Утро"  badge={morning.length} />}
-      {day_.length   > 0 && <PanelRow icon="clock"     label="День"  badge={day_.length} />}
-      {evening.length > 0 && <PanelRow icon="moon"      label="Вечер" badge={evening.length} />}
+
+      <PanelGroupLabel>По времени</PanelGroupLabel>
+      {morning.length > 0  && <PanelRow icon="sun_today" label="Утро"  badge={morning.length}  onClick={() => goGroup('time')} />}
+      {day_.length    > 0  && <PanelRow icon="clock"     label="День"  badge={day_.length}     onClick={() => goGroup('time')} />}
+      {evening.length > 0  && <PanelRow icon="moon"      label="Вечер" badge={evening.length}  onClick={() => goGroup('time')} />}
+
       {isLoading && <div style={{ padding: '8px 10px', fontSize: 12, color: 'var(--text-muted)' }}>Загрузка…</div>}
-      {!isLoading && tasks.length === 0 && <div style={{ padding: '8px 10px', fontSize: 12, color: 'var(--text-muted)' }}>Задач нет</div>}
+      {!isLoading && total === 0 && <div style={{ padding: '8px 10px', fontSize: 12, color: 'var(--text-muted)' }}>Задач нет</div>}
     </PanelChrome>
   );
 }
 
 function CalendarPanel() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: projects = [] } = useProjects();
-  const monthYear = new Date().toLocaleDateString('ru', { month: 'long', year: 'numeric' });
+
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+
+  // Mini-cal month navigation (independent from main view)
+  const [miniYear,  setMiniYear]  = useState(now.getFullYear());
+  const [miniMonth, setMiniMonth] = useState(now.getMonth());
+
+  const prevMiniMonth = () => { if (miniMonth === 0) { setMiniMonth(11); setMiniYear(y => y - 1); } else setMiniMonth(m => m - 1); };
+  const nextMiniMonth = () => { if (miniMonth === 11) { setMiniMonth(0); setMiniYear(y => y + 1); } else setMiniMonth(m => m + 1); };
+
+  // Highlighted dates derived from current URL (if on /calendar)
+  const dateParam  = searchParams.get('date') || todayStr;
+  const viewParam  = searchParams.get('view') || 'week';
+  const hideParam  = searchParams.get('hide') || '';
+  const hiddenSet  = new Set(hideParam ? hideParam.split(',') : []);
+
+  // Build highlighted dates for the mini-cal
+  const highlightedDates = (() => {
+    const s = new Set();
+    if (viewParam === 'week') {
+      const anchor = new Date(dateParam + 'T12:00:00');
+      const dow = anchor.getDay();
+      const diff = dow === 0 ? -6 : 1 - dow;
+      const mon = new Date(anchor);
+      mon.setDate(anchor.getDate() + diff);
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(mon);
+        d.setDate(mon.getDate() + i);
+        s.add(d.toISOString().slice(0, 10));
+      }
+    } else {
+      s.add(dateParam);
+    }
+    return s;
+  })();
+
+  const monthLabel = new Date(miniYear, miniMonth, 1).toLocaleDateString('ru', { month: 'long', year: 'numeric' });
+
+  const handleDayClick = (dateStr) => {
+    // Navigate to /calendar with day view for that date
+    const p = new URLSearchParams(searchParams);
+    p.set('view', 'day');
+    p.set('date', dateStr);
+    navigate(`/calendar?${p.toString()}`, { replace: true });
+  };
+
+  const toggleProject = (id) => {
+    const p = new URLSearchParams(searchParams);
+    const next = new Set(hiddenSet);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    if (next.size === 0) p.delete('hide');
+    else p.set('hide', [...next].join(','));
+    navigate(`/calendar?${p.toString()}`, { replace: true });
+  };
+
   return (
-    <PanelChrome title="Календарь" sub={monthYear}
-      primaryAction={<PanelButton primary icon="plus">Событие</PanelButton>}
+    <PanelChrome title="Календарь" sub={monthLabel}
+      primaryAction={
+        <PanelButton primary icon="plus" onClick={() => navigate('/calendar?new=1')}>
+          Событие
+        </PanelButton>
+      }
     >
-      <div style={{ padding: '8px 8px 6px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px 8px' }}>
-          <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{monthYear}</span>
+      <div style={{ padding: '6px 8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px 6px' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 500, textTransform: 'capitalize' }}>{monthLabel}</span>
           <div style={{ display: 'flex', gap: 2 }}>
-            <IconButton icon="chevron_left"  size="sm" />
-            <IconButton icon="chevron_right" size="sm" />
+            <IconButton icon="chevron_left"  size="sm" onClick={prevMiniMonth} />
+            <IconButton icon="chevron_right" size="sm" onClick={nextMiniMonth} />
           </div>
         </div>
-        <MiniCal />
+        <MiniCal
+          year={miniYear}
+          month={miniMonth}
+          todayStr={todayStr}
+          highlightedDates={highlightedDates}
+          onDayClick={handleDayClick}
+        />
       </div>
+
       {projects.length > 0 && (
         <>
           <PanelGroupLabel>Календари</PanelGroupLabel>
+          <button
+            onClick={() => toggleProject('none')}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 10px', borderRadius: 6, fontSize: 13, color: hiddenSet.has('none') ? 'var(--text-muted)' : 'var(--text-2)', cursor: 'pointer', width: '100%', background: 'transparent', border: 'none', textAlign: 'left' }}>
+            <span style={{ width: 13, height: 13, borderRadius: 3, flex: 'none', background: !hiddenSet.has('none') ? 'color-mix(in oklab, var(--p-openresto) 28%, transparent)' : 'var(--bg-elev-3)', border: `1.5px solid ${!hiddenSet.has('none') ? 'var(--p-openresto)' : 'var(--border)'}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'all 120ms' }}>
+              {!hiddenSet.has('none') && <Icon name="check" size={9} style={{ color: 'var(--p-openresto)' }} />}
+            </span>
+            <span style={{ flex: 1 }}>Личный</span>
+          </button>
           {projects.map(p => (
-            <label key={p.id} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '6px 10px', borderRadius: 6,
-              fontSize: 13, color: 'var(--text-2)',
-            }}>
-              <span style={{
-                width: 14, height: 14, borderRadius: 4,
-                background: `color-mix(in oklab, var(${p.color_token}) 28%, transparent)`,
-                border: `1px solid color-mix(in oklab, var(${p.color_token}) 60%, transparent)`,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none',
-              }}><Icon name="check" size={10} stroke={2.5} style={{ color: `var(${p.color_token})` }} /></span>
+            <button key={p.id}
+              onClick={() => toggleProject(p.id)}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 10px', borderRadius: 6, fontSize: 13, color: hiddenSet.has(p.id) ? 'var(--text-muted)' : 'var(--text-2)', cursor: 'pointer', width: '100%', background: 'transparent', border: 'none', textAlign: 'left' }}>
+              <span style={{ width: 13, height: 13, borderRadius: 3, flex: 'none', background: !hiddenSet.has(p.id) ? `color-mix(in oklab, var(${p.color_token}) 28%, transparent)` : 'var(--bg-elev-3)', border: `1.5px solid ${!hiddenSet.has(p.id) ? `var(${p.color_token})` : 'var(--border)'}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'all 120ms' }}>
+                {!hiddenSet.has(p.id) && <Icon name="check" size={9} style={{ color: `var(${p.color_token})` }} />}
+              </span>
               <span style={{ flex: 1 }}>{p.name}</span>
-            </label>
+            </button>
           ))}
         </>
       )}
@@ -1319,19 +1469,40 @@ function GoalsPanel() {
   );
 }
 
+const KANBAN_COLS = [
+  { id: 'backlog',     label: 'Бэклог',       color: '--text-muted' },
+  { id: 'todo',        label: 'К выполнению',  color: '--info' },
+  { id: 'in_progress', label: 'В работе',      color: '--p-openresto' },
+  { id: 'review',      label: 'Ревью',         color: '--warn' },
+  { id: 'done',        label: 'Готово',        color: '--success' },
+];
+
 function KanbanPanel() {
   const navigate = useNavigate();
-  const { data: projects = [], isLoading } = useProjects();
-  const { data: tasks = [] } = useKanbanTasks();
-
-  const openByProject = tasks
-    .filter(t => !t.done)
-    .reduce((acc, t) => {
-      if (t.project_id) acc[t.project_id] = (acc[t.project_id] ?? 0) + 1;
-      return acc;
-    }, {});
+  const [searchParams] = useSearchParams();
+  const { data: tasks = [], isLoading } = useKanbanTasks();
+  const { data: customCols = [] } = useKanbanColumns();
 
   const openTotal = tasks.filter(t => !t.done).length;
+  const activeCol = searchParams.get('col') ?? '';
+
+  const allCols = [
+    ...KANBAN_COLS,
+    ...customCols.map(c => ({ id: c.id, label: c.title, color: c.color_token })),
+  ];
+
+  const counts = allCols.reduce((acc, col) => {
+    acc[col.id] = tasks.filter(t => t.kanban_status === col.id).length;
+    return acc;
+  }, {});
+
+  const goCol = (colId) => {
+    if (activeCol === colId) {
+      navigate('/kanban', { replace: true });
+    } else {
+      navigate(`/kanban?col=${colId}`, { replace: true });
+    }
+  };
 
   return (
     <PanelChrome
@@ -1339,18 +1510,24 @@ function KanbanPanel() {
       sub={isLoading ? '…' : `${ru.tasks(openTotal)} открыто`}
       primaryAction={<PanelButton primary icon="plus" onClick={() => navigate('/kanban?new=1')}>Задача</PanelButton>}
     >
-      <PanelGroupLabel>Проекты</PanelGroupLabel>
+      <PanelGroupLabel>Колонки</PanelGroupLabel>
+      <PanelRow
+        icon="layers"
+        label="Все колонки"
+        badge={isLoading ? undefined : tasks.length || undefined}
+        active={!activeCol}
+        onClick={() => navigate('/kanban', { replace: true })}
+      />
       {isLoading ? (
         <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[1,2,3].map(i => <div key={i} style={{ height: 12, borderRadius: 4, background: 'var(--bg-elev-3)', width: `${60 + i * 8}%` }} />)}
         </div>
-      ) : projects.length === 0 ? (
-        <div style={{ padding: '8px 10px', fontSize: 12, color: 'var(--text-muted)' }}>Нет проектов</div>
       ) : (
-        projects.map((p, i) => (
-          <PanelRow key={p.id} dot={p.color_token} label={p.name}
-            badge={openByProject[p.id] || undefined}
-            active={i === 0}
+        allCols.map(col => (
+          <PanelRow key={col.id} dot={col.color} label={col.label}
+            badge={counts[col.id] || undefined}
+            active={activeCol === col.id}
+            onClick={() => goCol(col.id)}
           />
         ))
       )}
@@ -1446,6 +1623,7 @@ function SettingsPanel() {
   const sections = [
     { id: 'profile',       icon: 'users',   label: 'Профиль'     },
     { id: 'appearance',    icon: 'star',    label: 'Внешний вид' },
+    { id: 'pages',         icon: 'layers',  label: 'Страницы'    },
     { id: 'notifications', icon: 'bell',    label: 'Уведомления' },
     { id: 'integrations',  icon: 'zap',     label: 'Интеграции'  },
     { id: 'security',      icon: 'lock',    label: 'Безопасность'},
@@ -1470,8 +1648,9 @@ function SettingsPanel() {
 /* ---- Sidebar assembly ---- */
 function PanelByPath({ pathname }) {
   if (pathname.startsWith('/projects/')) return <ProjectsPanel />;
+  if (pathname.startsWith('/personal/')) return null;
   switch (pathname) {
-    case '/dashboard': return <HomePanel />;
+    case '/dashboard': return null;
     case '/inbox':     return <InboxPanel />;
     case '/today':     return <TodayPanel />;
     case '/calendar':  return <CalendarPanel />;

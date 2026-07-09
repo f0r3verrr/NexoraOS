@@ -11,19 +11,19 @@ function dayBounds(offsetDays = 0) {
   return { start, end };
 }
 
-const TASK_SELECT = '*, project:projects(id, name, color_token)';
+const TASK_SELECT = '*, project:projects(id, name, color_token, area)';
 
-/* Tasks due today (and overdue) — not done */
+/* Tasks due strictly TODAY (between today 00:00 and tomorrow 00:00) */
 export function useTodayTasks() {
-  const { end } = dayBounds(0);
+  const { start, end } = dayBounds(0);
   return useQuery({
     queryKey: ['tasks', 'today'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
-        .lte('due_at', end)
-        .not('due_at', 'is', null)
+        .gte('due_at', start)
+        .lt('due_at', end)
         .order('due_at', { ascending: true })
         .order('priority', { ascending: true, nullsLast: true });
       if (error) throw error;
@@ -32,7 +32,27 @@ export function useTodayTasks() {
   });
 }
 
-/* Tasks with no due date — not done (for Today "без времени" section) */
+/* Tasks past their due date that are not done */
+export function useOverdueTasks() {
+  const { start } = dayBounds(0);
+  return useQuery({
+    queryKey: ['tasks', 'overdue'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select(TASK_SELECT)
+        .lt('due_at', start)
+        .not('due_at', 'is', null)
+        .eq('done', false)
+        .order('due_at', { ascending: true })
+        .order('priority', { ascending: true, nullsLast: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/* Tasks with no due date — includes done for accurate progress counting */
 export function useUndatedTasks() {
   return useQuery({
     queryKey: ['tasks', 'undated'],
@@ -41,10 +61,10 @@ export function useUndatedTasks() {
         .from('tasks')
         .select(TASK_SELECT)
         .is('due_at', null)
-        .eq('done', false)
+        .order('done', { ascending: true })      // undone first
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(30);
       if (error) throw error;
       return data ?? [];
     },
@@ -240,7 +260,7 @@ export function useToggleTask() {
     onMutate: async ({ id, done }) => {
       await qc.cancelQueries({ queryKey: ['tasks'] });
       const prev = {};
-      for (const key of [['tasks','today'], ['tasks','undated'], ['tasks','all']]) {
+      for (const key of [['tasks','today'], ['tasks','undated'], ['tasks','all'], ['tasks','overdue']]) {
         prev[key.join('/')] = qc.getQueryData(key);
         qc.setQueryData(key, (old) =>
           old?.map(t => t.id === id ? { ...t, done } : t)

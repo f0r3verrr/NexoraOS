@@ -6,6 +6,8 @@ import { Sidebar, TopBar } from '../components/Sidebar.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
 import { useStorageStats } from '../hooks/useFiles.js';
+import { useHiddenPages, useToggleHiddenPage } from '../hooks/useHiddenPages.js';
+import { HIDEABLE_PAGES, PAGE_GROUPS } from '../lib/pages.js';
 
 const BUCKET   = 'user-files';
 const ZOOM_KEY = 'nexora-zoom';
@@ -517,6 +519,54 @@ function AppearanceSection() {
   );
 }
 
+/* ─── Pages: включение/отключение страниц аккаунта ───────── */
+
+function PagesSection() {
+  const { data: hidden = [], isLoading } = useHiddenPages();
+  const toggle = useToggleHiddenPage();
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.55 }}>
+        Отключённые страницы исчезают из сайдбара, а прямые ссылки на них ведут на дашборд.
+        Данные при этом не удаляются — включи страницу обратно, и всё будет на месте.
+        Дашборд, Inbox, Сегодня и Настройки отключить нельзя.
+      </div>
+
+      {PAGE_GROUPS.map(group => {
+        const pages = HIDEABLE_PAGES.filter(p => p.group === group);
+        if (pages.length === 0) return null;
+        return (
+          <Card key={group} gap={16}>
+            <CardLabel>{group}</CardLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', margin: '-10px 0' }}>
+              {pages.map((p, i) => {
+                const isHidden = hidden.includes(p.key);
+                return (
+                  <div key={p.key}>
+                    {i > 0 && <Sep />}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0' }}>
+                      <span style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)', color: isHidden ? 'var(--text-muted)' : 'var(--text-2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                        <Icon name={p.icon} size={15} />
+                      </span>
+                      <span style={{ flex: 1, fontSize: 13.5, color: isHidden ? 'var(--text-3)' : 'var(--text)' }}>{p.label}</span>
+                      <Toggle
+                        checked={!isHidden}
+                        disabled={isLoading}
+                        onChange={(on) => toggle.mutate({ key: p.key, hidden: !on })}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ─── Notifications ──────────────────────────────────────── */
 
 function NotificationsSection() {
@@ -609,13 +659,62 @@ function IntegrationsSection() {
         </div>
       </Card>
 
+      {/* Google Calendar */}
+      <Card gap={14}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'white', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="5" width="18" height="16" rx="2" fill="#4285F4" fillOpacity="0.15" stroke="#4285F4" strokeWidth="1.5"/>
+              <path d="M3 9h18" stroke="#4285F4" strokeWidth="1.5"/>
+              <path d="M8 3v4M16 3v4" stroke="#4285F4" strokeWidth="1.5" strokeLinecap="round"/>
+              <rect x="7" y="12" width="4" height="3" rx="0.5" fill="#EA4335"/>
+              <rect x="13" y="12" width="4" height="3" rx="0.5" fill="#34A853"/>
+            </svg>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>Google Календарь</div>
+            <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>Двусторонняя синхронизация событий</div>
+          </div>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)', borderRadius: 20, padding: '3px 10px', flex: 'none' }}>
+            Не подключён
+          </span>
+        </div>
+        <Sep />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {[
+            { label: 'Импорт из Google', desc: 'Показывать события Google в NexoraOS' },
+            { label: 'Экспорт в Google', desc: 'Создавать события NexoraOS в Google' },
+          ].map(item => (
+            <div key={item.label} style={{ padding: '10px 12px', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 4, opacity: 0.55 }}>
+              <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)' }}>{item.label}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.45 }}>{item.desc}</div>
+            </div>
+          ))}
+        </div>
+        <button
+          style={{ height: 36, borderRadius: 8, background: 'white', border: '1px solid #dadce0', cursor: 'not-allowed', opacity: 0.65, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontSize: 13, fontWeight: 500, color: '#3c4043', width: '100%' }}
+          disabled title="Требует настройки Google OAuth"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Войти через Google
+        </button>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+          <Icon name="info" size={12} style={{ flex: 'none', marginTop: 1 }} />
+          Для активации требуется настройка Google OAuth в консоли разработчика
+        </div>
+      </Card>
+
       <Card gap={14}>
         <CardLabel>Другие интеграции</CardLabel>
         {[
-          { icon: 'globe',    name: 'Web Clipper',      desc: 'Браузерное расширение для захвата страниц' },
-          { icon: 'message',  name: 'Email → Inbox',    desc: 'Пересылай письма на свой адрес NexoraOS' },
-          { icon: 'calendar', name: 'Google Calendar',  desc: 'Двусторонняя синхронизация событий' },
-          { icon: 'link',     name: 'Webhooks',         desc: 'Подключи любой внешний сервис через HTTP' },
+          { icon: 'globe',   name: 'Web Clipper',   desc: 'Браузерное расширение для захвата страниц' },
+          { icon: 'message', name: 'Email → Inbox', desc: 'Пересылай письма на свой адрес NexoraOS' },
+          { icon: 'link',    name: 'Webhooks',      desc: 'Подключи любой внешний сервис через HTTP' },
         ].map((item, i) => (
           <div key={item.name}>
             {i > 0 && <Sep />}
@@ -782,6 +881,7 @@ function DataSection() {
 const SECTIONS = [
   { id: 'profile',       label: 'Профиль',     icon: 'users'   },
   { id: 'appearance',    label: 'Внешний вид', icon: 'star'    },
+  { id: 'pages',         label: 'Страницы',    icon: 'layers'  },
   { id: 'notifications', label: 'Уведомления', icon: 'bell'    },
   { id: 'integrations',  label: 'Интеграции',  icon: 'zap'     },
   { id: 'security',      label: 'Безопасность',icon: 'lock'    },
@@ -803,6 +903,7 @@ export default function Settings() {
           <div style={{ maxWidth: 580 }}>
             {sectionId === 'profile'       && <ProfileSection user={user} />}
             {sectionId === 'appearance'    && <AppearanceSection />}
+            {sectionId === 'pages'         && <PagesSection />}
             {sectionId === 'notifications' && <NotificationsSection />}
             {sectionId === 'integrations'  && <IntegrationsSection />}
             {sectionId === 'security'      && <SecuritySection />}

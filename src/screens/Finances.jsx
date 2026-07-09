@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { Icon } from '../icons.jsx';
-import { Button, Badge } from '../components/primitives.jsx';
+import { Button, Badge, SpinInput } from '../components/primitives.jsx';
+import { anchoredPos } from '../lib/anchor.js';
 import { Sidebar, TopBar } from '../components/Sidebar.jsx';
 import { useOrders, useCreateOrder, useUpdateOrder, useDeleteOrder } from '../hooks/useOrders.js';
 import { useTransactions, useCreateTransaction, useUpdateTransaction, useDeleteTransaction } from '../hooks/useTransactions.js';
@@ -143,9 +144,9 @@ function RowMenu({ onEdit, onDelete }) {
   const toggle = (e) => {
     e.stopPropagation();
     if (!open && btnRef.current) {
-      const zoom = parseFloat(document.body.style.zoom) || 1;
       const r = btnRef.current.getBoundingClientRect();
-      setPos({ x: (r.right - 148) / zoom, y: (r.bottom + 4) / zoom });
+      const { left, top } = anchoredPos(r, { width: 148, height: 76 });
+      setPos({ x: left, y: top });
     }
     setOpen(v => !v);
   };
@@ -258,8 +259,7 @@ function OrderModal({ order, onClose }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <FormField label="Сумма (₽)">
-            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="30 000"
-              style={{ ...INPUT_SX, width: '100%' }} />
+            <SpinInput value={amount} onChange={setAmount} placeholder="30 000" min={0} step={1000} />
           </FormField>
           <FormField label="Статус">
             <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...select_sx, width: '100%' }}>
@@ -343,8 +343,7 @@ function ExpenseModal({ tx, onClose }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <FormField label="Сумма (₽)">
-            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="5 000"
-              style={{ ...INPUT_SX, width: '100%' }} />
+            <SpinInput value={amount} onChange={setAmount} placeholder="5 000" min={0} step={500} />
           </FormField>
           <FormField label="Дата">
             <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ ...INPUT_SX, width: '100%' }} />
@@ -383,9 +382,8 @@ function BudgetModal({ current, onSave, onClose }) {
       <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, width: 340, boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 16 }}>
         <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>Цель дохода на месяц</span>
         <FormField label="Сумма (₽)">
-          <input type="number" value={val} onChange={e => setVal(e.target.value)} placeholder="100 000" autoFocus
-            onKeyDown={e => e.key === 'Enter' && (onSave(+val), onClose())}
-            style={{ ...INPUT_SX, width: '100%' }} />
+          <SpinInput value={val} onChange={setVal} placeholder="100 000" autoFocus min={0} step={5000}
+            onKeyDown={e => e.key === 'Enter' && (onSave(+val), onClose())} />
         </FormField>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <Button variant="ghost" onClick={onClose}>Отмена</Button>

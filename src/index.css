@@ -63,10 +63,17 @@ button:focus, input:focus, textarea:focus, select:focus { outline: none; box-sha
 input, textarea { font: inherit; color: inherit; }
 ul, ol { list-style: none; padding: 0; margin: 0; }
 
-.ws-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
-.ws-scroll::-webkit-scrollbar-thumb { background: var(--bg-elev-3); border-radius: 999px; }
-.ws-scroll::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
-.ws-scroll::-webkit-scrollbar-track { background: transparent; }
+/* ---- Scrollbar: тонкий кастомный везде (страницы, модалки, дропдауны) ---- */
+*::-webkit-scrollbar { width: 5px; height: 5px; }
+*::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--border); }
+*::-webkit-scrollbar-track { background: transparent; }
+* { scrollbar-width: thin; scrollbar-color: var(--border-subtle) transparent; }
+
+/* ---- Number input: нативные стрелки скрыты, спинер рисует SpinInput ---- */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
 .app-surface {
   background: var(--bg);
@@ -127,11 +134,6 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 /* ---- Page-level fade-in (only main content, sidebar stays still) ---- */
 @keyframes pagefade { from { opacity:0 } to { opacity:1 } }
 .app-surface > main { animation: pagefade 120ms ease-out; }
-
-/* ---- Scrollbar ---- */
-.ws-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-.ws-scroll::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 999px; }
-.ws-scroll::-webkit-scrollbar-thumb:hover { background: var(--border); }
 
 /* ---- Suppress focus ring on plain editor inputs ---- */
 .no-ring:focus-visible { border-color: transparent !important; box-shadow: none !important; outline: none !important; }

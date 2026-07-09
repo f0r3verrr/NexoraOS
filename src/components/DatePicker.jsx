@@ -35,13 +35,14 @@ function fmtDisplay(s) {
  *   size        — 'sm' | 'md' (default 'md')
  *   disabled    — boolean
  */
-export function DatePicker({ value, onChange, placeholder = 'Выбрать дату', size = 'md', disabled = false }) {
+export function DatePicker({ value, onChange, placeholder = 'Выбрать дату', size = 'md', disabled = false, background = 'var(--bg-elev-1)' }) {
   const h  = size === 'sm' ? 28 : 36;
   const fs = size === 'sm' ? 12 : 13;
 
   const [open, setOpen]         = useState(false);
   const [visible, setVisible]   = useState(false); // two-phase: mount invisible → measure → show
   const [pos, setPos]           = useState({ top: 0, left: 0 });
+  const [mode, setMode]         = useState('days'); // days | months | years
   const [viewYear, setViewYear]   = useState(() => { const d = parseISO(value); return d ? d.getFullYear() : new Date().getFullYear(); });
   const [viewMonth, setViewMonth] = useState(() => { const d = parseISO(value); return d ? d.getMonth()     : new Date().getMonth(); });
 
@@ -58,6 +59,7 @@ export function DatePicker({ value, onChange, placeholder = 'Выбрать да
   const openPicker = () => {
     if (disabled) return;
     setVisible(false);
+    setMode('days');
     setOpen(true);
   };
 
@@ -194,6 +196,28 @@ export function DatePicker({ value, onChange, placeholder = 'Выбрать да
 
   const monthLabel = firstOfMonth.toLocaleDateString('ru', { month: 'long', year: 'numeric' });
 
+  /* Навигация шапки зависит от режима: месяц / год / страница из 12 лет */
+  const yearsStart = Math.floor(viewYear / 12) * 12;
+  const navPrev = () => {
+    if (mode === 'days')   prevMonth();
+    if (mode === 'months') setViewYear(y => y - 1);
+    if (mode === 'years')  setViewYear(y => y - 12);
+  };
+  const navNext = () => {
+    if (mode === 'days')   nextMonth();
+    if (mode === 'months') setViewYear(y => y + 1);
+    if (mode === 'years')  setViewYear(y => y + 12);
+  };
+  const headerLabel = mode === 'days' ? monthLabel
+    : mode === 'months' ? String(viewYear)
+    : `${yearsStart} – ${yearsStart + 11}`;
+  const headerClick = () => {
+    if (mode === 'days')   setMode('months');
+    else if (mode === 'months') setMode('years');
+  };
+
+  const MONTHS_SHORT = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+
   return (
     <>
       {/* ── Trigger ─────────────────────────────────────────── */}
@@ -204,7 +228,7 @@ export function DatePicker({ value, onChange, placeholder = 'Выбрать да
         style={{
           display: 'flex', alignItems: 'center', gap: 8,
           height: h, padding: '0 12px', width: '100%',
-          background: 'var(--bg-elev-1)',
+          background,
           border: `1px solid ${open ? 'var(--border-strong)' : 'var(--border-subtle)'}`,
           borderRadius: 8, fontSize: fs, cursor: disabled ? 'default' : 'pointer',
           color: value ? 'var(--text)' : 'var(--text-muted)',
@@ -247,44 +271,77 @@ export function DatePicker({ value, onChange, placeholder = 'Выбрать да
             transition: 'opacity 80ms',
           }}>
 
-          {/* Month navigation */}
+          {/* Header: клик по заголовку — выбор месяца, ещё раз — года */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <NavBtn onClick={prevMonth} icon="chevron_left" />
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', textTransform: 'capitalize', letterSpacing: '-0.01em' }}>
-              {monthLabel}
-            </span>
-            <NavBtn onClick={nextMonth} icon="chevron_right" />
+            <NavBtn onClick={navPrev} icon="chevron_left" />
+            <button onClick={headerClick} title={mode === 'days' ? 'Выбрать месяц и год' : mode === 'months' ? 'Выбрать год' : undefined}
+              style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', textTransform: 'capitalize', letterSpacing: '-0.01em', background: 'transparent', border: '1px solid transparent', borderRadius: 7, padding: '3px 10px', cursor: mode === 'years' ? 'default' : 'pointer', transition: 'background 80ms' }}
+              onMouseEnter={e => { if (mode !== 'years') { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; } }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; }}>
+              {headerLabel}
+            </button>
+            <NavBtn onClick={navNext} icon="chevron_right" />
           </div>
 
-          {/* Weekday headers */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 4 }}>
-            {WEEK_DAYS_SHORT.map(d => (
-              <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '2px 0' }}>
-                {d}
+          {mode === 'days' && (
+            <>
+              {/* Weekday headers */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 4 }}>
+                {WEEK_DAYS_SHORT.map(d => (
+                  <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '2px 0' }}>
+                    {d}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Days */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
-            {cells.map((cell, i) => {
-              const ds      = isoDate(cell.date);
-              const isSel   = ds === selectedStr;
-              const isToday = ds === todayStr;
-              const isWE    = cell.date.getDay() === 0 || cell.date.getDay() === 6;
-              return (
-                <DayBtn
-                  key={i}
-                  label={cell.date.getDate()}
-                  isSel={isSel}
-                  isToday={isToday}
-                  isWE={isWE}
-                  isCurr={cell.curr}
-                  onClick={() => selectDay(cell.date)}
-                />
-              );
-            })}
-          </div>
+              {/* Days */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+                {cells.map((cell, i) => {
+                  const ds      = isoDate(cell.date);
+                  const isSel   = ds === selectedStr;
+                  const isToday = ds === todayStr;
+                  const isWE    = cell.date.getDay() === 0 || cell.date.getDay() === 6;
+                  return (
+                    <DayBtn
+                      key={i}
+                      label={cell.date.getDate()}
+                      isSel={isSel}
+                      isToday={isToday}
+                      isWE={isWE}
+                      isCurr={cell.curr}
+                      onClick={() => selectDay(cell.date)}
+                    />
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {mode === 'months' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
+              {MONTHS_SHORT.map((m, i) => {
+                const isCurr = i === new Date().getMonth() && viewYear === new Date().getFullYear();
+                const isSel  = selectedStr && new Date(selectedStr).getMonth() === i && new Date(selectedStr).getFullYear() === viewYear;
+                return (
+                  <GridBtn key={m} label={m} isSel={isSel} isCurr={isCurr}
+                    onClick={() => { setViewMonth(i); setMode('days'); }} />
+                );
+              })}
+            </div>
+          )}
+
+          {mode === 'years' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
+              {Array.from({ length: 12 }, (_, i) => yearsStart + i).map(y => {
+                const isCurr = y === new Date().getFullYear();
+                const isSel  = selectedStr && new Date(selectedStr).getFullYear() === y;
+                return (
+                  <GridBtn key={y} label={y} isSel={isSel} isCurr={isCurr}
+                    onClick={() => { setViewYear(y); setMode('months'); }} />
+                );
+              })}
+            </div>
+          )}
 
           {/* Footer */}
           <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -321,6 +378,24 @@ function DayBtn({ label, isSel, isToday, isWE, isCurr, onClick }) {
     <button
       onClick={onClick}
       style={{ height: 30, borderRadius: 8, fontSize: 12, fontWeight: isSel ? 700 : isToday ? 600 : 400, cursor: 'pointer', background: bgBase, color: textColor, border: `1px solid ${borderCol}`, transition: 'background 80ms' }}
+      onMouseEnter={e => { e.currentTarget.style.background = bgHover; }}
+      onMouseLeave={e => { e.currentTarget.style.background = bgBase; }}>
+      {label}
+    </button>
+  );
+}
+
+/* Кнопка сетки месяцев/лет */
+function GridBtn({ label, isSel, isCurr, onClick }) {
+  const bgBase    = isSel ? 'var(--text)' : isCurr ? 'color-mix(in oklab, var(--danger) 18%, transparent)' : 'transparent';
+  const bgHover   = isSel ? 'var(--text)' : isCurr ? 'color-mix(in oklab, var(--danger) 28%, transparent)' : 'var(--bg-active)';
+  const textColor = isSel ? 'var(--bg)' : isCurr ? 'var(--danger)' : 'var(--text-2)';
+  const borderCol = isCurr && !isSel ? 'color-mix(in oklab, var(--danger) 38%, transparent)' : 'transparent';
+
+  return (
+    <button
+      onClick={onClick}
+      style={{ height: 36, borderRadius: 8, fontSize: 12, fontWeight: isSel ? 700 : isCurr ? 600 : 400, cursor: 'pointer', background: bgBase, color: textColor, border: `1px solid ${borderCol}`, transition: 'background 80ms' }}
       onMouseEnter={e => { e.currentTarget.style.background = bgHover; }}
       onMouseLeave={e => { e.currentTarget.style.background = bgBase; }}>
       {label}

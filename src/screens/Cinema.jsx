@@ -1,8 +1,10 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+﻿import { useState, useRef, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { Icon } from '../icons.jsx';
 import { Sidebar } from '../components/Sidebar.jsx';
+import { DatePicker } from '../components/DatePicker.jsx';
+import { SpinInput } from '../components/primitives.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useCinema, useCreateCinemaEntry, useUpdateCinemaEntry, useDeleteCinemaEntry } from '../hooks/useCinema.js';
 import { searchMedia, getDetails } from '../lib/tmdb.js';
@@ -65,136 +67,6 @@ const inputSx = {
   borderRadius: 8, fontSize: 13, color: 'var(--text)',
   outline: 'none', boxSizing: 'border-box',
 };
-
-/* ─── DatePicker ────────────────────────────────────────────── */
-const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-const DAYS_RU   = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-
-function DatePicker({ value, onChange, style = {} }) {
-  const [open, setOpen]         = useState(false);
-  const [viewYear, setViewYear] = useState(() => value ? new Date(value).getFullYear() : new Date().getFullYear());
-  const [viewMonth, setViewMonth] = useState(() => value ? new Date(value).getMonth() : new Date().getMonth());
-  const [coords, setCoords] = useState({ top: 0, left: 0 });
-  const triggerRef = useRef(null);
-  const popupRef   = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onMouseDown = (e) => {
-      if (
-        triggerRef.current && !triggerRef.current.contains(e.target) &&
-        popupRef.current   && !popupRef.current.contains(e.target)
-      ) setOpen(false);
-    };
-    const onScroll = () => setOpen(false);
-    document.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('scroll', onScroll, true);
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('scroll', onScroll, true);
-    };
-  }, [open]);
-
-  const CALENDAR_H = 340;
-  const CALENDAR_W = 260;
-
-  const handleOpen = () => {
-    if (!open && value) { const d = new Date(value); setViewYear(d.getFullYear()); setViewMonth(d.getMonth()); }
-    if (!open && triggerRef.current) {
-      const r = triggerRef.current.getBoundingClientRect();
-      // Use nearest scrollable ancestor bottom (e.g. modal body) to avoid overlapping sticky footers
-      let containerBottom = window.innerHeight;
-      let el = triggerRef.current.parentElement;
-      while (el && el !== document.body) {
-        const s = getComputedStyle(el);
-        if (/auto|scroll/.test(s.overflow + s.overflowY)) {
-          containerBottom = el.getBoundingClientRect().bottom;
-          break;
-        }
-        el = el.parentElement;
-      }
-      const spaceBelow = containerBottom - r.bottom;
-      let top = spaceBelow >= CALENDAR_H + 10 ? r.bottom + 6 : r.top - CALENDAR_H - 6;
-      top = Math.max(8, Math.min(top, window.innerHeight - CALENDAR_H - 8));
-      const left = Math.min(r.left, window.innerWidth - CALENDAR_W - 8);
-      setCoords({ top, left });
-    }
-    setOpen(v => !v);
-  };
-
-  const selected = value ? new Date(value + 'T00:00:00') : null;
-  const today    = new Date(); today.setHours(0,0,0,0);
-
-  const prevMonth = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); } else setViewMonth(m => m - 1); };
-  const nextMonth = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); } else setViewMonth(m => m + 1); };
-  const goToday   = () => { const n = new Date(); setViewYear(n.getFullYear()); setViewMonth(n.getMonth()); onChange(n.toISOString().substring(0,10)); setOpen(false); };
-  const clear     = () => { onChange(''); setOpen(false); };
-
-  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
-  const offset   = firstDay === 0 ? 6 : firstDay - 1;
-  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-  const cells = Array.from({ length: Math.ceil((offset + daysInMonth) / 7) * 7 }, (_, i) => {
-    const d = i - offset + 1;
-    return d >= 1 && d <= daysInMonth ? d : null;
-  });
-
-  const displayStr = selected
-    ? selected.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
-    : '';
-
-  const calendar = (
-    <div ref={popupRef} style={{ position: 'fixed', top: coords.top, left: coords.left, zIndex: 99999, width: 260, background: 'oklch(0.19 0.007 80)', border: '1px solid oklch(0.30 0.008 80)', borderRadius: 14, boxShadow: '0 16px 48px rgba(0,0,0,.6)', overflow: 'hidden' }}>
-      {/* header */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 14px 8px', gap: 4 }}>
-        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'oklch(0.88 0.006 80)' }}>{MONTHS_RU[viewMonth]} {viewYear}</span>
-        <button onClick={prevMonth} style={{ width: 28, height: 28, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: 'oklch(0.60 0.007 80)', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='oklch(0.26 0.007 80)'} onMouseLeave={e => e.currentTarget.style.background='transparent'}><Icon name="chevron_up" size={15} /></button>
-        <button onClick={nextMonth} style={{ width: 28, height: 28, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: 'oklch(0.60 0.007 80)', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background='oklch(0.26 0.007 80)'} onMouseLeave={e => e.currentTarget.style.background='transparent'}><Icon name="chevron_down" size={15} /></button>
-      </div>
-      {/* day names */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', padding: '0 10px', marginBottom: 4 }}>
-        {DAYS_RU.map(d => <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 600, color: 'oklch(0.48 0.007 80)', padding: '4px 0', letterSpacing: '.04em' }}>{d}</div>)}
-      </div>
-      {/* cells */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', padding: '0 10px 10px', gap: 2 }}>
-        {cells.map((d, i) => {
-          if (!d) return <div key={i} />;
-          const date   = new Date(viewYear, viewMonth, d);
-          const isSel  = selected && date.getTime() === selected.getTime();
-          const isTod  = date.getTime() === today.getTime();
-          return (
-            <button key={i} onClick={() => { onChange(date.toISOString().substring(0,10)); setOpen(false); }}
-              style={{ height: 30, borderRadius: 7, fontSize: 13, fontWeight: isSel ? 700 : 400, cursor: 'pointer', border: 'none', fontFamily: 'inherit',
-                background: isSel ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'transparent',
-                color: isSel ? '#fff' : isTod ? '#a78bfa' : 'oklch(0.82 0.006 80)',
-                outline: isTod && !isSel ? '1px solid rgba(139,92,246,.4)' : 'none',
-              }}
-              onMouseEnter={e => { if (!isSel) e.currentTarget.style.background='oklch(0.26 0.007 80)'; }}
-              onMouseLeave={e => { if (!isSel) e.currentTarget.style.background='transparent'; }}
-            >{d}</button>
-          );
-        })}
-      </div>
-      {/* footer */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 14px', borderTop: '1px solid oklch(0.26 0.007 80)' }}>
-        <button onClick={clear} style={{ fontSize: 12, color: 'oklch(0.55 0.007 80)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }} onMouseEnter={e => e.currentTarget.style.color='oklch(0.75 0.007 80)'} onMouseLeave={e => e.currentTarget.style.color='oklch(0.55 0.007 80)'}>Очистить</button>
-        <button onClick={goToday} style={{ fontSize: 12, color: '#a78bfa', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }} onMouseEnter={e => e.currentTarget.style.color='#c4b5fd'} onMouseLeave={e => e.currentTarget.style.color='#a78bfa'}>Сегодня</button>
-      </div>
-    </div>
-  );
-
-  return (
-    <div ref={triggerRef} style={{ position: 'relative', ...style }}>
-      <div
-        onClick={handleOpen}
-        style={{ ...inputSx, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none', color: displayStr ? 'var(--text)' : 'var(--text-muted)', background: open ? 'var(--bg-elev-3)' : 'var(--bg-elev-2)' }}
-      >
-        <span style={{ fontSize: 13 }}>{displayStr || 'Выбрать дату'}</span>
-        <Icon name="calendar" size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-      </div>
-      {open && createPortal(calendar, document.body)}
-    </div>
-  );
-}
 
 /* ─── Stepper ───────────────────────────────────────────────── */
 function Stepper({ value, onChange, min = 0, placeholder = '–' }) {
@@ -659,7 +531,7 @@ function CinemaDetailModal({ entry, onEdit, onDelete, onClose, onToggleFav, onUp
                     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                       <div style={{ flex: 1, minWidth: 120 }}>
                         <label style={{ ...labelSx, marginBottom: 4 }}>Дата</label>
-                        <DatePicker value={rwDate} onChange={setRwDate} />
+                        <DatePicker value={rwDate} onChange={setRwDate} background="var(--bg-elev-2)" />
                       </div>
                       <div>
                         <label style={{ ...labelSx, marginBottom: 4 }}>Настроение</label>
@@ -891,7 +763,7 @@ function AddMovieModal({ entry, defaultStatus, onClose, onSave }) {
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={{ flex: 1 }}>
                     <label style={labelSx}>Год</label>
-                    <input value={year} onChange={e => setYear(e.target.value)} placeholder="2024" type="number" style={inputSx} />
+                    <SpinInput value={year} onChange={setYear} placeholder="2024" min={1900} style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)' }} />
                   </div>
                   <div style={{ flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 2, paddingRight: 2 }}>
                     <button onClick={() => setIsFav(v => !v)} title={isFav ? 'Убрать из избранного' : 'В избранное'} style={{ width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isFav ? 'rgba(244,63,94,0.15)' : 'var(--bg-elev-2)', border: isFav ? '1px solid rgba(244,63,94,0.3)' : '1px solid var(--border-subtle)', cursor: 'pointer', color: isFav ? '#F43F5E' : 'var(--text-muted)', transition: 'all 120ms' }}>
@@ -980,7 +852,7 @@ function AddMovieModal({ entry, defaultStatus, onClose, onSave }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'start' }}>
                 <div>
                   <label style={labelSx}>Дата просмотра</label>
-                  <DatePicker value={watchedDate} onChange={setWatchedDate} />
+                  <DatePicker value={watchedDate} onChange={setWatchedDate} background="var(--bg-elev-2)" />
                 </div>
                 <div>
                   <label style={labelSx}>Настроение</label>

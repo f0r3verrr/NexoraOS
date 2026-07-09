@@ -418,10 +418,11 @@ function ContextMenu({ x, y, item, onClose, onAction }) {
   ];
   const actions = item?.type === 'milestone' ? milestoneActions : taskActions;
 
-  // Adjust position to stay in viewport
+  // Позиция с учётом body zoom + не выходим за экран
   const menuW = 200; const menuH = actions.length * 32;
-  const sx = Math.min(x, window.innerWidth - menuW - 10);
-  const sy = Math.min(y, window.innerHeight - menuH - 10);
+  const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+  const sx = Math.max(8, Math.min(x / zoom, window.innerWidth / zoom - menuW - 10));
+  const sy = Math.max(8, Math.min(y / zoom, window.innerHeight / zoom - menuH - 10));
 
   return createPortal(
     <div ref={ref} style={{

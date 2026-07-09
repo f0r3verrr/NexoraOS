@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Icon } from '../icons.jsx';
-import { Button, IconButton, Badge, Avatar } from '../components/primitives.jsx';
+import { Button, IconButton, Badge, Avatar, SpinInput } from '../components/primitives.jsx';
 import { Sidebar, TopBar } from '../components/Sidebar.jsx';
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact } from '../hooks/useContacts.js';
 import { useProjects } from '../hooks/useProjects.js';
@@ -146,9 +146,7 @@ function ContactModal({ contact, onClose }) {
             </select>
           </Field>
           <Field label="Сумма сделки (₽)">
-            <input value={dealAmt} type="number" min="0" step="any"
-              onChange={e => setDealAmt(e.target.value)}
-              placeholder="0" style={inputSx} />
+            <SpinInput value={dealAmt} onChange={setDealAmt} placeholder="0" min={0} step={1000} />
           </Field>
         </div>
 
@@ -843,7 +841,7 @@ function TableView({ contacts, activeId, setActiveId, hasPanel, selectedIds, onT
               {!c.email && !c.phone && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>—</span>}
             </div>
 
-            <Badge tone={STATUS_TONE[c.status]}>{c.status}</Badge>
+            <Badge tone={STATUS_TONE[c.status]} style={{ width: 96, justifyContent: 'center', justifySelf: 'start', boxSizing: 'border-box' }}>{c.status}</Badge>
 
             {!hasPanel && (
               <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>

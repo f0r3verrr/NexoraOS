@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { safeFileName } from './useModuleFiles.js';
 
 const BUCKET = 'user-files';
 
@@ -20,7 +21,8 @@ export function useFiles(folder = '') {
         throw error;
       }
       const items = (data ?? [])
-        .filter(f => f.name !== '.emptyFolderPlaceholder')
+        // _modules — служебная папка личных модулей (сканы авто, чеки, фото), в общих файлах не показываем
+        .filter(f => f.name !== '.emptyFolderPlaceholder' && f.name !== '_modules')
         .map(f => ({ ...f, fullPath: `${prefix}/${f.name}` }));
       return { items, bucketMissing: false };
     },
@@ -32,8 +34,7 @@ export function useUploadFile() {
   return useMutation({
     mutationFn: async ({ file, folder = '' }) => {
       const { data: { user } } = await supabase.auth.getUser();
-      const ext = file.name.split('.').pop();
-      const path = `${user.id}/${folder}/${Date.now()}_${file.name}`;
+      const path = `${user.id}/${folder}/${Date.now()}_${safeFileName(file.name)}`;
       const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: false });
       if (error) throw error;
       return path;
