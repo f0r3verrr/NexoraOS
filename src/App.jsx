@@ -26,6 +26,10 @@ import PersonalCar  from './screens/PersonalCar.jsx';
 import PersonalGirl from './screens/PersonalGirl.jsx';
 import PersonalHome from './screens/PersonalHome.jsx';
 import { PrivacyPolicy, Terms } from './screens/Legal.jsx';
+import Admin from './screens/Admin.jsx';
+
+/* admin.nexoraos.ru живёт в том же бандле, но со своим набором роутов */
+const IS_ADMIN_HOST = typeof window !== 'undefined' && window.location.hostname.startsWith('admin.');
 
 /* Redirects to /login if not authenticated; shows spinner while loading session */
 function AuthGuard() {
@@ -77,6 +81,23 @@ function AppLoader() {
 }
 
 export default function App() {
+  /* Отдельный домен админки: только логин и панель */
+  if (IS_ADMIN_HOST) {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route element={<GuestGuard />}>
+            <Route path="/login" element={<Login />} />
+          </Route>
+          <Route element={<AuthGuard />}>
+            <Route path="/" element={<Admin />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    );
+  }
+
   return (
     <BrowserRouter>
       <Routes>
