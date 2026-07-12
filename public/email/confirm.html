@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="margin:0;padding:0;background:#101012;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#101012;padding:40px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="440" cellpadding="0" cellspacing="0" style="max-width:440px;width:100%;background:#1a1a1d;border:1px solid #2a2a2e;border-radius:16px;">
+        <tr><td style="padding:36px 36px 28px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;">
+          <img src="https://nexoraos.ru/favicon.png" width="44" height="44" alt="NexoraOS" style="border-radius:10px;display:block;">
+          <h1 style="margin:22px 0 10px;font-size:20px;font-weight:600;color:#f2f2f3;letter-spacing:-0.01em;">Подтверди почту</h1>
+          <p style="margin:0 0 26px;font-size:14px;line-height:1.6;color:#9a9aa0;">
+            Ты создаёшь аккаунт в NexoraOS — операционной системе для твоей жизни.
+            Нажми кнопку, чтобы подтвердить адрес и начать.
+          </p>
+          <a href="{{ .ConfirmationURL }}"
+             style="display:inline-block;background:#f2f2f3;color:#101012;font-size:14px;font-weight:600;text-decoration:none;padding:12px 26px;border-radius:10px;">
+            Подтвердить и войти
+          </a>
+          <p style="margin:26px 0 0;font-size:12px;line-height:1.6;color:#5c5c62;">
+            Если кнопка не работает, открой ссылку вручную:<br>
+            <a href="{{ .ConfirmationURL }}" style="color:#37c6b6;word-break:break-all;">{{ .ConfirmationURL }}</a>
+          </p>
+          <p style="margin:22px 0 0;font-size:12px;color:#5c5c62;">
+            Не создавал аккаунт? Просто проигнорируй это письмо.
+          </p>
+        </td></tr>
+      </table>
+      <p style="margin:18px 0 0;font-family:Arial,sans-serif;font-size:11px;color:#5c5c62;">© NexoraOS · nexoraos.ru</p>
+    </td></tr>
+  </table>
+</body>
+</html>
