@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { Icon } from '../icons.jsx';
 
@@ -83,6 +83,7 @@ export default function Login() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [name, setName]         = useState('');
+  const [agree, setAgree]       = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
 
@@ -97,6 +98,7 @@ export default function Login() {
         navigate('/dashboard');
       } else {
         if (!name.trim()) throw new Error('Введи имя');
+        if (!agree) throw new Error('Нужно принять условия соглашения и политику');
         const { error } = await signUp(email, password, name.trim());
         if (error) throw error;
         setMode('confirm');
@@ -174,6 +176,19 @@ export default function Login() {
             <Field label="Email" type="email" value={email} onChange={setEmail} placeholder="me@example.com" autoFocus={mode === 'login'} />
             <Field label="Пароль" type="password" value={password} onChange={setPassword} placeholder="············" />
 
+            {mode === 'register' && (
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
+                <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)}
+                  style={{ marginTop: 2, width: 15, height: 15, accentColor: 'var(--text)', cursor: 'pointer', flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.5 }}>
+                  Принимаю{' '}
+                  <Link to="/terms" target="_blank" style={{ color: 'var(--text-2)' }}>пользовательское соглашение</Link>
+                  {' '}и даю согласие на обработку персональных данных согласно{' '}
+                  <Link to="/privacy" target="_blank" style={{ color: 'var(--text-2)' }}>политике</Link>
+                </span>
+              </label>
+            )}
+
             {error && (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 8,
@@ -186,21 +201,26 @@ export default function Login() {
               </div>
             )}
 
-            <button type="submit" disabled={loading}
-              onMouseEnter={e => !loading && (e.currentTarget.style.boxShadow = '0 4px 24px -4px color-mix(in oklab, var(--text) 45%, transparent)')}
-              onMouseLeave={e => (e.currentTarget.style.boxShadow = '')}
-              style={{
-                height: 40, borderRadius: 10,
-                background: loading ? 'var(--bg-elev-3)' : 'var(--text)',
-                color: 'var(--bg)',
-                fontSize: 14, fontWeight: 500,
-                letterSpacing: '-0.005em',
-                cursor: loading ? 'default' : 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                transition: 'background 120ms, box-shadow 150ms',
-              }}>
-              {loading ? <Spinner /> : (mode === 'login' ? 'Войти' : 'Создать аккаунт')}
-            </button>
+            {(() => {
+              const blocked = loading || (mode === 'register' && !agree);
+              return (
+                <button type="submit" disabled={blocked}
+                  onMouseEnter={e => !blocked && (e.currentTarget.style.boxShadow = '0 4px 24px -4px color-mix(in oklab, var(--text) 45%, transparent)')}
+                  onMouseLeave={e => (e.currentTarget.style.boxShadow = '')}
+                  style={{
+                    height: 40, borderRadius: 10,
+                    background: blocked ? 'var(--bg-elev-3)' : 'var(--text)',
+                    color: blocked ? 'var(--text-3)' : 'var(--bg)',
+                    fontSize: 14, fontWeight: 500,
+                    letterSpacing: '-0.005em',
+                    cursor: blocked ? 'default' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    transition: 'background 120ms, box-shadow 150ms, color 120ms',
+                  }}>
+                  {loading ? <Spinner /> : (mode === 'login' ? 'Войти' : 'Создать аккаунт')}
+                </button>
+              );
+            })()}
 
             <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-3)' }}>
               {mode === 'login' ? (
@@ -211,6 +231,13 @@ export default function Login() {
             </div>
           </form>
         )}
+
+        {/* Юридический подвал */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, fontSize: 12 }}>
+          <Link to="/privacy" style={{ color: 'var(--text-muted)' }}>Конфиденциальность</Link>
+          <span style={{ color: 'var(--border)' }}>·</span>
+          <Link to="/terms" style={{ color: 'var(--text-muted)' }}>Условия</Link>
+        </div>
       </div>
     </div>
   );

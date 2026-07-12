@@ -25,6 +25,7 @@ import CinemaPublic from './screens/CinemaPublic.jsx';
 import PersonalCar  from './screens/PersonalCar.jsx';
 import PersonalGirl from './screens/PersonalGirl.jsx';
 import PersonalHome from './screens/PersonalHome.jsx';
+import { PrivacyPolicy, Terms } from './screens/Legal.jsx';
 
 /* Redirects to /login if not authenticated; shows spinner while loading session */
 function AuthGuard() {
@@ -81,6 +82,8 @@ export default function App() {
       <Routes>
         {/* Fully public — no auth required */}
         <Route path="/cinema/public/:userId" element={<CinemaPublic />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms"   element={<Terms />} />
 
         {/* Public */}
         <Route element={<GuestGuard />}>
