@@ -59,11 +59,29 @@ export function useModuleFiles(module) {
         if (error.message?.includes('bucket') || error.message?.includes('not found')) return [];
         throw error;
       }
-      return (data ?? [])
+      const items = (data ?? [])
         .filter(f => f.name !== '.emptyFolderPlaceholder')
         .map(f => ({ ...f, fullPath: `${prefix}/${f.name}` }));
+      // бакет приватный: доступ к файлам только по подписанным ссылкам (1 час)
+      if (items.length) {
+        const { data: signed } = await supabase.storage.from(BUCKET)
+          .createSignedUrls(items.map(i => i.fullPath), 3600);
+        items.forEach((it, i) => { it.url = signed?.[i]?.signedUrl ?? null; });
+      }
+      return items;
     },
+    // обновляем ссылки до истечения их срока
+    refetchInterval: 50 * 60 * 1000,
   });
+}
+
+/* Максимальный размер загружаемого файла */
+export const MAX_FILE_MB = 20;
+
+export function checkFileSize(file) {
+  if (file.size > MAX_FILE_MB * 1024 * 1024) {
+    throw new Error(`Файл больше ${MAX_FILE_MB} МБ — сожми или выбери другой`);
+  }
 }
 
 export function useUploadModuleFile(module) {
@@ -72,6 +90,7 @@ export function useUploadModuleFile(module) {
     // label — необязательная человекочитаемая подпись (кириллица ок)
     mutationFn: async (input) => {
       const { file, label } = input instanceof File ? { file: input, label: null } : input;
+      checkFileSize(file);
       const { data: { user } } = await supabase.auth.getUser();
       const dot = file.name.lastIndexOf('.');
       const ext = dot > 0 ? file.name.slice(dot + 1).replace(/[^a-zA-Z0-9]/g, '').toLowerCase() : '';
@@ -96,11 +115,6 @@ export function useDeleteModuleFile(module) {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['module-files', module] }),
   });
-}
-
-export function moduleFileUrl(path) {
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  return data.publicUrl;
 }
 
 export function isImage(name) {

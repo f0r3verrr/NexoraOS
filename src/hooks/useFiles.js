@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
-import { safeFileName } from './useModuleFiles.js';
+import { safeFileName, checkFileSize } from './useModuleFiles.js';
 
 const BUCKET = 'user-files';
 
@@ -24,8 +24,16 @@ export function useFiles(folder = '') {
         // _modules — служебная папка личных модулей (сканы авто, чеки, фото), в общих файлах не показываем
         .filter(f => f.name !== '.emptyFolderPlaceholder' && f.name !== '_modules')
         .map(f => ({ ...f, fullPath: `${prefix}/${f.name}` }));
+      // бакет приватный: доступ только по подписанным ссылкам (1 час)
+      const filesOnly = items.filter(f => f.id != null); // у папок id = null, им ссылка не нужна
+      if (filesOnly.length) {
+        const { data: signed } = await supabase.storage.from(BUCKET)
+          .createSignedUrls(filesOnly.map(f => f.fullPath), 3600);
+        filesOnly.forEach((f, i) => { f.url = signed?.[i]?.signedUrl ?? null; });
+      }
       return { items, bucketMissing: false };
     },
+    refetchInterval: 50 * 60 * 1000,
   });
 }
 
@@ -33,6 +41,7 @@ export function useUploadFile() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ file, folder = '' }) => {
+      checkFileSize(file);
       const { data: { user } } = await supabase.auth.getUser();
       const path = `${user.id}/${folder}/${Date.now()}_${safeFileName(file.name)}`;
       const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: false });
@@ -52,11 +61,6 @@ export function useDeleteFile() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['files'] }),
   });
-}
-
-export function getFileUrl(path) {
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  return data.publicUrl;
 }
 
 export function useStorageStats() {

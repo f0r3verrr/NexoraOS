@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Icon } from '../icons.jsx';
 import { Button, IconButton, Badge } from '../components/primitives.jsx';
 import { Sidebar, TopBar } from '../components/Sidebar.jsx';
-import { useFiles, useUploadFile, useDeleteFile, getFileUrl } from '../hooks/useFiles.js';
+import { useFiles, useUploadFile, useDeleteFile } from '../hooks/useFiles.js';
 import { ru } from '../lib/plural.js';
 
 const FILE_TYPE_EXTS = {
@@ -129,17 +129,17 @@ export default function Files() {
   };
 
   const handleDownload = (f) => {
+    if (!f.url) return;
     try {
-      const url = getFileUrl(f.fullPath);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = f.url;
       a.download = getDisplayName(f.name);
       a.target = '_blank';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
     } catch {
-      window.open(getFileUrl(f.fullPath), '_blank');
+      window.open(f.url, '_blank');
     }
   };
 

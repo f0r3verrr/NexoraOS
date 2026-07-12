@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Icon } from '../icons.jsx';
 import { Button } from './primitives.jsx';
 import { Modal, Field, fieldStyle } from './Modal.jsx';
-import { useModuleFiles, useUploadModuleFile, useDeleteModuleFile, moduleFileUrl, isImage, decodeLabel } from '../hooks/useModuleFiles.js';
+import { useModuleFiles, useUploadModuleFile, useDeleteModuleFile, isImage, decodeLabel } from '../hooks/useModuleFiles.js';
 
 /* Отображаемое имя: подпись из base64url, иначе имя без таймстампа и расширения */
 function cleanName(name) {
@@ -137,7 +137,7 @@ export function ModuleFilesGrid({ module, accent = '--p-home', columns = 3, hint
   const [pending, setPending] = useState(null);   // File[] — ждут подписи в модалке
   const [viewer, setViewer] = useState(null);     // индекс фото в лайтбоксе
 
-  const images = files.filter(f => isImage(f.name)).map(f => ({ url: moduleFileUrl(f.fullPath), name: cleanName(f.name) }));
+  const images = files.filter(f => isImage(f.name) && f.url).map(f => ({ url: f.url, name: cleanName(f.name) }));
 
   const openViewer = (file) => {
     const idx = images.findIndex(i => i.name === cleanName(file.name));
@@ -172,7 +172,7 @@ export function ModuleFilesGrid({ module, accent = '--p-home', columns = 3, hint
       <input ref={inputRef} type="file" multiple accept="image/*,application/pdf" style={{ display: 'none' }} onChange={onPick} />
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: 8 }}>
         {files.map(f => {
-          const url = moduleFileUrl(f.fullPath);
+          const url = f.url;
           const img = isImage(f.name);
           return (
             <div key={f.name}
@@ -239,7 +239,7 @@ export function ModulePhoto({ module, shape = 'circle', size = 200, accent = '--
   const [viewerOpen, setViewerOpen] = useState(false);
 
   const photo = files.find(f => isImage(f.name));
-  const url = photo ? moduleFileUrl(photo.fullPath) : null;
+  const url = photo?.url ?? null;
 
   const onPick = async (e) => {
     const f = e.target.files?.[0];

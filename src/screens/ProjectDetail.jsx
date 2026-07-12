@@ -7,7 +7,7 @@ import { Icon } from '../icons.jsx';
 import { Button, IconButton, Badge, Progress } from '../components/primitives.jsx';
 import { Sidebar } from '../components/Sidebar.jsx';
 import { useProject, useUpdateProject, useDeleteProject } from '../hooks/useProjects.js';
-import { useFiles, useUploadFile, useDeleteFile, getFileUrl } from '../hooks/useFiles.js';
+import { useFiles, useUploadFile, useDeleteFile } from '../hooks/useFiles.js';
 import { supabase } from '../lib/supabase.js';
 
 const COLORS  = ['--p-openresto','--p-youmin','--p-diploma','--p-sites','--p-bots','--p-girl','--p-family','--p-car','--p-home','--p-health'];
@@ -371,7 +371,7 @@ function FilesTab({ projectId }) {
                   <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>{fmtSize(f.metadata?.size)}</span>
                   <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>{fmtRelDate(f.created_at)}</span>
                   <div style={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                    <button className="fa" onClick={() => { const a = document.createElement('a'); a.href = getFileUrl(f.fullPath); a.download = displayName; a.target = '_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a); }}
+                    <button className="fa" onClick={() => { if (!f.url) return; const a = document.createElement('a'); a.href = f.url; a.download = displayName; a.target = '_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a); }}
                       style={{ opacity: 0, transition: 'opacity 120ms', width: 24, height: 24, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-2)', background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)' }}>
                       <Icon name="download" size={11} />
                     </button>

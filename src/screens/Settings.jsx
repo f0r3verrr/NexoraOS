@@ -10,6 +10,8 @@ import { useHiddenPages, useToggleHiddenPage } from '../hooks/useHiddenPages.js'
 import { HIDEABLE_PAGES, PAGE_GROUPS } from '../lib/pages.js';
 
 const BUCKET   = 'user-files';
+// аватарки — некритичные данные, живут в публичном бакете (ссылка хранится в профиле)
+const AVATAR_BUCKET = 'avatars';
 const ZOOM_KEY = 'nexora-zoom';
 const NOTIF_KEY = 'nexora-notifications';
 
@@ -320,10 +322,10 @@ function ProfileSection({ user }) {
   const handleCropConfirm = useCallback(async (croppedFile) => {
     setUploading(true);
     try {
-      const path = `${user.id}/avatar/avatar.png`;
-      const { error } = await supabase.storage.from(BUCKET).upload(path, croppedFile, { upsert: true });
+      const path = `${user.id}/avatar.png`;
+      const { error } = await supabase.storage.from(AVATAR_BUCKET).upload(path, croppedFile, { upsert: true });
       if (error) throw error;
-      const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+      const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path);
       const url = `${data.publicUrl}?t=${Date.now()}`;
       await supabase.auth.updateUser({ data: { avatar_url: url } });
       await supabase.from('profiles').upsert({ id: user.id, avatar_url: url }, { onConflict: 'id' });
