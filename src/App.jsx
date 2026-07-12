@@ -28,6 +28,7 @@ import PersonalHome from './screens/PersonalHome.jsx';
 import { PrivacyPolicy, Terms } from './screens/Legal.jsx';
 import Admin from './screens/Admin.jsx';
 import Landing from './screens/Landing.jsx';
+import ResetPassword from './screens/ResetPassword.jsx';
 
 /* admin.nexoraos.ru живёт в том же бандле, но со своим набором роутов */
 const IS_ADMIN_HOST = typeof window !== 'undefined' && window.location.hostname.startsWith('admin.');
@@ -116,6 +117,7 @@ export default function App() {
         <Route path="/cinema/public/:userId" element={<CinemaPublic />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms"   element={<Terms />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Public */}
         <Route element={<GuestGuard />}>

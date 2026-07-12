@@ -135,6 +135,19 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 @keyframes pagefade { from { opacity:0 } to { opacity:1 } }
 .app-surface > main { animation: pagefade 120ms ease-out; }
 
+/* ---- Autofill: не даём браузеру красить поля в белый ---- */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+input:autofill {
+  -webkit-text-fill-color: var(--text) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-elev-2) inset !important;
+  box-shadow: 0 0 0 1000px var(--bg-elev-2) inset !important;
+  caret-color: var(--text);
+  transition: background-color 99999s ease-in-out 0s;
+}
+
 /* ---- Suppress focus ring on plain editor inputs ---- */
 .no-ring:focus-visible { border-color: transparent !important; box-shadow: none !important; outline: none !important; }
 

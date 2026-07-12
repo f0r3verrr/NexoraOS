@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { supabase } from '../lib/supabase.js';
 import { Icon } from '../icons.jsx';
 
 /* ---- Animated gradient canvas ---- */
@@ -93,7 +94,13 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      if (mode === 'login') {
+      if (mode === 'forgot') {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        setMode('forgot-sent');
+      } else if (mode === 'login') {
         const { error } = await signIn(email, password);
         if (error) throw error;
         navigate('/dashboard');
@@ -148,14 +155,16 @@ export default function Login() {
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 22, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.02em' }}>NexoraOS</div>
             <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>
-              {mode === 'login'    && 'Добро пожаловать'}
-              {mode === 'register' && 'Создать аккаунт'}
-              {mode === 'confirm'  && 'Проверь почту'}
+              {mode === 'login'       && 'Добро пожаловать'}
+              {mode === 'register'    && 'Создать аккаунт'}
+              {mode === 'confirm'     && 'Проверь почту'}
+              {mode === 'forgot'      && 'Восстановление пароля'}
+              {mode === 'forgot-sent' && 'Проверь почту'}
             </div>
           </div>
         </div>
 
-        {mode === 'confirm' ? (
+        {(mode === 'confirm' || mode === 'forgot-sent') ? (
           <div className="modal-enter" style={cardStyle}>
             <div style={{ width: 44, height: 44, borderRadius: 999, background: 'color-mix(in oklab, var(--success) 16%, transparent)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
               <Icon name="check" size={20} stroke={2} />
@@ -164,10 +173,12 @@ export default function Login() {
               Письмо отправлено на <strong>{email}</strong>
             </div>
             <div style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.5, textAlign: 'center' }}>
-              Перейди по ссылке в письме, чтобы подтвердить аккаунт. Потом вернись сюда и войди.
+              {mode === 'confirm'
+                ? 'Перейди по ссылке в письме, чтобы подтвердить аккаунт. Потом вернись сюда и войди.'
+                : 'Перейди по ссылке в письме — она откроет страницу, где можно задать новый пароль. Если письма нет, проверь «Спам».'}
             </div>
             <button onClick={() => setMode('login')} style={{ color: 'var(--text-2)', fontSize: 13, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}>
-              Уже подтвердил — войти
+              {mode === 'confirm' ? 'Уже подтвердил — войти' : '← Вернуться ко входу'}
             </button>
           </div>
         ) : (
@@ -175,8 +186,10 @@ export default function Login() {
             {mode === 'register' && (
               <Field label="Имя" type="text" value={name} onChange={setName} placeholder="Кирилл" autoFocus />
             )}
-            <Field label="Email" type="email" value={email} onChange={setEmail} placeholder="me@example.com" autoFocus={mode === 'login'} />
-            <Field label="Пароль" type="password" value={password} onChange={setPassword} placeholder="············" />
+            <Field label="Email" type="email" value={email} onChange={setEmail} placeholder="me@example.com" autoFocus={mode !== 'register'} />
+            {mode !== 'forgot' && (
+              <Field label="Пароль" type="password" value={password} onChange={setPassword} placeholder="············" />
+            )}
 
             {mode === 'register' && (
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
@@ -219,16 +232,28 @@ export default function Login() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     transition: 'background 120ms, box-shadow 150ms, color 120ms',
                   }}>
-                  {loading ? <Spinner /> : (mode === 'login' ? 'Войти' : 'Создать аккаунт')}
+                  {loading ? <Spinner /> : (mode === 'login' ? 'Войти' : mode === 'forgot' ? 'Отправить ссылку' : 'Создать аккаунт')}
                 </button>
               );
             })()}
 
             <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-3)' }}>
-              {mode === 'login' ? (
-                <>Нет аккаунта? <TextBtn onClick={() => { setMode('register'); setError(''); }}>Зарегистрироваться</TextBtn></>
-              ) : (
+              {mode === 'login' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span>Нет аккаунта? <TextBtn onClick={() => { setMode('register'); setError(''); }}>Зарегистрироваться</TextBtn></span>
+                  <button type="button" onClick={() => { setMode('forgot'); setError(''); }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--text-2)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                    style={{ fontSize: 12, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 120ms', padding: 0 }}>
+                    Забыл пароль?
+                  </button>
+                </div>
+              )}
+              {mode === 'register' && (
                 <>Уже есть аккаунт? <TextBtn onClick={() => { setMode('login'); setError(''); }}>Войти</TextBtn></>
+              )}
+              {mode === 'forgot' && (
+                <TextBtn onClick={() => { setMode('login'); setError(''); }}>← Вернуться ко входу</TextBtn>
               )}
             </div>
           </form>
@@ -245,10 +270,13 @@ export default function Login() {
   );
 }
 
-function Field({ label, type, value, onChange, placeholder, autoFocus }) {
+function Field({ label, type, value, onChange, placeholder, autoFocus, labelAction }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-3)', letterSpacing: '0.02em' }}>{label}</label>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-3)', letterSpacing: '0.02em' }}>{label}</label>
+        {labelAction}
+      </div>
       <input
         type={type}
         value={value}
