@@ -27,6 +27,7 @@ import PersonalGirl from './screens/PersonalGirl.jsx';
 import PersonalHome from './screens/PersonalHome.jsx';
 import { PrivacyPolicy, Terms } from './screens/Legal.jsx';
 import Admin from './screens/Admin.jsx';
+import Landing from './screens/Landing.jsx';
 
 /* admin.nexoraos.ru живёт в том же бандле, но со своим набором роутов */
 const IS_ADMIN_HOST = typeof window !== 'undefined' && window.location.hostname.startsWith('admin.');
@@ -57,6 +58,15 @@ function GuestGuard() {
   if (loading) return <AppLoader />;
   if (session) return <Navigate to="/dashboard" replace />;
   return <Outlet />;
+}
+
+/* Корень: гостям — лендинг, залогиненным — дашборд */
+function RootGate() {
+  const { session, loading } = useAuth();
+
+  if (loading) return <AppLoader />;
+  if (session) return <Navigate to="/dashboard" replace />;
+  return <Landing />;
 }
 
 function AppLoader() {
@@ -102,6 +112,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Fully public — no auth required */}
+        <Route path="/" element={<RootGate />} />
         <Route path="/cinema/public/:userId" element={<CinemaPublic />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms"   element={<Terms />} />
@@ -113,7 +124,6 @@ export default function App() {
 
         {/* Protected */}
         <Route element={<AuthGuard />}>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/today"     element={<Today />} />
           <Route path="/inbox"     element={<Inbox />} />

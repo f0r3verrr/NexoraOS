@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { Icon } from '../icons.jsx';
 
@@ -13,7 +13,7 @@ const BLOBS = [
   { ox: 0.28, oy: 0.18, r: 0.36, rgb: [236, 100, 148],  sp: [ 0.32, -0.23] }, // pink   --p-bots
 ];
 
-function GradientCanvas() {
+export function GradientCanvas() {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -79,7 +79,8 @@ export default function Login() {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
-  const [mode, setMode]         = useState('login');
+  const [searchParams]          = useSearchParams();
+  const [mode, setMode]         = useState(searchParams.get('mode') === 'register' ? 'register' : 'login');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [name, setName]         = useState('');
