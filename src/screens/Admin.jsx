@@ -206,7 +206,7 @@ export default function Admin() {
     <div className="app-surface" style={{ minHeight: '100vh', background: 'var(--bg)', overflowY: 'auto' }}>
       {/* Шапка */}
       <div style={{ height: 56, display: 'flex', alignItems: 'center', gap: 14, padding: '0 28px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg)' }}>
-        <img src="/logo.png" alt="" style={{ height: 26 }} />
+        <img src="/favicon.png" alt="" style={{ height: 26, borderRadius: 7 }} />
         <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>NexoraOS · Админ</span>
         <span style={{ flex: 1 }} />
         <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{user?.email}</span>

@@ -139,9 +139,10 @@ export default function Login() {
       }}>
         {/* Logo */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <img src="/logo.png" alt="NexoraOS" style={{
-            width: 260,
+          <img src="/favicon.png" alt="NexoraOS" style={{
+            width: 96,
             display: 'block',
+            borderRadius: 22,
             filter: 'drop-shadow(0 0 28px color-mix(in oklab, var(--p-openresto) 55%, transparent))',
           }} />
           <div style={{ textAlign: 'center' }}>

@@ -130,7 +130,7 @@ export default function Landing() {
       {/* ── Шапка ── */}
       <header style={{ position: 'sticky', top: 0, zIndex: 20, background: 'color-mix(in oklab, var(--bg) 82%, transparent)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--border-subtle)' }}>
         <div className="ld-container" style={{ height: 60, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <img src="/logo.png" alt="" style={{ height: 28 }} />
+          <img src="/favicon.png" alt="" style={{ height: 28, borderRadius: 7 }} />
           <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.01em' }}>NexoraOS</span>
           <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: 'color-mix(in oklab, var(--p-openresto) 16%, transparent)', color: 'var(--p-openresto)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>beta</span>
           <span style={{ flex: 1 }} />
