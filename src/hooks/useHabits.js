@@ -1,15 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 function isoDate(d = new Date()) {
   return d.toISOString().slice(0, 10);
 }
 
 export function useHabits() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['habits'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('habits')
         .select('*')
@@ -20,16 +21,17 @@ export function useHabits() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 /* Logs for the past N days — returns { [habitId]: Set<dateString> } */
 export function useHabitLogs(days = 30) {
+  const { user } = useAuth();
   const from = isoDate(new Date(Date.now() - days * 86400000));
   return useQuery({
     queryKey: ['habit_logs', days],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('habit_logs')
         .select('habit_id, date, done')
@@ -44,15 +46,16 @@ export function useHabitLogs(days = 30) {
       }
       return map;
     },
+    enabled: !!user,
   });
 }
 
 /* Toggle a single habit log for today */
 export function useToggleHabitLog() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ habitId, date = isoDate(), done }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (done) {
         const { error } = await supabase
           .from('habit_logs')
@@ -73,9 +76,9 @@ export function useToggleHabitLog() {
 
 export function useCreateHabit() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ name, color_token = '--p-health', area }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('habits')
         .insert({ user_id: user.id, name, color_token, area })

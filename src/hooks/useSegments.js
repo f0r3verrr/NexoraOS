@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export function useSegments() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['crm_segments'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('crm_segments')
         .select('*')
@@ -14,14 +15,15 @@ export function useSegments() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 export function useCreateSegment() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async (name) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('crm_segments')
         .insert({ user_id: user.id, name })

@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export function useTransactions() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['transactions'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
@@ -14,14 +15,15 @@ export function useTransactions() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 export function useCreateTransaction() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async (tx) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('transactions')
         .insert({ user_id: user.id, ...tx })

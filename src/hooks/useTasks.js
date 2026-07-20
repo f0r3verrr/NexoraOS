@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 function dayBounds(offsetDays = 0) {
   const d = new Date();
@@ -15,11 +16,11 @@ const TASK_SELECT = '*, project:projects(id, name, color_token, area)';
 
 /* Tasks due strictly TODAY (between today 00:00 and tomorrow 00:00) */
 export function useTodayTasks() {
+  const { user } = useAuth();
   const { start, end } = dayBounds(0);
   return useQuery({
     queryKey: ['tasks', 'today'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
@@ -31,16 +32,17 @@ export function useTodayTasks() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 /* Tasks past their due date that are not done */
 export function useOverdueTasks() {
+  const { user } = useAuth();
   const { start } = dayBounds(0);
   return useQuery({
     queryKey: ['tasks', 'overdue'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
@@ -53,15 +55,16 @@ export function useOverdueTasks() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 /* Tasks with no due date — includes done for accurate progress counting */
 export function useUndatedTasks() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['tasks', 'undated'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
@@ -74,15 +77,16 @@ export function useUndatedTasks() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 /* All tasks for Gantt — includes done tasks for correct progress calculation */
 export function useGanttTasks() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['tasks', 'gantt'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
@@ -91,15 +95,16 @@ export function useGanttTasks() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 /* All incomplete tasks — used by Kanban, Gantt etc. */
 export function useAllTasks() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['tasks', 'all'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
@@ -109,6 +114,7 @@ export function useAllTasks() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
@@ -140,10 +146,10 @@ export function parseTaskInput(text) {
 
 /* All tasks grouped by kanban_status */
 export function useKanbanTasks() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['tasks', 'kanban'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
@@ -153,15 +159,16 @@ export function useKanbanTasks() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 /* Overdue incomplete tasks — for notification count */
 export function useOverdueCount() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['tasks', 'overdue_count'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { count, error } = await supabase
         .from('tasks')
         .select('id', { count: 'exact', head: true })
@@ -172,17 +179,18 @@ export function useOverdueCount() {
       if (error) throw error;
       return count ?? 0;
     },
+    enabled: !!user,
     refetchInterval: 60000,
   });
 }
 
 /* Frog of the day — highest priority incomplete task due today */
 export function useFrogTask() {
+  const { user } = useAuth();
   const { end } = dayBounds(0);
   return useQuery({
     queryKey: ['tasks', 'frog'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
@@ -197,6 +205,7 @@ export function useFrogTask() {
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 }
 
@@ -227,9 +236,9 @@ export function useMoveTask() {
 
 export function useCreateTask() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ title, priority = null, due_at = null, project_id = null, kanban_status = 'todo', contact_id = null }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .insert({ user_id: user.id, title, priority, due_at, project_id, kanban_status, contact_id })
@@ -245,10 +254,10 @@ export function useCreateTask() {
 }
 
 export function useContactTasks(contactId) {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['tasks', 'contact', contactId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
@@ -258,7 +267,7 @@ export function useContactTasks(contactId) {
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!contactId,
+    enabled: !!user && !!contactId,
   });
 }
 

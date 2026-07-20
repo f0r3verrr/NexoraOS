@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export function useSubtasks(taskId) {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['subtasks', taskId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('task_subtasks')
         .select('*')
@@ -16,15 +17,15 @@ export function useSubtasks(taskId) {
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!taskId,
+    enabled: !!user && !!taskId,
   });
 }
 
 export function useCreateSubtask() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ task_id, title }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('task_subtasks')
         .insert({ user_id: user.id, task_id, title })

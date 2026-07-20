@@ -1,30 +1,32 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 /* Универсальные CRUD-фабрики для простых таблиц модуля «Дом» */
 function useList(table, key, order) {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['home', key],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       let q = supabase.from(table).select('*').eq('user_id', user.id);
       if (order) q = q.order(order.col, { ascending: order.asc ?? true, nullsFirst: false });
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 function useSave(table, key) {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ id, ...fields }) => {
       if (id) {
         const { error } = await supabase.from(table).update(fields).eq('id', id);
         if (error) throw error;
       } else {
-        const { data: { user } } = await supabase.auth.getUser();
         const { error } = await supabase.from(table).insert({ user_id: user.id, ...fields });
         if (error) throw error;
       }

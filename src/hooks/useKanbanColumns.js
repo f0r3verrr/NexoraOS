@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export function useKanbanColumns() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['kanban_columns'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('kanban_columns')
         .select('*')
@@ -15,14 +16,15 @@ export function useKanbanColumns() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 export function useCreateKanbanColumn() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ title, color_token = '--text-muted', position = 99 }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('kanban_columns')
         .insert({ user_id: user.id, title, color_token, position })

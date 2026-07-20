@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export function useContactActivities(contactId) {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['contact_activities', contactId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('contact_activities')
         .select('*')
@@ -15,15 +16,15 @@ export function useContactActivities(contactId) {
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!contactId,
+    enabled: !!user && !!contactId,
   });
 }
 
 export function useCreateActivity() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ contact_id, type, body }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('contact_activities')
         .insert({ contact_id, type, body, user_id: user.id })

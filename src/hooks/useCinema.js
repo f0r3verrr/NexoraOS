@@ -1,14 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export function useCinema() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['cinema'],
     queryFn: async () => {
       // cinema_entries допускает публичное чтение чужих is_public=true записей
       // (для /cinema/public/:userId) — здесь явно фильтруем "мои", иначе в
       // список попадут фильмы всех пользователей с is_public по умолчанию.
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('cinema_entries')
         .select('*')
@@ -17,6 +18,7 @@ export function useCinema() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
@@ -40,9 +42,9 @@ export function usePublicCinema(userId) {
 
 export function useCreateCinemaEntry() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async (entry) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('cinema_entries')
         .insert({ user_id: user.id, ...entry })

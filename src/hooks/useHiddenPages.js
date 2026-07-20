@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 /* Список ключей отключённых страниц (profiles.hidden_pages, jsonb-массив) */
 export function useHiddenPages() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['prefs', 'hidden'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('profiles')
         .select('hidden_pages')
@@ -19,15 +20,16 @@ export function useHiddenPages() {
       }
       return data?.hidden_pages ?? [];
     },
+    enabled: !!user,
     staleTime: 60_000,
   });
 }
 
 export function useToggleHiddenPage() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ key, hidden }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const current = qc.getQueryData(['prefs', 'hidden']) ?? [];
       const next = hidden
         ? [...new Set([...current, key])]

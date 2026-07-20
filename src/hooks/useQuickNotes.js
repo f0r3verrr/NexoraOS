@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export function useQuickNotes() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['quick_notes'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('quick_notes')
         .select('*')
@@ -16,14 +17,15 @@ export function useQuickNotes() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 export function useAddQuickNote() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ text, color_token = '--p-openresto' }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('quick_notes')
         .insert({ user_id: user.id, text, color_token })

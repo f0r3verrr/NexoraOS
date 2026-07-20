@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 function isoDate(d = new Date()) {
   return d.toISOString().slice(0, 10);
@@ -7,11 +8,11 @@ function isoDate(d = new Date()) {
 
 /* All entries for the past year — used for heatmap */
 export function useJournalEntries() {
+  const { user } = useAuth();
   const from = isoDate(new Date(Date.now() - 365 * 86400000));
   return useQuery({
     queryKey: ['journal', 'all'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('journal_entries')
         .select('id, date, mood, energy')
@@ -21,15 +22,16 @@ export function useJournalEntries() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 /* Single entry for a given date (default = today) */
 export function useJournalEntry(date = isoDate()) {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['journal', 'entry', date],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('journal_entries')
         .select('*')
@@ -39,16 +41,17 @@ export function useJournalEntry(date = isoDate()) {
       if (error) throw error;
       return data ?? null;
     },
+    enabled: !!user,
   });
 }
 
 /* Last N days of journal entries (for sidebar panel) */
 export function useRecentJournalEntries(days = 7) {
+  const { user } = useAuth();
   const from = isoDate(new Date(Date.now() - (days - 1) * 86400000));
   return useQuery({
     queryKey: ['journal', 'recent', days],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('journal_entries')
         .select('date, mood, energy')
@@ -58,15 +61,16 @@ export function useRecentJournalEntries(days = 7) {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 /* Consecutive-day journal streak */
 export function useJournalStreak() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['journal', 'streak'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('journal_entries')
         .select('date')
@@ -87,15 +91,16 @@ export function useJournalStreak() {
       }
       return streak;
     },
+    enabled: !!user,
   });
 }
 
 /* Delete entry for a date */
 export function useDeleteJournalEntry() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async (date) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from('journal_entries')
         .delete()
@@ -110,9 +115,9 @@ export function useDeleteJournalEntry() {
 /* Create or update entry for a date */
 export function useUpsertJournalEntry() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ date = isoDate(), mood, energy, body }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('journal_entries')
         .upsert(

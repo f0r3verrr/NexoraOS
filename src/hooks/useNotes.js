@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export function useNotes(folder) {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['notes', folder],   // null stays null — no collision with useAllNotes
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       let q = supabase
         .from('notes')
         .select('*, project:projects(id, name, color_token)')
@@ -17,15 +18,16 @@ export function useNotes(folder) {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 /* All notes without filter — used for correct folder badge counts */
 export function useAllNotes() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['notes', '__counts__'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('notes')
         .select('id, folder, pinned')
@@ -34,14 +36,15 @@ export function useAllNotes() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 export function useFolders() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['notes', 'folders'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('notes')
         .select('folder')
@@ -51,14 +54,15 @@ export function useFolders() {
       const folders = [...new Set((data ?? []).map(n => n.folder))].filter(Boolean);
       return folders.length ? folders : ['Личное'];
     },
+    enabled: !!user,
   });
 }
 
 export function useCreateNote() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ title = 'Без названия', folder = 'Личное', body = '', project_id = null }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('notes')
         .insert({ user_id: user.id, title, folder, body, project_id })
@@ -95,11 +99,11 @@ export function useDeleteNote() {
 
 /* Attachments */
 export function useNoteAttachments(noteId) {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['note_attachments', noteId],
     queryFn: async () => {
       if (!noteId) return [];
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('note_attachments')
         .select('*')
@@ -109,15 +113,15 @@ export function useNoteAttachments(noteId) {
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!noteId,
+    enabled: !!user && !!noteId,
   });
 }
 
 export function useAddAttachment() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ noteId, file }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const ext  = file.name.split('.').pop();
       const path = `${user.id}/${noteId}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage

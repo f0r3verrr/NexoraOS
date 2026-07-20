@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 const CONTACT_SELECT = '*, project:projects(id, name, color_token), segment:crm_segments(id, name)';
 
 export function useContacts() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['contacts'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('contacts')
         .select(CONTACT_SELECT)
@@ -16,14 +17,15 @@ export function useContacts() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 export function useCreateContact() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ name, email, phone, social_link = null, status = 'Новый', project_id = null, segment_id = null, tags = [], notes = '', deal_amount = null }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('contacts')
         .insert({ user_id: user.id, name, email, phone, social_link, status, project_id, segment_id, tags, notes, deal_amount })

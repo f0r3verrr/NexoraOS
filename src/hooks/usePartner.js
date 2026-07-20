@@ -1,24 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 /* ─── Профиль (одна строка) ──────────────────────────────── */
 export function usePartnerProfile() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['partner', 'profile'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase.from('partner_profile').select('*').eq('user_id', user.id).maybeSingle();
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 }
 
 export function useUpsertPartnerProfile() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async (patch) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from('partner_profile')
         .upsert({ user_id: user.id, ...patch }, { onConflict: 'user_id' });
@@ -30,10 +32,10 @@ export function useUpsertPartnerProfile() {
 
 /* ─── Идеи подарков ──────────────────────────────────────── */
 export function useGiftIdeas() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['partner', 'gifts'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('gift_ideas').select('*')
         .eq('user_id', user.id)
@@ -42,18 +44,19 @@ export function useGiftIdeas() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 export function useSaveGiftIdea() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ id, ...fields }) => {
       if (id) {
         const { error } = await supabase.from('gift_ideas').update(fields).eq('id', id);
         if (error) throw error;
       } else {
-        const { data: { user } } = await supabase.auth.getUser();
         const { error } = await supabase.from('gift_ideas').insert({ user_id: user.id, ...fields });
         if (error) throw error;
       }
@@ -75,10 +78,10 @@ export function useDeleteGiftIdea() {
 
 /* ─── Совместные планы ───────────────────────────────────── */
 export function useSharedPlans() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['partner', 'plans'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('shared_plans').select('*')
         .eq('user_id', user.id)
@@ -86,18 +89,19 @@ export function useSharedPlans() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 export function useSaveSharedPlan() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ id, ...fields }) => {
       if (id) {
         const { error } = await supabase.from('shared_plans').update(fields).eq('id', id);
         if (error) throw error;
       } else {
-        const { data: { user } } = await supabase.auth.getUser();
         const { error } = await supabase.from('shared_plans').insert({ user_id: user.id, ...fields });
         if (error) throw error;
       }

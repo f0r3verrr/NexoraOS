@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 const BUCKET = 'user-files';
 
@@ -46,10 +47,10 @@ export function safeFileName(name) {
  */
 
 export function useModuleFiles(module) {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['module-files', module],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const prefix = `${user.id}/_modules/${module}`;
       const { data, error } = await supabase.storage.from(BUCKET).list(prefix, {
         limit: 100,
@@ -70,6 +71,7 @@ export function useModuleFiles(module) {
       }
       return items;
     },
+    enabled: !!user,
     // обновляем ссылки до истечения их срока
     refetchInterval: 50 * 60 * 1000,
   });
@@ -86,12 +88,12 @@ export function checkFileSize(file) {
 
 export function useUploadModuleFile(module) {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     // label — необязательная человекочитаемая подпись (кириллица ок)
     mutationFn: async (input) => {
       const { file, label } = input instanceof File ? { file: input, label: null } : input;
       checkFileSize(file);
-      const { data: { user } } = await supabase.auth.getUser();
       const dot = file.name.lastIndexOf('.');
       const ext = dot > 0 ? file.name.slice(dot + 1).replace(/[^a-zA-Z0-9]/g, '').toLowerCase() : '';
       const name = label?.trim()

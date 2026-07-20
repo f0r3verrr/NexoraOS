@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 function isSchemaErr(err) {
   return err && (
@@ -11,10 +12,10 @@ function isSchemaErr(err) {
 }
 
 export function useGoals() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['goals'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('goals')
         .select('*')
@@ -24,14 +25,15 @@ export function useGoals() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 export function useCreateGoal() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ title, goal_type = 'Годовая', horizon, color_token = '--p-openresto', current_value, target_value, progress = 0, notes, category = 'custom', unit }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const base = { user_id: user.id, title, goal_type, horizon, color_token, current_value, target_value, progress, notes };
 
       // Phase 1: insert base fields (always works)

@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 /* ─── Notes ──────────────────────────────────────────────── */
 
 export function useVaultNotes() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['vault_notes'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('vault_notes')
         .select('*')
@@ -16,14 +17,15 @@ export function useVaultNotes() {
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 }
 
 export function useCreateVaultNote() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ title = '', content = '' } = {}) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('vault_notes')
         .insert({ user_id: user.id, title, content })
@@ -64,10 +66,10 @@ export function useDeleteVaultNote() {
 /* ─── Credentials ────────────────────────────────────────── */
 
 export function useVaultCreds() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['vault_creds'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('vault_credentials')
         .select('*')
@@ -76,14 +78,15 @@ export function useVaultCreds() {
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 }
 
 export function useCreateVaultCred() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async (cred = {}) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('vault_credentials')
         .insert({ user_id: user.id, title: '', url: '', login: '', password: '', notes: '', ...cred })

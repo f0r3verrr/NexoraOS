@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export function useProject(id) {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['projects', id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('projects')
         .select('*')
@@ -15,15 +16,15 @@ export function useProject(id) {
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!user && !!id,
   });
 }
 
 export function useProjects() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('projects')
         .select('*')
@@ -34,14 +35,15 @@ export function useProjects() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 export function useCreateProject() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ name, color_token = '--p-openresto', area = 'Личное' }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('projects')
         .insert({ user_id: user.id, name, color_token, area })

@@ -1,14 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { safeFileName, checkFileSize } from './useModuleFiles.js';
 
 const BUCKET = 'user-files';
 
 export function useFiles(folder = '') {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['files', folder],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const prefix = `${user.id}${folder ? '/' + folder : ''}`;
       const { data, error } = await supabase.storage.from(BUCKET).list(prefix, {
         limit: 200,
@@ -33,16 +34,17 @@ export function useFiles(folder = '') {
       }
       return { items, bucketMissing: false };
     },
+    enabled: !!user,
     refetchInterval: 50 * 60 * 1000,
   });
 }
 
 export function useUploadFile() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ file, folder = '' }) => {
       checkFileSize(file);
-      const { data: { user } } = await supabase.auth.getUser();
       const path = `${user.id}/${folder}/${Date.now()}_${safeFileName(file.name)}`;
       const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: false });
       if (error) throw error;
@@ -64,15 +66,16 @@ export function useDeleteFile() {
 }
 
 export function useStorageStats() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['files', 'stats'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase.storage.from(BUCKET).list(user.id, { limit: 1000 });
       if (error) return { total: 0, size: 0 };
       const total = data?.length ?? 0;
       const size = data?.reduce((a, f) => a + (f.metadata?.size ?? 0), 0) ?? 0;
       return { total, size };
     },
+    enabled: !!user,
   });
 }

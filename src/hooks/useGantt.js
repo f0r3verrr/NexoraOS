@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 const MILESTONE_SELECT = '*, project:projects(id, name, color_token)';
 const DEP_SELECT = '*, fromTask:tasks!task_dependencies_from_task_fkey(id, title, start_date, due_at), toTask:tasks!task_dependencies_to_task_fkey(id, title, start_date, due_at)';
@@ -7,10 +8,10 @@ const DEP_SELECT = '*, fromTask:tasks!task_dependencies_from_task_fkey(id, title
 /* ─── Milestones ─────────────────────────────────────────────── */
 
 export function useMilestones() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['milestones'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('milestones')
         .select(MILESTONE_SELECT)
@@ -19,14 +20,15 @@ export function useMilestones() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 export function useCreateMilestone() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ project_id, title, date, description = null, color_token = null }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('milestones')
         .insert({ user_id: user.id, project_id, title, date, description, color_token })
@@ -64,10 +66,10 @@ export function useDeleteMilestone() {
 /* ─── Task Dependencies ──────────────────────────────────────── */
 
 export function useTaskDependencies() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['task_dependencies'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('task_dependencies')
         .select(DEP_SELECT)
@@ -76,14 +78,15 @@ export function useTaskDependencies() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
 export function useCreateDependency() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ from_task, to_task, dep_type = 'finish_to_start' }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('task_dependencies')
         .insert({ user_id: user.id, from_task, to_task, dep_type })

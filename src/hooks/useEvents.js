@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 const SEL = '*, project:projects(id, name, color_token)';
 
@@ -39,16 +40,15 @@ function expandForRange(ev, rangeStart, rangeEnd) {
   return instances;
 }
 
-async function fetchWithRecurring(rangeStart, rangeEnd) {
-  const { data: { user } } = await supabase.auth.getUser();
+async function fetchWithRecurring(userId, rangeStart, rangeEnd) {
   const [directRes, recurringRes] = await Promise.all([
     supabase.from('events').select(SEL)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .gte('start_at', rangeStart.toISOString())
       .lt('start_at', rangeEnd.toISOString())
       .order('start_at'),
     supabase.from('events').select(SEL)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .in('recurrence', RECURRING_VALUES)
       .lt('start_at', rangeStart.toISOString())
       .order('start_at'),
@@ -60,43 +60,49 @@ async function fetchWithRecurring(rangeStart, rangeEnd) {
 
 /* ─── Hooks ──────────────────────────────────────────────── */
 export function useDayEvents(date = new Date()) {
+  const { user } = useAuth();
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
   const start = new Date(d);
   const end   = new Date(d); end.setDate(d.getDate() + 1);
   return useQuery({
     queryKey: ['events', 'day', start.toISOString()],
-    queryFn: () => fetchWithRecurring(start, end),
+    queryFn: () => fetchWithRecurring(user.id, start, end),
+    enabled: !!user,
     staleTime: 0,
     refetchOnMount: 'always',
   });
 }
 
 export function useWeekEvents(weekStart) {
+  const { user } = useAuth();
   const start = new Date(weekStart);
   start.setHours(0, 0, 0, 0);
   const end = new Date(start);
   end.setDate(end.getDate() + 7);
   return useQuery({
     queryKey: ['events', 'week', start.toISOString()],
-    queryFn: () => fetchWithRecurring(start, end),
+    queryFn: () => fetchWithRecurring(user.id, start, end),
+    enabled: !!user,
   });
 }
 
 export function useMonthEvents(year, month) {
+  const { user } = useAuth();
   const start = new Date(year, month, 1, 0, 0, 0, 0);
   const end   = new Date(year, month + 1, 1, 0, 0, 0, 0);
   return useQuery({
     queryKey: ['events', 'month', year, month],
-    queryFn: () => fetchWithRecurring(start, end),
+    queryFn: () => fetchWithRecurring(user.id, start, end),
+    enabled: !!user,
   });
 }
 
 export function useCreateEvent() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ title, start_at, end_at, all_day = false, color_token, project_id = null, is_deadline = false, location, notes, url, recurrence = 'none' }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('events')
         .insert({ user_id: user.id, title, start_at, end_at, all_day, color_token, project_id, is_deadline, location, notes, url: url || null, recurrence })

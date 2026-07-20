@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export function useInboxItems() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['inbox'],
     queryFn: async () => {
       // элемент "проснулся", если snoozed_until уже в прошлом — он возвращается в общий список
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('inbox_items')
         .select('*, project:projects(id, name, color_token)')
@@ -17,15 +18,16 @@ export function useInboxItems() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
     refetchInterval: 60_000,
   });
 }
 
 export function useAddInboxItem() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ text, source = 'web' }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('inbox_items')
         .insert({ user_id: user.id, text, source })
@@ -99,10 +101,10 @@ export function useDeleteInboxItem() {
 }
 
 export function useResolvedItems() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['inbox', 'resolved'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('inbox_items')
         .select('*, project:projects(id, name, color_token)')
@@ -113,6 +115,7 @@ export function useResolvedItems() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
   });
 }
 
@@ -128,11 +131,11 @@ export function useUnresolveItem() {
 }
 
 export function useSnoozedItems() {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['inbox', 'snoozed'],
     queryFn: async () => {
       // только "спящие" (в будущем); проснувшиеся уже показываются в основном списке
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('inbox_items')
         .select('*, project:projects(id, name, color_token)')
@@ -143,6 +146,7 @@ export function useSnoozedItems() {
       if (error) throw error;
       return data ?? [];
     },
+    enabled: !!user,
     refetchInterval: 60_000,
   });
 }

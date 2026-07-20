@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export function useContactReminders(contactId) {
+  const { user } = useAuth();
   return useQuery({
     queryKey: ['contact_reminders', contactId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('contact_reminders')
         .select('*')
@@ -15,15 +16,15 @@ export function useContactReminders(contactId) {
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!contactId,
+    enabled: !!user && !!contactId,
   });
 }
 
 export function useCreateReminder() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ contact_id, body, remind_at }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('contact_reminders')
         .insert({ contact_id, body, remind_at, user_id: user.id })
