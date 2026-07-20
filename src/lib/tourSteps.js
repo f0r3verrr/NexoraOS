@@ -7,6 +7,11 @@
  * без авторского контента.
  */
 
+/* Безопасный "виртуальный" таргет для центрированных шагов без привязки к
+   элементу — рейл всегда в вьюпорте на любой странице, в отличие от 'body'
+   (у react-joyride на 'body' съезжает скролл на середину всего документа). */
+export const CENTER_FALLBACK_TARGET = '[data-tour="rail-home"]';
+
 export const ROUTE_ORDER = [
   '/dashboard', '/inbox', '/today', '/calendar', '/kanban', '/gantt',
   '/projects', '/notes', '/journal', '/files', '/finances', '/crm', '/goals', '/cinema',
@@ -41,7 +46,7 @@ export const TOUR_STEPS = [
   {
     id: 'dashboard-welcome',
     route: '/dashboard',
-    target: 'body',
+    target: CENTER_FALLBACK_TARGET,
     placement: 'center',
     title: 'Добро пожаловать в NexoraOS',
     content: 'Это ваш личный центр управления делами. Пройдёмся коротко по разделам — займёт пару минут. В любой момент можно нажать «Пропустить».',

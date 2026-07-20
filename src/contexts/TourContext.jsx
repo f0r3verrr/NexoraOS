@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext.jsx';
 import { useHiddenPages } from '../hooks/useHiddenPages.js';
 import { useOnboarding, useSetOnboardingStatus, useSetOnboardingStep } from '../hooks/useOnboarding.js';
-import { ROUTE_ORDER, ROUTE_META, getStepsForRoute } from '../lib/tourSteps.js';
+import { ROUTE_ORDER, ROUTE_META, getStepsForRoute, CENTER_FALLBACK_TARGET } from '../lib/tourSteps.js';
 import { waitForElement } from '../lib/tourEngine.js';
 
 const TourContext = createContext(null);
@@ -29,7 +29,7 @@ export function TourProvider({ children }) {
   }, [hidden]);
 
   const effectiveSteps = useMemo(
-    () => visibleSteps.map((s, i) => (targetOverrides[i] ? { ...s, target: 'body', placement: 'center' } : s)),
+    () => visibleSteps.map((s, i) => (targetOverrides[i] ? { ...s, target: CENTER_FALLBACK_TARGET, placement: 'center' } : s)),
     [visibleSteps, targetOverrides]
   );
 
@@ -85,7 +85,7 @@ export function TourProvider({ children }) {
     let cancelled = false;
     waitForElement(step.target).then((found) => {
       if (cancelled) return;
-      if (!found && step.target !== 'body') {
+      if (!found && step.target !== CENTER_FALLBACK_TARGET) {
         setTargetOverrides((o) => ({ ...o, [stepIndex]: true }));
       }
       setRun(true);
