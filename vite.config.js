@@ -6,7 +6,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/kinopoisk': {
-        target: 'https://api.kinopoisk.dev',
+        // провайдер переехал с kinopoisk.dev на poiskkino.dev (301 на всех эндпоинтах)
+        target: 'https://api.poiskkino.dev',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/kinopoisk/, ''),
       },

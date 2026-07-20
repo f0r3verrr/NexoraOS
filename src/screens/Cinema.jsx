@@ -170,7 +170,7 @@ function PosterCard({ entry, onOpen, onEdit, onDelete, onToggleFav }) {
       }}
     >
       {entry.poster_url
-        ? <img src={entry.poster_url} alt={entry.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        ? <img src={entry.poster_url} alt={entry.title} loading="lazy" onError={e => { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="film" size={32} style={{ color: 'var(--text-muted)', opacity: 0.3 }} /></div>
       }
 
@@ -254,7 +254,7 @@ function ContinueWatchingRail({ entries, onOpen }) {
             >
               <div style={{ position: 'relative', height: 120, overflow: 'hidden' }}>
                 {(entry.backdrop_url || entry.poster_url)
-                  ? <img src={entry.backdrop_url || entry.poster_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(.78)' }} />
+                  ? <img src={entry.backdrop_url || entry.poster_url} alt="" onError={e => { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(.78)' }} />
                   : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(150deg, oklch(0.26 0.04 285), oklch(0.16 0.015 285))' }} />
                 }
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, oklch(0.18 0.006 80) 2%, transparent 60%)' }} />
@@ -326,7 +326,7 @@ function CinemaDetailModal({ entry, onEdit, onDelete, onClose, onToggleFav, onUp
           {/* Hero */}
           <div style={{ position: 'relative', height: 260, overflow: 'hidden', borderRadius: '22px 22px 0 0' }}>
             {(entry.backdrop_url || entry.poster_url)
-              ? <img src={entry.backdrop_url || entry.poster_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 28%' }} />
+              ? <img src={entry.backdrop_url || entry.poster_url} alt="" onError={e => { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 28%' }} />
               : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(150deg, oklch(0.26 0.04 285), oklch(0.16 0.015 285))' }} />
             }
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, oklch(0.17 0.006 80) 2%, oklch(0.17 0.006 80 / .35) 45%, transparent 80%)' }} />
@@ -345,7 +345,7 @@ function CinemaDetailModal({ entry, onEdit, onDelete, onClose, onToggleFav, onUp
             <div style={{ position: 'absolute', left: 28, right: 28, bottom: 20, display: 'flex', alignItems: 'flex-end', gap: 20 }}>
               {entry.poster_url && (
                 <div style={{ width: 110, flexShrink: 0, aspectRatio: '2/3', borderRadius: 12, overflow: 'hidden', boxShadow: '0 12px 34px rgba(0,0,0,.6)', border: '2px solid rgba(255,255,255,.1)' }}>
-                  <img src={entry.poster_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={entry.poster_url} alt="" onError={e => { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               )}
               <div style={{ flex: 1, minWidth: 0, paddingBottom: 4 }}>
@@ -753,7 +753,7 @@ function AddMovieModal({ entry, defaultStatus, onClose, onSave }) {
 
             <div style={{ display: 'flex', gap: 14 }}>
               <div style={{ width: 80, height: 120, flexShrink: 0, borderRadius: 8, background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {poster ? <img src={poster} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Icon name="film" size={24} style={{ color: 'var(--text-muted)' }} />}
+                {poster ? <img src={poster} alt="" onError={e => { e.currentTarget.style.display = 'none'; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Icon name="film" size={24} style={{ color: 'var(--text-muted)' }} />}
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div>
@@ -1023,7 +1023,7 @@ export default function Cinema() {
           {featured && (
             <section style={{ position: 'relative', height: 380, overflow: 'hidden', borderBottom: '1px solid oklch(0.22 0.007 80)', flexShrink: 0 }}>
               {(featured.backdrop_url || featured.poster_url)
-                ? <img src={featured.backdrop_url || featured.poster_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%' }} />
+                ? <img src={featured.backdrop_url || featured.poster_url} alt="" onError={e => { e.currentTarget.style.display = 'none'; }} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%' }} />
                 : <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(150deg, oklch(0.26 0.04 285), oklch(0.16 0.015 285))' }} />
               }
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(105deg, oklch(0.135 0.005 80) 0%, oklch(0.135 0.005 80 / .82) 34%, oklch(0.135 0.005 80 / .2) 64%, transparent 100%)' }} />
