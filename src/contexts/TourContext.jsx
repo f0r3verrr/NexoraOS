@@ -108,6 +108,19 @@ export function TourProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex]);
 
+  /* Интерфейс рассчитан на экран без скролла — блокируем скролл колесом/тачем,
+     пока активно показан шаг тура, чтобы не сбивать подсветку таргета */
+  useEffect(() => {
+    if (!run) return;
+    const prevent = (e) => e.preventDefault();
+    document.addEventListener('wheel', prevent, { passive: false });
+    document.addEventListener('touchmove', prevent, { passive: false });
+    return () => {
+      document.removeEventListener('wheel', prevent);
+      document.removeEventListener('touchmove', prevent);
+    };
+  }, [run]);
+
   /* Стрелки клавиатуры — только пока тур активно показан */
   useEffect(() => {
     if (!run) return;

@@ -29,7 +29,12 @@ export function TourOverlay() {
       disableOverlayClose
       disableScrolling
       spotlightClicks={false}
-      styles={{ options: { overlayColor: 'rgba(10,10,12,0.65)', arrowColor: 'var(--bg-elev-2)', zIndex: 10000 } }}
+      spotlightPadding={4}
+      floaterProps={{ offset: 14 }}
+      styles={{
+        options: { overlayColor: 'rgba(3,3,5,0.88)', arrowColor: 'var(--bg-elev-2)', zIndex: 10000 },
+        spotlight: { borderRadius: 10, border: '2px solid var(--p-openresto)' },
+      }}
     />
   );
 }
