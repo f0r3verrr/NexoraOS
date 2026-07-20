@@ -34,7 +34,6 @@ export function TourProvider({ children }) {
   );
 
   function finishTour(status) {
-    document.body.style.zoom = '';
     setRun(false);
     setStepIndex(null);
     setTargetOverrides({});
@@ -45,7 +44,6 @@ export function TourProvider({ children }) {
     if (nextIndex < 0) return;
     if (nextIndex >= visibleSteps.length) { finishTour('completed'); return; }
     const step = visibleSteps[nextIndex];
-    document.body.style.zoom = '';
     setRun(false);
     if (step.route !== pathname) {
       navigatedByTour.current = true;
@@ -77,7 +75,6 @@ export function TourProvider({ children }) {
       if (!navigatedByTour.current && pausedForIndex.current !== stepIndex) {
         // пользователь сам ушёл с роута тура — молча ставим на паузу, не мешаем
         pausedForIndex.current = stepIndex;
-        document.body.style.zoom = '';
         setRun(false);
         setStep.mutate({ step: stepIndex });
       }
@@ -97,11 +94,6 @@ export function TourProvider({ children }) {
       // иначе он иногда меряет устаревший прямоугольник от предыдущего кадра.
       requestAnimationFrame(() => requestAnimationFrame(() => {
         if (cancelled) return;
-        // zoom:1.1 на body (index.css) ломает математику позиционирования
-        // react-joyride/react-floater — снимаем его именно на момент показа
-        // шага, синхронно перед setRun(true), чтобы спотлайт считал координаты
-        // в том же масштабе, в котором рендерится.
-        document.body.style.zoom = '1';
         window.dispatchEvent(new Event('resize'));
         setRun(true);
       }));
@@ -149,8 +141,18 @@ export function TourProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [run, stepIndex]);
 
-  /* Подстраховка: если провайдер размонтируется пока zoom снят (например, выход из аккаунта) */
-  useEffect(() => () => { document.body.style.zoom = ''; }, []);
+  /* CSS zoom:1.1 на body (index.css) ломает математику позиционирования
+     react-joyride/react-floater — снимаем его один раз на всю сессию тура
+     (а не на каждый шаг — иначе интерфейс дёргается между 110% и 100% на
+     каждый клик «Далее/Назад»), восстанавливаем только по завершении/пропуске. */
+  const tourActive = stepIndex !== null;
+  useEffect(() => {
+    if (!tourActive) return;
+    const prevZoom = document.body.style.zoom;
+    document.body.style.zoom = '1';
+    return () => { document.body.style.zoom = prevZoom; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tourActive]);
 
   const value = { run, stepIndex, steps: effectiveSteps, goToStep, finishTour, skipTour };
   return <TourContext.Provider value={value}>{children}</TourContext.Provider>;
