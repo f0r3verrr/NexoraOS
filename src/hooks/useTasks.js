@@ -19,9 +19,11 @@ export function useTodayTasks() {
   return useQuery({
     queryKey: ['tasks', 'today'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
+        .eq('user_id', user.id)
         .gte('due_at', start)
         .lt('due_at', end)
         .order('due_at', { ascending: true })
@@ -38,9 +40,11 @@ export function useOverdueTasks() {
   return useQuery({
     queryKey: ['tasks', 'overdue'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
+        .eq('user_id', user.id)
         .lt('due_at', start)
         .not('due_at', 'is', null)
         .eq('done', false)
@@ -57,9 +61,11 @@ export function useUndatedTasks() {
   return useQuery({
     queryKey: ['tasks', 'undated'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
+        .eq('user_id', user.id)
         .is('due_at', null)
         .order('done', { ascending: true })      // undone first
         .order('sort_order', { ascending: true })
@@ -76,9 +82,11 @@ export function useGanttTasks() {
   return useQuery({
     queryKey: ['tasks', 'gantt'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
+        .eq('user_id', user.id)
         .order('due_at', { ascending: true, nullsLast: true });
       if (error) throw error;
       return data ?? [];
@@ -91,9 +99,11 @@ export function useAllTasks() {
   return useQuery({
     queryKey: ['tasks', 'all'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
+        .eq('user_id', user.id)
         .eq('done', false)
         .order('due_at', { ascending: true, nullsLast: true });
       if (error) throw error;
@@ -133,9 +143,11 @@ export function useKanbanTasks() {
   return useQuery({
     queryKey: ['tasks', 'kanban'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
+        .eq('user_id', user.id)
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -149,9 +161,11 @@ export function useOverdueCount() {
   return useQuery({
     queryKey: ['tasks', 'overdue_count'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { count, error } = await supabase
         .from('tasks')
         .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
         .lt('due_at', new Date().toISOString())
         .not('due_at', 'is', null)
         .eq('done', false);
@@ -168,9 +182,11 @@ export function useFrogTask() {
   return useQuery({
     queryKey: ['tasks', 'frog'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
+        .eq('user_id', user.id)
         .lte('due_at', end)
         .not('due_at', 'is', null)
         .eq('done', false)
@@ -232,9 +248,11 @@ export function useContactTasks(contactId) {
   return useQuery({
     queryKey: ['tasks', 'contact', contactId],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('tasks')
         .select(TASK_SELECT)
+        .eq('user_id', user.id)
         .eq('contact_id', contactId)
         .order('created_at', { ascending: false });
       if (error) throw error;

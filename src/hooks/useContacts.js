@@ -7,9 +7,11 @@ export function useContacts() {
   return useQuery({
     queryKey: ['contacts'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('contacts')
         .select(CONTACT_SELECT)
+        .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
       if (error) throw error;
       return data ?? [];

@@ -6,7 +6,8 @@ export function usePartnerProfile() {
   return useQuery({
     queryKey: ['partner', 'profile'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('partner_profile').select('*').maybeSingle();
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase.from('partner_profile').select('*').eq('user_id', user.id).maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -32,8 +33,10 @@ export function useGiftIdeas() {
   return useQuery({
     queryKey: ['partner', 'gifts'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('gift_ideas').select('*')
+        .eq('user_id', user.id)
         .order('used', { ascending: true })
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -75,8 +78,10 @@ export function useSharedPlans() {
   return useQuery({
     queryKey: ['partner', 'plans'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('shared_plans').select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: true });
       if (error) throw error;
       return data ?? [];

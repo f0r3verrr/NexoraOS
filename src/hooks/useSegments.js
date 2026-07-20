@@ -5,9 +5,11 @@ export function useSegments() {
   return useQuery({
     queryKey: ['crm_segments'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('crm_segments')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at');
       if (error) throw error;
       return data ?? [];

@@ -10,9 +10,11 @@ export function useMilestones() {
   return useQuery({
     queryKey: ['milestones'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('milestones')
         .select(MILESTONE_SELECT)
+        .eq('user_id', user.id)
         .order('date', { ascending: true });
       if (error) throw error;
       return data ?? [];
@@ -65,9 +67,11 @@ export function useTaskDependencies() {
   return useQuery({
     queryKey: ['task_dependencies'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('task_dependencies')
         .select(DEP_SELECT)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: true });
       if (error) throw error;
       return data ?? [];

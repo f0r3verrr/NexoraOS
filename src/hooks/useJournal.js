@@ -11,9 +11,11 @@ export function useJournalEntries() {
   return useQuery({
     queryKey: ['journal', 'all'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('journal_entries')
         .select('id, date, mood, energy')
+        .eq('user_id', user.id)
         .gte('date', from)
         .order('date', { ascending: true });
       if (error) throw error;
@@ -27,9 +29,11 @@ export function useJournalEntry(date = isoDate()) {
   return useQuery({
     queryKey: ['journal', 'entry', date],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('journal_entries')
         .select('*')
+        .eq('user_id', user.id)
         .eq('date', date)
         .maybeSingle();
       if (error) throw error;
@@ -44,9 +48,11 @@ export function useRecentJournalEntries(days = 7) {
   return useQuery({
     queryKey: ['journal', 'recent', days],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('journal_entries')
         .select('date, mood, energy')
+        .eq('user_id', user.id)
         .gte('date', from)
         .order('date', { ascending: false });
       if (error) throw error;
@@ -60,9 +66,11 @@ export function useJournalStreak() {
   return useQuery({
     queryKey: ['journal', 'streak'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('journal_entries')
         .select('date')
+        .eq('user_id', user.id)
         .order('date', { ascending: false })
         .limit(400);
       if (error) throw error;

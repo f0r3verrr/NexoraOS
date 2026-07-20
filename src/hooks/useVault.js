@@ -7,9 +7,11 @@ export function useVaultNotes() {
   return useQuery({
     queryKey: ['vault_notes'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('vault_notes')
         .select('*')
+        .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
       if (error) throw error;
       return data;
@@ -65,9 +67,11 @@ export function useVaultCreds() {
   return useQuery({
     queryKey: ['vault_creds'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('vault_credentials')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data;

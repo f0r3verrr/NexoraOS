@@ -5,9 +5,11 @@ export function useQuickNotes() {
   return useQuery({
     queryKey: ['quick_notes'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('quick_notes')
         .select('*')
+        .eq('user_id', user.id)
         .order('pinned', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(6);

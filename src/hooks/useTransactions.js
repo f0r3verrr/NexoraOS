@@ -5,11 +5,13 @@ export function useTransactions() {
   return useQuery({
     queryKey: ['transactions'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
+        .eq('user_id', user.id)
         .order('date', { ascending: false });
-      if (error) return [];          // table may not exist yet
+      if (error) throw error;
       return data ?? [];
     },
   });

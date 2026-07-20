@@ -5,9 +5,11 @@ export function useSubtasks(taskId) {
   return useQuery({
     queryKey: ['subtasks', taskId],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('task_subtasks')
         .select('*')
+        .eq('user_id', user.id)
         .eq('task_id', taskId)
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });

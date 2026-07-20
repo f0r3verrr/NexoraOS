@@ -40,12 +40,15 @@ function expandForRange(ev, rangeStart, rangeEnd) {
 }
 
 async function fetchWithRecurring(rangeStart, rangeEnd) {
+  const { data: { user } } = await supabase.auth.getUser();
   const [directRes, recurringRes] = await Promise.all([
     supabase.from('events').select(SEL)
+      .eq('user_id', user.id)
       .gte('start_at', rangeStart.toISOString())
       .lt('start_at', rangeEnd.toISOString())
       .order('start_at'),
     supabase.from('events').select(SEL)
+      .eq('user_id', user.id)
       .in('recurrence', RECURRING_VALUES)
       .lt('start_at', rangeStart.toISOString())
       .order('start_at'),

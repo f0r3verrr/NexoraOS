@@ -5,9 +5,11 @@ export function useKanbanColumns() {
   return useQuery({
     queryKey: ['kanban_columns'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('kanban_columns')
         .select('*')
+        .eq('user_id', user.id)
         .order('position', { ascending: true })
         .order('created_at', { ascending: true });
       if (error) throw error;

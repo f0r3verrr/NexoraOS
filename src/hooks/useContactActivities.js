@@ -5,9 +5,11 @@ export function useContactActivities(contactId) {
   return useQuery({
     queryKey: ['contact_activities', contactId],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('contact_activities')
         .select('*')
+        .eq('user_id', user.id)
         .eq('contact_id', contactId)
         .order('created_at', { ascending: false });
       if (error) throw error;

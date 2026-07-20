@@ -9,9 +9,11 @@ export function useHabits() {
   return useQuery({
     queryKey: ['habits'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('habits')
         .select('*')
+        .eq('user_id', user.id)
         .eq('archived', false)
         .order('sort_order')
         .order('created_at');
@@ -27,9 +29,11 @@ export function useHabitLogs(days = 30) {
   return useQuery({
     queryKey: ['habit_logs', days],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('habit_logs')
         .select('habit_id, date, done')
+        .eq('user_id', user.id)
         .gte('date', from)
         .eq('done', true);
       if (error) throw error;

@@ -6,7 +6,8 @@ export function useCarProfile() {
   return useQuery({
     queryKey: ['car', 'profile'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('car_profile').select('*').maybeSingle();
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase.from('car_profile').select('*').eq('user_id', user.id).maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -32,8 +33,10 @@ export function useCarDeadlines() {
   return useQuery({
     queryKey: ['car', 'deadlines'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('car_deadlines').select('*')
+        .eq('user_id', user.id)
         .order('due_date', { ascending: true, nullsFirst: false });
       if (error) throw error;
       return data ?? [];
@@ -74,8 +77,10 @@ export function useCarService() {
   return useQuery({
     queryKey: ['car', 'service'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('car_service').select('*')
+        .eq('user_id', user.id)
         .order('date', { ascending: false });
       if (error) throw error;
       return data ?? [];

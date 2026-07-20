@@ -5,9 +5,11 @@ export function useNotes(folder) {
   return useQuery({
     queryKey: ['notes', folder],   // null stays null — no collision with useAllNotes
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       let q = supabase
         .from('notes')
         .select('*, project:projects(id, name, color_token)')
+        .eq('user_id', user.id)
         .order('pinned', { ascending: false })
         .order('updated_at', { ascending: false });
       if (folder) q = q.eq('folder', folder);
@@ -23,9 +25,11 @@ export function useAllNotes() {
   return useQuery({
     queryKey: ['notes', '__counts__'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('notes')
         .select('id, folder, pinned')
+        .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -37,9 +41,11 @@ export function useFolders() {
   return useQuery({
     queryKey: ['notes', 'folders'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('notes')
         .select('folder')
+        .eq('user_id', user.id)
         .order('folder');
       if (error) throw error;
       const folders = [...new Set((data ?? []).map(n => n.folder))].filter(Boolean);
@@ -93,9 +99,11 @@ export function useNoteAttachments(noteId) {
     queryKey: ['note_attachments', noteId],
     queryFn: async () => {
       if (!noteId) return [];
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('note_attachments')
         .select('*')
+        .eq('user_id', user.id)
         .eq('note_id', noteId)
         .order('created_at', { ascending: true });
       if (error) throw error;

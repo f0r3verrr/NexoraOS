@@ -5,9 +5,14 @@ export function useCinema() {
   return useQuery({
     queryKey: ['cinema'],
     queryFn: async () => {
+      // cinema_entries допускает публичное чтение чужих is_public=true записей
+      // (для /cinema/public/:userId) — здесь явно фильтруем "мои", иначе в
+      // список попадут фильмы всех пользователей с is_public по умолчанию.
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('cinema_entries')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data ?? [];

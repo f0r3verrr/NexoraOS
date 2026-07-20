@@ -6,9 +6,11 @@ export function useInboxItems() {
     queryKey: ['inbox'],
     queryFn: async () => {
       // элемент "проснулся", если snoozed_until уже в прошлом — он возвращается в общий список
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('inbox_items')
         .select('*, project:projects(id, name, color_token)')
+        .eq('user_id', user.id)
         .eq('resolved', false)
         .or(`snoozed_until.is.null,snoozed_until.lte.${new Date().toISOString()}`)
         .order('created_at', { ascending: false });
@@ -100,9 +102,11 @@ export function useResolvedItems() {
   return useQuery({
     queryKey: ['inbox', 'resolved'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('inbox_items')
         .select('*, project:projects(id, name, color_token)')
+        .eq('user_id', user.id)
         .eq('resolved', true)
         .order('resolved_at', { ascending: false, nullsFirst: false })
         .limit(100);
@@ -128,9 +132,11 @@ export function useSnoozedItems() {
     queryKey: ['inbox', 'snoozed'],
     queryFn: async () => {
       // только "спящие" (в будущем); проснувшиеся уже показываются в основном списке
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('inbox_items')
         .select('*, project:projects(id, name, color_token)')
+        .eq('user_id', user.id)
         .eq('resolved', false)
         .gt('snoozed_until', new Date().toISOString())
         .order('snoozed_until', { ascending: true });

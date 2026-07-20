@@ -5,10 +5,12 @@ export function useProject(id) {
   return useQuery({
     queryKey: ['projects', id],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('projects')
         .select('*')
         .eq('id', id)
+        .eq('user_id', user.id)
         .single();
       if (error) throw error;
       return data;
@@ -21,9 +23,11 @@ export function useProjects() {
   return useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('projects')
         .select('*')
+        .eq('user_id', user.id)
         .eq('archived', false)
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });

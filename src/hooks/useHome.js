@@ -6,7 +6,8 @@ function useList(table, key, order) {
   return useQuery({
     queryKey: ['home', key],
     queryFn: async () => {
-      let q = supabase.from(table).select('*');
+      const { data: { user } } = await supabase.auth.getUser();
+      let q = supabase.from(table).select('*').eq('user_id', user.id);
       if (order) q = q.order(order.col, { ascending: order.asc ?? true, nullsFirst: false });
       const { data, error } = await q;
       if (error) throw error;

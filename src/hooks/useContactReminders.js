@@ -5,9 +5,11 @@ export function useContactReminders(contactId) {
   return useQuery({
     queryKey: ['contact_reminders', contactId],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('contact_reminders')
         .select('*')
+        .eq('user_id', user.id)
         .eq('contact_id', contactId)
         .order('remind_at', { ascending: true });
       if (error) throw error;
