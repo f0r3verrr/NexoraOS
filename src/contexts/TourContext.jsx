@@ -88,7 +88,14 @@ export function TourProvider({ children }) {
       if (!found && step.target !== CENTER_FALLBACK_TARGET) {
         setTargetOverrides((o) => ({ ...o, [stepIndex]: true }));
       }
-      setRun(true);
+      // Дать вёрстке осесть (бейджи/счётчики могут перерисоваться после
+      // загрузки данных) и заставить Joyride пересчитать позицию спотлайта —
+      // иначе он иногда меряет устаревший прямоугольник от предыдущего кадра.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (cancelled) return;
+        window.dispatchEvent(new Event('resize'));
+        setRun(true);
+      }));
     });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
