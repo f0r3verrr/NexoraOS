@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext.jsx';
+import { TourProvider } from './contexts/TourContext.jsx';
+import { TourOverlay } from './components/TourOverlay.jsx';
 import { useHiddenPages } from './hooks/useHiddenPages.js';
 import { pageKeyByPath } from './lib/pages.js';
 
@@ -49,7 +51,12 @@ function HiddenPageGuard() {
 
   const key = pageKeyByPath(pathname);
   if (key && hidden.includes(key)) return <Navigate to="/dashboard" replace />;
-  return <Outlet />;
+  return (
+    <TourProvider>
+      <Outlet />
+      <TourOverlay />
+    </TourProvider>
+  );
 }
 
 /* Redirects logged-in users away from /login */

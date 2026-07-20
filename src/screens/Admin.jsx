@@ -227,6 +227,8 @@ export default function Admin() {
             sub={stats ? fmtBytes(stats.storage_bytes) : undefined} />
           <Metric label="Контент" icon="check" accent="--warn" value={isLoading ? '…' : (stats?.tasks_total ?? 0) + (stats?.notes_total ?? 0)}
             sub={stats ? `${stats.tasks_total} задач · ${stats.notes_total} заметок` : undefined} />
+          <Metric label="Обучение пройдено" icon="star" accent="--success" value={isLoading ? '…' : stats?.onboarding_completed ?? 0}
+            sub={stats ? `${stats.onboarding_skipped} пропустили · ${stats.onboarding_pending} ещё нет` : undefined} />
         </div>
 
         <SignupsChart data={stats?.signups_by_day} />

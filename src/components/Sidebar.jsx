@@ -60,7 +60,7 @@ const PATH_TO_KEY = {
 function RailDot({ item, active }) {
   const navigate = useNavigate();
   return (
-    <button onClick={() => item.path && navigate(item.path)} title={item.label}
+    <button onClick={() => item.path && navigate(item.path)} title={item.label} data-tour={`rail-${item.key}`}
       onMouseEnter={e => {
         if (!active) {
           e.currentTarget.style.background = 'var(--bg-hover)';
@@ -260,7 +260,7 @@ function PanelChrome({ title, sub, primaryAction, children, footer, onSearch, mo
   }, [showMore]);
 
   return (
-    <div style={{
+    <div data-tour="page-panel" style={{
       width: 260, flex: 'none',
       background: 'var(--bg)',
       borderRight: '1px solid var(--border-subtle)',
@@ -486,10 +486,12 @@ function InboxPanel() {
       title="Inbox"
       sub={isLoading ? '…' : items.length > 0 ? `${items.length} не разобрано` : 'Inbox чист'}
     >
-      <PanelGroupLabel>Виды</PanelGroupLabel>
-      <PanelRow icon="inbox"  label="Не разобрано" badge={isLoading ? '…' : items.length || undefined}   active={view === 'unresolved'} onClick={() => goView('unresolved')} />
-      <PanelRow icon="check"  label="Разобрано"                                                           active={view === 'resolved'}   onClick={() => goView('resolved')}   />
-      <PanelRow icon="snooze" label="Отложенные"   badge={snoozed.length || undefined}                   active={view === 'snoozed'}    onClick={() => goView('snoozed')}    />
+      <div data-tour="inbox-views">
+        <PanelGroupLabel>Виды</PanelGroupLabel>
+        <PanelRow icon="inbox"  label="Не разобрано" badge={isLoading ? '…' : items.length || undefined}   active={view === 'unresolved'} onClick={() => goView('unresolved')} />
+        <PanelRow icon="check"  label="Разобрано"                                                           active={view === 'resolved'}   onClick={() => goView('resolved')}   />
+        <PanelRow icon="snooze" label="Отложенные"   badge={snoozed.length || undefined}                   active={view === 'snoozed'}    onClick={() => goView('snoozed')}    />
+      </div>
 
       {hasAnySrc && (
         <>
@@ -530,9 +532,11 @@ function TodayPanel() {
       title="Сегодня"
       sub={dateStr}
       primaryAction={
-        <PanelButton primary icon="plus" onClick={() => navigate('/today?new=1')}>
-          Задача
-        </PanelButton>
+        <div data-tour="today-add">
+          <PanelButton primary icon="plus" onClick={() => navigate('/today?new=1')}>
+            Задача
+          </PanelButton>
+        </div>
       }
     >
       {/* Progress */}

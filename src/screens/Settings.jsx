@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
 import { useStorageStats } from '../hooks/useFiles.js';
 import { useHiddenPages, useToggleHiddenPage } from '../hooks/useHiddenPages.js';
+import { useSetOnboardingStatus } from '../hooks/useOnboarding.js';
 import { HIDEABLE_PAGES, PAGE_GROUPS } from '../lib/pages.js';
 
 const BUCKET   = 'user-files';
@@ -811,6 +812,8 @@ function SecuritySection() {
 /* ─── Data ───────────────────────────────────────────────── */
 
 function DataSection() {
+  const navigate = useNavigate();
+  const setOnboarding = useSetOnboardingStatus();
   const { data: stats } = useStorageStats();
   const MAX = 500 * 1024 * 1024;
   const used = stats?.size ?? 0;
@@ -858,6 +861,18 @@ function DataSection() {
         <Sep />
         <FieldRow label="Финансы" hint="Все заказы и транзакции в CSV">
           <Button variant="secondary" icon="download">Скачать</Button>
+        </FieldRow>
+      </Card>
+
+      <Card gap={14}>
+        <CardLabel>Обучение</CardLabel>
+        <FieldRow label="Интерактивный тур по приложению" hint="Пройти обучение заново — с самого начала, по всем разделам">
+          <Button
+            variant="secondary" icon="star"
+            onClick={() => { setOnboarding.mutate({ status: 'pending', step: 0 }); navigate('/dashboard'); }}
+          >
+            Пройти заново
+          </Button>
         </FieldRow>
       </Card>
 
