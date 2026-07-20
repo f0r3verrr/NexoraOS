@@ -44,11 +44,13 @@ export function TourProvider({ children }) {
     if (nextIndex < 0) return;
     if (nextIndex >= visibleSteps.length) { finishTour('completed'); return; }
     const step = visibleSteps[nextIndex];
-    setRun(false);
     if (step.route !== pathname) {
+      // переход на другую страницу — скрываем подсветку на время навигации/маунта таргета
+      setRun(false);
       navigatedByTour.current = true;
       navigate(step.route);
     }
+    // на той же странице run не трогаем — Joyride сам плавно переедет к новому таргету
     setStepIndex(nextIndex);
   }
 
