@@ -27,9 +27,9 @@ export function TourOverlay() {
       continuous
       showSkipButton
       disableOverlayClose
+      disableScrolling
       spotlightClicks={false}
-      scrollToFirstStep
-      styles={{ options: { overlayColor: 'rgba(10,10,12,0.65)', zIndex: 10000 } }}
+      styles={{ options: { overlayColor: 'rgba(10,10,12,0.65)', arrowColor: 'var(--bg-elev-2)', zIndex: 10000 } }}
     />
   );
 }
