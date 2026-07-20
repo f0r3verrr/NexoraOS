@@ -34,6 +34,7 @@ export function TourProvider({ children }) {
   );
 
   function finishTour(status) {
+    document.body.style.zoom = '';
     setRun(false);
     setStepIndex(null);
     setTargetOverrides({});
@@ -44,6 +45,7 @@ export function TourProvider({ children }) {
     if (nextIndex < 0) return;
     if (nextIndex >= visibleSteps.length) { finishTour('completed'); return; }
     const step = visibleSteps[nextIndex];
+    document.body.style.zoom = '';
     setRun(false);
     if (step.route !== pathname) {
       navigatedByTour.current = true;
@@ -75,6 +77,8 @@ export function TourProvider({ children }) {
       if (!navigatedByTour.current && pausedForIndex.current !== stepIndex) {
         // пользователь сам ушёл с роута тура — молча ставим на паузу, не мешаем
         pausedForIndex.current = stepIndex;
+        document.body.style.zoom = '';
+        setRun(false);
         setStep.mutate({ step: stepIndex });
       }
       return;
@@ -93,6 +97,11 @@ export function TourProvider({ children }) {
       // иначе он иногда меряет устаревший прямоугольник от предыдущего кадра.
       requestAnimationFrame(() => requestAnimationFrame(() => {
         if (cancelled) return;
+        // zoom:1.1 на body (index.css) ломает математику позиционирования
+        // react-joyride/react-floater — снимаем его именно на момент показа
+        // шага, синхронно перед setRun(true), чтобы спотлайт считал координаты
+        // в том же масштабе, в котором рендерится.
+        document.body.style.zoom = '1';
         window.dispatchEvent(new Event('resize'));
         setRun(true);
       }));
@@ -139,6 +148,9 @@ export function TourProvider({ children }) {
     return () => window.removeEventListener('keydown', onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [run, stepIndex]);
+
+  /* Подстраховка: если провайдер размонтируется пока zoom снят (например, выход из аккаунта) */
+  useEffect(() => () => { document.body.style.zoom = ''; }, []);
 
   const value = { run, stepIndex, steps: effectiveSteps, goToStep, finishTour, skipTour };
   return <TourContext.Provider value={value}>{children}</TourContext.Provider>;
