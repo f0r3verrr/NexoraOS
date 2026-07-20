@@ -330,9 +330,9 @@ function ScheduleWidget() {
                 onMouseLeave={el => el.currentTarget.style.background = 'transparent'}
                 style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: 10, padding: '10px 4px', borderRadius: 8, background: 'transparent', transition: 'background 80ms', margin: '0 -4px', cursor: 'pointer' }}>
                 <span style={{ fontSize: 12, color: isNow ? 'var(--text)' : 'var(--text-3)', fontFamily: 'var(--font-mono)', paddingTop: 1, fontWeight: isNow ? 500 : 400 }}>{fmtTime(e.start_at)}</span>
-                <div style={{ padding: '10px 12px', borderRadius: 8, background: `color-mix(in oklab, var(${color}) ${isNow ? 16 : 10}%, transparent)`, borderLeft: `2px solid var(${color})`, display: 'flex', flexDirection: 'column', gap: 3, position: 'relative' }}>
+                <div style={{ padding: '10px 12px', borderRadius: 8, background: `color-mix(in oklab, var(${color}) ${isNow ? 16 : 10}%, transparent)`, borderLeft: `2px solid var(${color})`, display: 'flex', flexDirection: 'column', gap: 3, position: 'relative', minWidth: 0 }}>
                   {isNow && <span style={{ position: 'absolute', top: 8, right: 10, fontSize: 10, color: `var(${color})`, fontFamily: 'var(--font-mono)', background: `color-mix(in oklab, var(${color}) 14%, var(--bg-elev-3))`, padding: '2px 6px', borderRadius: 4, animation: 'pulse 2.5s ease-in-out infinite', fontWeight: 600 }}>СЕЙЧАС</span>}
-                  <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{e.title}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{e.title}</span>
                   <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{fmtTime(e.start_at)} – {fmtTime(e.end_at)}</span>
                 </div>
               </div>

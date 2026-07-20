@@ -135,6 +135,18 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 @keyframes pagefade { from { opacity:0 } to { opacity:1 } }
 .app-surface > main { animation: pagefade 120ms ease-out; }
 
+/* ---- Длинные строки без пробелов не должны ломать вёрстку ----
+   1) overflow-wrap позволяет браузеру перенести/сжать даже "нескладную"
+      строку внутри flex/grid-ячейки (влияет на авто-минимум размера
+      именно таких контейнеров — это не no-op, а стандартный фикс).
+      Не мешает white-space:nowrap — там переносить нечего.
+   2) Для однострочной обрезки (text-overflow:ellipsis) этого мало —
+      flex/grid-потомок всё равно не сожмётся без min-width:0.
+      Правило точечно бьёт по элементам, которые сами объявили ellipsis,
+      т.е. уже осознанно хотят обрезаться. */
+* { overflow-wrap: break-word; }
+[style*="text-overflow"] { min-width: 0; }
+
 /* ---- Autofill: не даём браузеру красить поля в белый ---- */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,

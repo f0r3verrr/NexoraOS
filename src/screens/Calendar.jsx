@@ -208,8 +208,8 @@ function EventDetailModal({ event, onClose, onEdit, onDelete }) {
         {/* Color accent strip + header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
           <div style={{ width: 14, height: 14, borderRadius: 4, background: `var(${color})`, flex: 'none', marginTop: 3 }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--text)', lineHeight: 1.3 }}>{event.title}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--text)', lineHeight: 1.3, overflowWrap: 'break-word' }}>{event.title}</div>
             {event.project && (
               <div style={{ fontSize: 12, color: `var(${color})`, marginTop: 2 }}>{event.project.name}</div>
             )}
