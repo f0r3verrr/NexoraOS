@@ -30,6 +30,7 @@ export function useFeedbackUnreadCount() {
     },
     enabled: !!user,
     refetchInterval: 15000,
+    retry: false,
   });
 }
 
