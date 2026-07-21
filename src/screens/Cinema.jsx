@@ -6,6 +6,8 @@ import { Sidebar } from '../components/Sidebar.jsx';
 import { DatePicker } from '../components/DatePicker.jsx';
 import { SpinInput } from '../components/primitives.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { useIsCompact } from '../hooks/useViewport.js';
+import { useMobileNav } from '../contexts/MobileNavContext.jsx';
 import { useCinema, useCreateCinemaEntry, useUpdateCinemaEntry, useDeleteCinemaEntry } from '../hooks/useCinema.js';
 import { searchMedia, getDetails } from '../lib/tmdb.js';
 
@@ -909,6 +911,8 @@ function AddMovieModal({ entry, defaultStatus, onClose, onSave }) {
 
 /* ─── Main screen ────────────────────────────────────────────── */
 export default function Cinema() {
+  const isCompact = useIsCompact();
+  const { setOpen: setNavOpen } = useMobileNav();
   const { data: entries = [], isLoading } = useCinema();
   const { user } = useAuth();
   const createEntry = useCreateCinemaEntry();
@@ -1019,39 +1023,51 @@ export default function Cinema() {
         <Sidebar />
         <main style={{ flex: 1, minWidth: 0, height: '100%', overflowY: 'auto', background: 'oklch(0.135 0.005 80)', color: 'oklch(0.96 0.004 80)', fontFamily: "'Geist', system-ui, sans-serif", fontFeatureSettings: "'ss01'", WebkitFontSmoothing: 'antialiased' }}>
 
+          {/* ── Mobile top bar: гамбургер (Cinema не использует общий TopBar) ── */}
+          {isCompact && (
+            <div style={{ position: 'sticky', top: 0, zIndex: 45, display: 'flex', alignItems: 'center', padding: '10px 14px', background: 'oklch(0.135 0.005 80 / .85)', backdropFilter: 'blur(10px)', borderBottom: '1px solid oklch(0.22 0.007 80)' }}>
+              <button onClick={() => setNavOpen(true)} style={{
+                width: 36, height: 36, flex: 'none', borderRadius: 9, border: '1px solid oklch(0.28 0.007 80)',
+                background: 'oklch(0.20 0.007 80)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+              }}>
+                <Icon name="menu" size={17} />
+              </button>
+            </div>
+          )}
+
           {/* ── Cinematic hero ── */}
           {featured && (
-            <section style={{ position: 'relative', height: 380, overflow: 'hidden', borderBottom: '1px solid oklch(0.22 0.007 80)', flexShrink: 0 }}>
+            <section style={{ position: 'relative', height: isCompact ? 260 : 380, overflow: 'hidden', borderBottom: '1px solid oklch(0.22 0.007 80)', flexShrink: 0 }}>
               {(featured.backdrop_url || featured.poster_url)
-                ? <img src={featured.backdrop_url || featured.poster_url} alt="" onError={e => { e.currentTarget.style.display = 'none'; }} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%' }} />
+                ? <img src={featured.backdrop_url || featured.poster_url} alt="" onError={e => { e.currentTarget.style.display = 'none'; }} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 22%' }} />
                 : <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(150deg, oklch(0.26 0.04 285), oklch(0.16 0.015 285))' }} />
               }
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(105deg, oklch(0.135 0.005 80) 0%, oklch(0.135 0.005 80 / .82) 34%, oklch(0.135 0.005 80 / .2) 64%, transparent 100%)' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, oklch(0.135 0.005 80) 0%, transparent 42%)' }} />
-              <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '0 44px 38px', maxWidth: 720 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <div style={{ position: 'absolute', inset: 0, background: isCompact ? 'linear-gradient(180deg, oklch(0.135 0.005 80 / .15) 0%, oklch(0.135 0.005 80 / .55) 55%, oklch(0.135 0.005 80) 100%)' : 'linear-gradient(105deg, oklch(0.135 0.005 80) 0%, oklch(0.135 0.005 80 / .82) 34%, oklch(0.135 0.005 80 / .2) 64%, transparent 100%)' }} />
+              {!isCompact && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, oklch(0.135 0.005 80) 0%, transparent 42%)' }} />}
+              <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: isCompact ? '0 16px 18px' : '0 44px 38px', maxWidth: isCompact ? '100%' : 720, boxSizing: 'border-box' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: isCompact ? 10 : 16, flexWrap: 'wrap' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, letterSpacing: '.04em', color: '#a78bfa', background: 'rgba(139,92,246,.16)', border: '1px solid rgba(139,92,246,.35)', padding: '5px 12px', borderRadius: 99 }}>
                     <span style={{ width: 6, height: 6, borderRadius: 99, background: '#8b5cf6', boxShadow: '0 0 8px #8b5cf6' }} />
                     Продолжить просмотр
                   </span>
                   <span style={{ fontSize: 12, color: 'oklch(0.62 0.007 80)' }}>{TYPE_LABEL[featured.media_type] || ''}</span>
                 </div>
-                <h1 style={{ fontSize: 46, fontWeight: 800, letterSpacing: '-.025em', lineHeight: 1.02, marginBottom: 12, textShadow: '0 2px 30px rgba(0,0,0,.6)', color: '#fff' }}>{featured.title}</h1>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14, flexWrap: 'wrap' }}>
+                <h1 style={{ fontSize: isCompact ? 26 : 46, fontWeight: 800, letterSpacing: '-.025em', lineHeight: 1.08, marginBottom: isCompact ? 8 : 12, textShadow: '0 2px 30px rgba(0,0,0,.6)', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{featured.title}</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: isCompact ? 10 : 14, flexWrap: 'wrap' }}>
                   {featured.year && <span style={{ fontSize: 13, color: 'oklch(0.80 0.006 80)' }}>{featured.year}</span>}
                   {featured.year && <span style={{ width: 3, height: 3, borderRadius: 99, background: 'oklch(0.45 0.007 80)' }} />}
                   {featured.my_rating != null && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#F5C518' }}><span style={{ fontSize: 12 }}>★</span>{featured.my_rating}</span>}
                   {featuredEpLabel && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600, color: '#fff', background: 'rgba(139,92,246,.9)', padding: '3px 9px', borderRadius: 7 }}>{featuredEpLabel}</span>}
                 </div>
-                {featured.overview && (
+                {featured.overview && !isCompact && (
                   <p style={{ fontSize: 14, lineHeight: 1.6, color: 'oklch(0.74 0.006 80)', marginBottom: 22, maxWidth: 560, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{featured.overview}</p>
                 )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-                  <button onClick={() => openDetail(featured)} style={{ display: 'inline-flex', alignItems: 'center', gap: 9, height: 46, padding: '0 26px', borderRadius: 12, background: '#fff', color: 'oklch(0.14 0.005 80)', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 24px rgba(255,255,255,.16)', transition: 'transform .15s, box-shadow .15s', fontFamily: 'inherit' }} onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.boxShadow = '0 10px 32px rgba(255,255,255,.26)'; }} onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 6px 24px rgba(255,255,255,.16)'; }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+                  <button onClick={() => openDetail(featured)} style={{ display: 'inline-flex', alignItems: 'center', gap: 9, height: isCompact ? 40 : 46, padding: isCompact ? '0 18px' : '0 26px', borderRadius: 12, background: '#fff', color: 'oklch(0.14 0.005 80)', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 24px rgba(255,255,255,.16)', transition: 'transform .15s, box-shadow .15s', fontFamily: 'inherit' }} onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.boxShadow = '0 10px 32px rgba(255,255,255,.26)'; }} onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 6px 24px rgba(255,255,255,.16)'; }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="oklch(0.14 0.005 80)"><path d="M8 5v14l11-7z"/></svg>Продолжить
                   </button>
                   {featuredEpLabel && featuredPct != null && (
-                    <div style={{ flex: 1, maxWidth: 240 }}>
+                    <div style={{ flex: 1, minWidth: 120, maxWidth: 240 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'oklch(0.60 0.007 80)', marginBottom: 6 }}>
                         <span>{featuredEpLabel}</span>
                         <span style={{ fontFamily: 'var(--font-mono)' }}>{featuredPct}%</span>
@@ -1066,7 +1082,7 @@ export default function Cinema() {
             </section>
           )}
 
-          <div style={{ padding: '30px 44px 8px' }}>
+          <div style={{ padding: isCompact ? '18px 16px 8px' : '30px 44px 8px', boxSizing: 'border-box' }}>
             {/* ── Category tabs (future-proof) ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 26, overflowX: 'auto' }}>
               {CAT_TABS.map(cat => {
@@ -1099,7 +1115,7 @@ export default function Cinema() {
 
             {/* ── Stats strip ── */}
             {!isLoading && entries.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12, marginBottom: 26 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isCompact ? 'repeat(2,1fr)' : 'repeat(5,1fr)', gap: 12, marginBottom: 26 }}>
                 {[
                   { value: String(entries.length), unit: '', label: 'Всего', color: 'oklch(0.96 0.004 80)' },
                   { value: String(statusCounts.watching || 0), unit: '', label: 'Смотрю', color: '#a78bfa' },

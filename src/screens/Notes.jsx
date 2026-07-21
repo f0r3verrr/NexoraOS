@@ -604,15 +604,33 @@ export default function Notes() {
             <div className="ws-scroll" style={{ width: isCompact ? '100%' : 280, flex: isCompact ? 1 : 'none', minWidth: 0, borderRight: '1px solid var(--border-subtle)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
               {/* Папки — на compact горизонтальные чипы вместо отдельной колонки */}
               {isCompact && (
-                <div style={{ display: 'flex', gap: 6, padding: '10px 10px', borderBottom: '1px solid var(--border-subtle)', overflowX: 'auto', flexShrink: 0 }}>
-                  <button onClick={() => setActiveFolder(null)} style={{ flex: 'none', padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: activeFolder === null ? 'var(--bg-elev-3)' : 'var(--bg-elev-2)', color: activeFolder === null ? 'var(--text)' : 'var(--text-2)', border: `1px solid ${activeFolder === null ? 'var(--border)' : 'var(--border-subtle)'}` }}>
-                    Все · {allNotes.length}
-                  </button>
-                  {folders.map(f => (
-                    <button key={f} onClick={() => setActiveFolder(f)} style={{ flex: 'none', padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: activeFolder === f ? 'var(--bg-elev-3)' : 'var(--bg-elev-2)', color: activeFolder === f ? 'var(--text)' : 'var(--text-2)', border: `1px solid ${activeFolder === f ? 'var(--border)' : 'var(--border-subtle)'}` }}>
-                      {f} · {folderCounts[f] ?? 0}
+                <div style={{ borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', gap: 6, padding: '10px 10px', overflowX: 'auto' }}>
+                    <button onClick={() => setActiveFolder(null)} style={{ flex: 'none', padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: activeFolder === null ? 'var(--bg-elev-3)' : 'var(--bg-elev-2)', color: activeFolder === null ? 'var(--text)' : 'var(--text-2)', border: `1px solid ${activeFolder === null ? 'var(--border)' : 'var(--border-subtle)'}` }}>
+                      Все · {allNotes.length}
                     </button>
-                  ))}
+                    {folders.map(f => (
+                      <button key={f} onClick={() => setActiveFolder(f)} style={{ flex: 'none', padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: activeFolder === f ? 'var(--bg-elev-3)' : 'var(--bg-elev-2)', color: activeFolder === f ? 'var(--text)' : 'var(--text-2)', border: `1px solid ${activeFolder === f ? 'var(--border)' : 'var(--border-subtle)'}` }}>
+                        {f} · {folderCounts[f] ?? 0}
+                      </button>
+                    ))}
+                    <button onClick={() => setNewFolderOpen(o => !o)} title="Новая папка" style={{ flex: 'none', width: 30, height: 30, borderRadius: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: newFolderOpen ? 'var(--bg-elev-3)' : 'var(--bg-elev-2)', color: 'var(--text-2)', border: '1px solid var(--border-subtle)' }}>
+                      <Icon name="plus" size={13} />
+                    </button>
+                  </div>
+                  {newFolderOpen && (
+                    <div style={{ padding: '0 10px 10px', display: 'flex', gap: 6 }}>
+                      <input
+                        value={newFolderName}
+                        onChange={e => setNewFolderName(e.target.value)}
+                        placeholder="Название папки…"
+                        autoFocus
+                        onKeyDown={e => { if (e.key === 'Enter') handleAddFolder(); if (e.key === 'Escape') { setNewFolderOpen(false); setNewFolderName(''); } }}
+                        style={{ flex: 1, height: 30, padding: '0 10px', background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12.5, color: 'var(--text)', outline: 'none', boxSizing: 'border-box' }}
+                      />
+                      <button onClick={handleAddFolder} style={{ height: 30, padding: '0 12px', borderRadius: 8, background: 'var(--text)', color: 'var(--bg)', fontSize: 12, fontWeight: 500 }}>Создать</button>
+                    </div>
+                  )}
                 </div>
               )}
               {/* Search bar */}

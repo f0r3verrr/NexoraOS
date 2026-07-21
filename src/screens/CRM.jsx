@@ -821,11 +821,61 @@ function PipelineView({ contacts, activeId, setActiveId, selectedIds, onToggleSe
 }
 
 /* ─── Table view ────────────────────────────────────────────────────────────── */
+function TableViewCompact({ contacts, activeId, setActiveId, selectedIds, onToggleSelect, selectionMode }) {
+  if (contacts.length === 0) {
+    return (
+      <div style={{ padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <Icon name="users" size={28} style={{ color: 'var(--text-muted)' }} />
+        <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>Ничего не найдено</span>
+      </div>
+    );
+  }
+  return (
+    <div className="ws-scroll" style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
+      {contacts.map(c => {
+        const colorToken = c.project?.color_token ?? '--p-openresto';
+        const isSelected = selectedIds.has(c.id);
+        return (
+          <div key={c.id} onClick={() => selectionMode ? onToggleSelect(c.id) : setActiveId(c.id === activeId ? null : c.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', minWidth: 0,
+              borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer',
+              background: isSelected ? 'color-mix(in oklab, var(--info) 6%, transparent)' : 'transparent',
+              borderLeft: isSelected ? '2px solid var(--info)' : '2px solid transparent',
+            }}>
+            {selectionMode && (
+              <button onClick={e => { e.stopPropagation(); onToggleSelect(c.id); }} style={{ flex: 'none', width: 18, height: 18, borderRadius: 5, border: `2px solid ${isSelected ? 'var(--info)' : 'var(--border)'}`, background: isSelected ? 'var(--info)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {isSelected && <Icon name="check" size={12} stroke={2.5} style={{ color: 'white' }} />}
+              </button>
+            )}
+            <Avatar initials={initials(c.name)} color={`var(${colorToken})`} size={32} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13.5, color: 'var(--text)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{c.name}</span>
+                <Badge tone={STATUS_TONE[c.status]} style={{ flex: 'none' }}>{c.status}</Badge>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, fontSize: 11.5, color: 'var(--text-3)' }}>
+                {c.project && <span style={{ width: 6, height: 6, borderRadius: 2, background: `var(${colorToken})`, flex: 'none' }} />}
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email || c.phone || c.project?.name || '—'}</span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function TableView({ contacts, activeId, setActiveId, hasPanel, selectedIds, onToggleSelect, onSelectAll, selectionMode }) {
+  const isCompact = useIsCompact();
   const allSelected = contacts.length > 0 && contacts.every(c => selectedIds.has(c.id));
   const colsAll  = selectionMode ? '36px 2fr 130px 160px 90px 90px' : '2fr 130px 160px 90px 90px';
   const colsWide = selectionMode ? '36px 2fr 140px 90px'            : '2fr 140px 90px';
   const cols = hasPanel ? colsWide : colsAll;
+
+  if (isCompact) {
+    return <TableViewCompact contacts={contacts} activeId={activeId} setActiveId={setActiveId} selectedIds={selectedIds} onToggleSelect={onToggleSelect} selectionMode={selectionMode} />;
+  }
 
   return (
     <div className="ws-scroll" style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>

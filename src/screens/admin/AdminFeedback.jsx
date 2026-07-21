@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useIsCompact } from '../../hooks/useViewport.js';
 import { Modal, Field, fieldStyle } from '../../components/Modal.jsx';
 import { AttachmentButton, PendingAttachments, AttachmentGrid } from '../../components/FeedbackAttachments.jsx';
 import { uploadFeedbackFiles } from '../../lib/feedbackAttachments.js';
@@ -131,7 +132,87 @@ function FeedbackDetail({ item, onClose }) {
   );
 }
 
-function FeedbackColumn({ col, items, dragId, onDragStart, onDrop, onOpen, onArchive }) {
+function FeedbackCard({ it, col, dragId, isCompact, onDragStart, onOpen, onArchive, onMove }) {
+  const [moveOpen, setMoveOpen] = useState(false);
+  const otherCols = COLUMNS.filter(c => c.status !== col.status);
+  return (
+    <div
+      draggable={!isCompact}
+      onDragStart={() => onDragStart(it.id)}
+      onClick={() => onOpen(it)}
+      style={{
+        position: 'relative', cursor: isCompact ? 'pointer' : 'grab', padding: 15, borderRadius: 13, background: 'var(--bg-elev-1)',
+        border: `1px solid ${dragId === it.id ? 'var(--border-strong)' : 'var(--border-subtle)'}`,
+        display: 'flex', flexDirection: 'column', gap: 9,
+        opacity: dragId === it.id ? 0.5 : 1, userSelect: 'none',
+      }}
+    >
+      <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: 4 }}>
+        {isCompact && (
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={e => { e.stopPropagation(); setMoveOpen(o => !o); }}
+              title="Переместить в…"
+              style={{
+                width: 22, height: 22, borderRadius: 7, border: 'none',
+                background: 'var(--bg-elev-3)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', cursor: 'pointer',
+              }}
+            >
+              <Icon name="more" size={14} />
+            </button>
+            {moveOpen && (
+              <div onClick={e => e.stopPropagation()} style={{
+                position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 20, minWidth: 150,
+                background: 'var(--bg-elev-3)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden',
+                boxShadow: '0 8px 24px rgba(0,0,0,.35)',
+              }}>
+                {otherCols.map(c => (
+                  <button key={c.status} onClick={() => { onMove(it.id, c.status); setMoveOpen(false); }} style={{
+                    display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '9px 12px',
+                    fontSize: 12.5, color: 'var(--text)', textAlign: 'left', whiteSpace: 'nowrap',
+                  }}>
+                    <span style={{ width: 7, height: 7, borderRadius: 99, background: c.dot }} />
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        <button
+          onClick={e => { e.stopPropagation(); onArchive(it.id); }}
+          title="В архив"
+          style={{
+            width: 22, height: 22, borderRadius: 7, border: 'none',
+            background: 'var(--bg-elev-3)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', cursor: 'pointer',
+          }}
+        >
+          <Icon name="archive" size={12} />
+        </button>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingRight: isCompact ? 48 : 24 }}>
+        <Badge tone={TYPE_TONE[it.type]}>{TYPE_LABEL[it.type]}</Badge>
+        <span style={{ flex: 1 }} />
+        <Badge tone="neutral">{PRIORITY_LABEL[it.priority]}</Badge>
+      </div>
+      <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.4 }}>{it.title}</div>
+      <div style={{ fontSize: 11.5, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, minWidth: 0 }}>
+        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userLabel(it)}</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 'none' }}>
+          {it.attachments?.length > 0 && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Icon name="paperclip" size={11} />{it.attachments.length}</span>
+          )}
+          {fmtRel(it.created_at)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function FeedbackColumn({ col, items, dragId, onDragStart, onDrop, onOpen, onArchive, onMove }) {
+  const isCompact = useIsCompact();
   const [isDragOver, setIsDragOver] = useState(false);
   return (
     <div
@@ -154,45 +235,7 @@ function FeedbackColumn({ col, items, dragId, onDragStart, onDrop, onOpen, onArc
         {items.length === 0 ? (
           <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: '8px 8px' }}>Пусто</div>
         ) : items.map(it => (
-          <div
-            key={it.id}
-            draggable
-            onDragStart={() => onDragStart(it.id)}
-            onClick={() => onOpen(it)}
-            style={{
-              position: 'relative', cursor: 'grab', padding: 15, borderRadius: 13, background: 'var(--bg-elev-1)',
-              border: `1px solid ${dragId === it.id ? 'var(--border-strong)' : 'var(--border-subtle)'}`,
-              display: 'flex', flexDirection: 'column', gap: 9,
-              opacity: dragId === it.id ? 0.5 : 1, userSelect: 'none',
-            }}
-          >
-            <button
-              onClick={e => { e.stopPropagation(); onArchive(it.id); }}
-              title="В архив"
-              style={{
-                position: 'absolute', top: 10, right: 10, width: 22, height: 22, borderRadius: 7, border: 'none',
-                background: 'var(--bg-elev-3)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', cursor: 'pointer',
-              }}
-            >
-              <Icon name="archive" size={12} />
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingRight: 24 }}>
-              <Badge tone={TYPE_TONE[it.type]}>{TYPE_LABEL[it.type]}</Badge>
-              <span style={{ flex: 1 }} />
-              <Badge tone="neutral">{PRIORITY_LABEL[it.priority]}</Badge>
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.4 }}>{it.title}</div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userLabel(it)}</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {it.attachments?.length > 0 && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Icon name="paperclip" size={11} />{it.attachments.length}</span>
-                )}
-                {fmtRel(it.created_at)}
-              </span>
-            </div>
-          </div>
+          <FeedbackCard key={it.id} it={it} col={col} dragId={dragId} isCompact={isCompact} onDragStart={onDragStart} onOpen={onOpen} onArchive={onArchive} onMove={onMove} />
         ))}
       </div>
     </div>
@@ -200,8 +243,34 @@ function FeedbackColumn({ col, items, dragId, onDragStart, onDrop, onOpen, onArc
 }
 
 function ArchiveList({ items, isLoading, onOpen, onRestore }) {
+  const isCompact = useIsCompact();
   if (isLoading) return <EmptyState icon="archive" text="Загрузка..." />;
   if (items.length === 0) return <EmptyState icon="archive" text="Архив пуст" />;
+
+  if (isCompact) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {items.map(it => (
+          <div key={it.id} style={{
+            display: 'flex', flexDirection: 'column', gap: 8, padding: '13px 16px', borderRadius: 13,
+            background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', cursor: 'pointer', minWidth: 0,
+          }} onClick={() => onOpen(it)}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <Badge tone={TYPE_TONE[it.type]}>{TYPE_LABEL[it.type]}</Badge>
+              <div style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 11.5, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userLabel(it)} · {fmtRel(it.created_at)}</span>
+              <AdminButton variant="secondary" onClick={e => { e.stopPropagation(); onRestore(it.id); }} style={{ flex: 'none' }}>
+                Восстановить
+              </AdminButton>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {items.map(it => (
@@ -262,12 +331,13 @@ export default function AdminFeedback() {
         isLoading ? (
           <EmptyState icon="message" text="Загрузка..." />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 16, alignItems: 'flex-start' }}>
+          <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 16, alignItems: 'flex-start' }}>
             {COLUMNS.map(col => (
               <FeedbackColumn
                 key={col.status} col={col} items={byStatus(col.status)}
                 dragId={dragId} onDragStart={setDragId} onDrop={handleDrop} onOpen={setSelected}
                 onArchive={id => setArchived.mutate({ id, archived: true })}
+                onMove={(id, status) => setStatus.mutate({ id, status })}
               />
             ))}
           </div>

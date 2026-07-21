@@ -1796,26 +1796,56 @@ export function Sidebar() {
   );
 }
 
-/* ---- TopBar ---- */
+/* ---- TopBar ----
+   На compact right-контент (кнопки/табы конкретного экрана) раньше делил
+   один ряд высотой 56px с заголовком через flex-wrap — без min-width:0 у
+   right-обёртки она не сжималась, отжимала заголовок в ноль ширины (текст
+   рвался посимвольно) и переполняла фикс-высоту по вертикали (контент
+   "уезжал" за границы). Теперь на compact шапка — две строки произвольной
+   высоты: [гамбургер+заголовок] и, если right непустой, [right на всю
+   ширину, со своим горизонтальным скроллом при необходимости]. */
 export function TopBar({ title, breadcrumb, right, sub }) {
   const isCompact = useIsCompact();
   const { setOpen } = useMobileNav();
+
+  if (isCompact) {
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', flex: 'none',
+        borderBottom: '1px solid var(--border-subtle)',
+        boxShadow: '0 1px 10px -3px color-mix(in oklab, oklch(0 0 0) 22%, transparent)',
+        background: 'var(--bg)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', minHeight: 56, boxSizing: 'border-box' }}>
+          <button onClick={() => setOpen(true)} style={{
+            width: 36, height: 36, flex: 'none', borderRadius: 9, border: '1px solid var(--border-subtle)',
+            background: 'var(--bg-elev-1)', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          }}>
+            <Icon name="menu" size={17} />
+          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2, flex: 1, minWidth: 0 }}>
+            {breadcrumb && <span style={{ fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.04em', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{breadcrumb}</span>}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0, overflow: 'hidden' }}>
+              <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
+              {sub && <span style={{ fontSize: 12, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1 }}>{sub}</span>}
+            </div>
+          </div>
+        </div>
+        {right && (
+          <div className="ws-scroll" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px 10px', overflowX: 'auto' }}>{right}</div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div style={{
-      height: 56, display: 'flex', alignItems: 'center', gap: isCompact ? 10 : 16,
-      padding: isCompact ? '0 14px' : '0 24px',
+      height: 56, display: 'flex', alignItems: 'center', gap: 16,
+      padding: '0 24px',
       borderBottom: '1px solid var(--border-subtle)',
       boxShadow: '0 1px 10px -3px color-mix(in oklab, oklch(0 0 0) 22%, transparent)',
       background: 'var(--bg)', flex: 'none',
     }}>
-      {isCompact && (
-        <button onClick={() => setOpen(true)} style={{
-          width: 36, height: 36, flex: 'none', borderRadius: 9, border: '1px solid var(--border-subtle)',
-          background: 'var(--bg-elev-1)', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-        }}>
-          <Icon name="menu" size={17} />
-        </button>
-      )}
       <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2, flex: 1, minWidth: 0 }}>
         {breadcrumb && <span style={{ fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>{breadcrumb}</span>}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, minWidth: 0, overflow: 'hidden' }}>
@@ -1823,7 +1853,7 @@ export function TopBar({ title, breadcrumb, right, sub }) {
           {sub && <span style={{ fontSize: 13, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1 }}>{sub}</span>}
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: isCompact ? 'wrap' : 'nowrap', justifyContent: 'flex-end' }}>{right}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{right}</div>
     </div>
   );
 }

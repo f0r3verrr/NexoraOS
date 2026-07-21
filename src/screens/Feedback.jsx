@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Sidebar, TopBar } from '../components/Sidebar.jsx';
+import { useIsCompact } from '../hooks/useViewport.js';
 import { Button, Badge } from '../components/primitives.jsx';
 import { Modal, Field, fieldStyle } from '../components/Modal.jsx';
 import { Icon } from '../icons.jsx';
@@ -232,15 +233,14 @@ function ThreadView({ ticketId, onBack }) {
 }
 
 function ListView({ onOpen, onNew }) {
+  const isCompact = useIsCompact();
   const { data: items = [], isLoading } = useMyFeedback();
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
-        <div>
-          <div style={{ fontSize: 13.5, color: 'var(--text-2)' }}>Задайте вопрос, сообщите о баге или предложите идею — мы отвечаем здесь же, в этом чате.</div>
-        </div>
-        <span style={{ flex: 1 }} />
-        <Button variant="primary" icon="plus" onClick={onNew}>Новое обращение</Button>
+      <div style={{ display: 'flex', flexDirection: isCompact ? 'column' : 'row', alignItems: isCompact ? 'stretch' : 'center', gap: isCompact ? 12 : 0, marginBottom: 20 }}>
+        <div style={{ fontSize: 13.5, color: 'var(--text-2)' }}>Задайте вопрос, сообщите о баге или предложите идею — мы отвечаем здесь же, в этом чате.</div>
+        {!isCompact && <span style={{ flex: 1 }} />}
+        <Button variant="primary" icon="plus" onClick={onNew} style={isCompact ? { alignSelf: 'flex-start' } : undefined}>Новое обращение</Button>
       </div>
       {isLoading ? (
         <EmptyState icon="message" text="Загрузка…" />

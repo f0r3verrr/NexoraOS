@@ -229,6 +229,12 @@ input:autofill {
    на compact-ширинах боковая колонка стекается под основную. */
 @media (max-width: 1023px) {
   .rstack-lg { display: flex !important; flex-direction: column !important; }
+  /* align-self:'start' на детях был задуман для верхнего выравнивания в
+     grid-строке — в flex-column режиме то же свойство схлопывает ширину
+     ребёнка до max-content, и flex-wrap-контент внутри (напр. чипы
+     продуктов в PersonalHome.jsx) считает свою "естественную" ширину без
+     переноса, вылезая за экран и создавая горизонтальный скролл. */
+  .rstack-lg > * { align-self: stretch !important; min-width: 0 !important; }
 }
 
 /* Dashboard.jsx: 12-колоночный грид виджетов (gridColumn:'span N' на каждом
@@ -253,3 +259,11 @@ input:autofill {
    gap, пропорции колонок на десктопе) не трогается. */
 @media (max-width: 1023px) { .admin-rgrid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; } }
 @media (max-width: 639px)  { .admin-rgrid { grid-template-columns: 1fr !important; } }
+
+/* Goals.jsx: таблица привычек (имя + 7 дней недели + стрик + удалить) — на
+   телефоне вместо горизонтального скролла сжимаем дни/стрик до минимума,
+   имя привычки остаётся резиновой 1fr-колонкой. */
+@media (max-width: 639px) {
+  .habit-grid { grid-template-columns: 1fr repeat(7, 20px) 34px 16px !important; gap: 2px !important; padding-left: 8px !important; padding-right: 4px !important; }
+  .habit-day-btn { width: 20px !important; height: 20px !important; border-radius: 5px !important; }
+}

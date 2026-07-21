@@ -141,7 +141,7 @@ export default function Login() {
 
       <div style={{
         position: 'relative', zIndex: 1,
-        width: 400,
+        width: '100%', maxWidth: 400, boxSizing: 'border-box', padding: '0 20px',
         display: 'flex', flexDirection: 'column', gap: 32,
       }}>
         {/* Logo */}

@@ -966,7 +966,7 @@ const SECTIONS = [
 export default function Settings() {
   const { user } = useAuth();
   const isCompact = useIsCompact();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const sectionId = searchParams.get('section') || 'profile';
   const active = SECTIONS.find(s => s.id === sectionId) || SECTIONS[0];
 
@@ -975,6 +975,25 @@ export default function Settings() {
       <Sidebar />
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, background: 'var(--bg)' }}>
         <TopBar title="Настройки" sub={active.label} />
+        {isCompact && (
+          <div className="ws-scroll" style={{ display: 'flex', gap: 6, padding: '10px 14px', overflowX: 'auto', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+            {SECTIONS.map(s => {
+              const isActive = s.id === sectionId;
+              return (
+                <button key={s.id} onClick={() => setSearchParams({ section: s.id })} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, flex: 'none', padding: '7px 13px', borderRadius: 20,
+                  fontSize: 12.5, fontWeight: 500, whiteSpace: 'nowrap',
+                  background: isActive ? 'var(--bg-elev-3)' : 'var(--bg-elev-2)',
+                  color: isActive ? 'var(--text)' : 'var(--text-2)',
+                  border: `1px solid ${isActive ? 'var(--border)' : 'var(--border-subtle)'}`,
+                }}>
+                  <Icon name={s.icon} size={13} />
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="ws-scroll" style={{ flex: 1, overflowY: 'auto', padding: isCompact ? '16px 14px 28px' : '28px 36px 48px' }}>
           <div style={{ maxWidth: 580 }}>
             {sectionId === 'profile'       && <ProfileSection user={user} />}

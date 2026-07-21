@@ -534,11 +534,8 @@ function HabitsTracker({ filteredIds = null }) {
   return (
     <>
       {showAdd && <AddHabitModal onClose={() => setShowAdd(false)} />}
-      <div style={{ background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12, overflow: 'auto' }}>
-        {/* Фикс-px колонки (7 дней недели по 32px) — на узких экранах вместо
-            сплющивания имени привычки карточка скроллится по горизонтали. */}
-        <div style={{ minWidth: 480 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr repeat(7, 32px) 56px 28px', padding: '10px 14px', borderBottom: '1px solid var(--border-subtle)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.04em', textTransform: 'uppercase', gap: 4, alignItems: 'center' }}>
+      <div style={{ background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12, overflow: 'hidden' }}>
+        <div className="habit-grid" style={{ display: 'grid', gridTemplateColumns: '1fr repeat(7, 32px) 56px 28px', padding: '10px 14px', borderBottom: '1px solid var(--border-subtle)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.04em', textTransform: 'uppercase', gap: 4, alignItems: 'center' }}>
           <div>Привычка</div>
           {WEEK_DAYS.map(d => <div key={d} style={{ textAlign: 'center' }}>{d}</div>)}
           <div style={{ textAlign: 'center' }}>Стрик</div>
@@ -559,8 +556,8 @@ function HabitsTracker({ filteredIds = null }) {
             const streak = calcStreak(h.id, logsMap);
             const logs   = logsMap[h.id] ?? new Set();
             return (
-              <div key={h.id} style={{ display: 'grid', gridTemplateColumns: '1fr repeat(7, 32px) 56px 28px', padding: '10px 14px', borderBottom: i < habits.length - 1 ? '1px solid var(--border-subtle)' : 'none', alignItems: 'center', gap: 4 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div key={h.id} className="habit-grid" style={{ display: 'grid', gridTemplateColumns: '1fr repeat(7, 32px) 56px 28px', padding: '10px 14px', borderBottom: i < habits.length - 1 ? '1px solid var(--border-subtle)' : 'none', alignItems: 'center', gap: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                   <span style={{ width: 8, height: 8, borderRadius: 999, background: `var(${h.color_token})`, flex: 'none' }} />
                   <span style={{ fontSize: 13, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.name}</span>
                 </div>
@@ -571,6 +568,7 @@ function HabitsTracker({ filteredIds = null }) {
                   return (
                     <div key={date} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <button
+                        className="habit-day-btn"
                         onClick={() => !isFuture && toggle.mutate({ habitId: h.id, date, done: !done })}
                         disabled={isFuture}
                         style={{
@@ -613,7 +611,6 @@ function HabitsTracker({ filteredIds = null }) {
         <button onClick={() => setShowAdd(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', color: 'var(--text-3)', fontSize: 13, borderTop: '1px solid var(--border-subtle)' }}>
           <Icon name="plus" size={14} /> Добавить привычку
         </button>
-        </div>
       </div>
     </>
   );

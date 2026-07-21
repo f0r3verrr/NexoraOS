@@ -71,7 +71,7 @@ export default function ResetPassword() {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-sans)', overflow: 'hidden' }}>
       <GradientCanvas />
-      <div style={{ position: 'relative', zIndex: 1, width: 400, display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 400, boxSizing: 'border-box', padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 28 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
           <img src="/favicon.png" alt="NexoraOS" style={{ width: 72, borderRadius: 18, filter: 'drop-shadow(0 0 24px color-mix(in oklab, var(--p-openresto) 50%, transparent))' }} />
           <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)' }}>Новый пароль</div>
