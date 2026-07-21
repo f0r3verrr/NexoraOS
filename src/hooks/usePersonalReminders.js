@@ -104,7 +104,7 @@ export function usePersonalReminders() {
       if (outProducts.length > 0) {
         items.push({
           module: 'home', icon: 'archive', tone: '--danger', label: 'Закончились продукты',
-          sub: outProducts.length === 1 ? outProducts[0].name : `${outProducts.length} позиций`,
+          sub: outProducts.length === 1 ? outProducts[0].name : plural(outProducts.length, 'позиция', 'позиции', 'позиций'),
           to: '/personal/home', urgency: 2,
         });
       }

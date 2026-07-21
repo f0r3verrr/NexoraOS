@@ -30,6 +30,10 @@ function isoDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function addDays(s, n) { const d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + n); return isoDate(d); }
+// Локальная календарная дата события из UTC-таймстампа — раньше многие места
+// резали ISO-строку напрямую (.slice(0,10)), что для всё-дневных событий
+// в часовых поясах восточнее UTC давало предыдущий день.
+function localDay(iso) { return isoDate(new Date(iso)); }
 function fmtTime(iso) { if (!iso) return ''; const d = new Date(iso); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
 function fmtShortDate(d) { return d.toLocaleDateString('ru', { day: 'numeric', month: 'short' }); }
 function fmtDate(iso) { const d = new Date(iso + 'T12:00:00'); return d.toLocaleDateString('ru', { weekday: 'long', day: 'numeric', month: 'long' }); }
@@ -43,7 +47,7 @@ function EventModal({ defaultDate, defaultHour, initialEvent, onClose }) {
 
   const pad = v => String(Math.max(0, Math.min(+v || 0, 23))).padStart(2, '0');
   const initDate = initialEvent
-    ? initialEvent.start_at.slice(0, 10)
+    ? localDay(initialEvent.start_at)
     : (defaultDate || isoDate(new Date()));
   const initH = initialEvent
     ? new Date(initialEvent.start_at).getHours()
@@ -77,9 +81,12 @@ function EventModal({ defaultDate, defaultHour, initialEvent, onClose }) {
 
   const submit = async () => {
     if (!title.trim()) { setError('Введи название'); return; }
-    // Convert local datetime string to UTC ISO — "2026-07-08T10:00:00" is treated as local time by JS
-    const start = allDay ? new Date(`${date}T00:00:00`).toISOString() : new Date(`${date}T${startT}:00`).toISOString();
-    const end   = allDay ? new Date(`${date}T23:59:00`).toISOString() : new Date(`${date}T${endT}:00`).toISOString();
+    // Convert local datetime string to UTC ISO — "2026-07-08T10:00:00" is treated as local time by JS.
+    // All-day events have no meaningful time-of-day, so anchor them to UTC midnight of the chosen
+    // calendar date directly — interpreting as local time here shifted the date back a day in
+    // timezones ahead of UTC once stored/read back as a UTC instant.
+    const start = allDay ? new Date(`${date}T00:00:00Z`).toISOString() : new Date(`${date}T${startT}:00`).toISOString();
+    const end   = allDay ? new Date(`${date}T23:59:00Z`).toISOString() : new Date(`${date}T${endT}:00`).toISOString();
     if (!allDay && new Date(end) <= new Date(start)) { setError('Конец должен быть позже начала'); return; }
     const payload = { title: title.trim(), start_at: start, end_at: end, all_day: allDay, project_id: projId || null, url: url.trim() || null, recurrence };
     try {
@@ -333,7 +340,7 @@ function TimedGrid({ dates, events, todayStr, slotH, onSlotClick, onDelete, onEv
       {dates.map((d, di) => {
         const dayStr = isoDate(d);
         const isToday = dayStr === todayStr;
-        const dayEvents = events.filter(e => !e.all_day && e.start_at.startsWith(dayStr));
+        const dayEvents = events.filter(e => !e.all_day && localDay(e.start_at) === dayStr);
         return (
           <div key={di} style={{ position: 'relative', borderLeft: '1px solid var(--border-subtle)', height: totalH, background: isToday ? 'color-mix(in oklab, var(--text) 1.5%, transparent)' : 'transparent' }}>
             {CAL_HOURS.map((h, hi) => (
@@ -396,7 +403,7 @@ function WeekView({ weekStart, events, todayStr, onSlotClick, onDelete, onEventC
           const dayStr = isoDate(d);
           return (
             <div key={i} style={{ borderLeft: '1px solid var(--border-subtle)', padding: '2px 3px', minHeight: 24, display: 'flex', flexDirection: 'column' }}>
-              {allDay.filter(e => e.start_at.slice(0,10) === dayStr).map(e => (
+              {allDay.filter(e => localDay(e.start_at) === dayStr).map(e => (
                 <AllDayChip key={e.id + e.start_at} event={e} onClick={() => onEventClick(e)} onDelete={onDelete} />
               ))}
             </div>
@@ -414,7 +421,7 @@ function WeekView({ weekStart, events, todayStr, onSlotClick, onDelete, onEventC
 function DayView({ dateStr, events, todayStr, onSlotClick, onDelete, onEventClick }) {
   const d = new Date(dateStr + 'T12:00:00');
   const dowIdx = (d.getDay() + 6) % 7;
-  const allDayEvts = events.filter(e => e.all_day && e.start_at.slice(0,10) === dateStr);
+  const allDayEvts = events.filter(e => e.all_day && localDay(e.start_at) === dateStr);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -470,7 +477,7 @@ function MonthView({ year, month, events, todayStr, onDayClick, onDelete, onEven
             const valid = day >= 1 && day <= daysInMonth;
             const dateStr = valid ? `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}` : null;
             const isToday = dateStr === todayStr;
-            const dayEvts = dateStr ? events.filter(e => e.start_at.slice(0,10) === dateStr) : [];
+            const dayEvts = dateStr ? events.filter(e => localDay(e.start_at) === dateStr) : [];
             return (
               <div key={i}
                 onClick={() => valid && onDayClick(dateStr)}
