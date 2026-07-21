@@ -46,6 +46,7 @@ const RAIL_PERSONAL = [
 const RAIL_BOTTOM = [
   { key: 'vault',     path: '/vault',      icon: 'lock',     label: 'Vault' },
   { key: 'whatsnew',  path: '/whats-new',  icon: 'bookmark', label: 'Что нового' },
+  { key: 'feedback',  path: '/settings?section=feedback', icon: 'send', label: 'Обратная связь' },
   { key: 'settings',  path: '/settings',   icon: 'settings', label: 'Настройки' },
 ];
 
