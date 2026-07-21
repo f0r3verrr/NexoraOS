@@ -903,7 +903,74 @@ const SECTIONS = [
   { id: 'integrations',  label: 'Интеграции',  icon: 'zap'     },
   { id: 'security',      label: 'Безопасность',icon: 'lock'    },
   { id: 'data',          label: 'Данные',      icon: 'archive' },
+  { id: 'feedback',      label: 'Обратная связь', icon: 'send' },
 ];
+
+/* ─── Обратная связь ─────────────────────────────────────── */
+const FEEDBACK_TYPES = [
+  { id: 'bug', label: 'Баг' }, { id: 'feature', label: 'Фича' },
+  { id: 'question', label: 'Вопрос' }, { id: 'other', label: 'Другое' },
+];
+
+function FeedbackSection() {
+  const { user } = useAuth();
+  const [type, setType] = useState('bug');
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [status, setStatus] = useState(null);
+  const [sending, setSending] = useState(false);
+
+  const submit = async () => {
+    if (!title.trim() || !body.trim()) return;
+    setSending(true);
+    setStatus(null);
+    const { error } = await supabase.from('feedback_items').insert({
+      user_id: user.id, type, title: title.trim(), body: body.trim(),
+    });
+    setSending(false);
+    if (error) { setStatus('error'); return; }
+    setStatus('sent');
+    setTitle(''); setBody('');
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <Card gap={16}>
+        <CardLabel>Обратная связь</CardLabel>
+        <FieldRow label="Тип обращения" column>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {FEEDBACK_TYPES.map(t => (
+              <button key={t.id} onClick={() => setType(t.id)}
+                style={{
+                  height: 32, padding: '0 14px', borderRadius: 8,
+                  border: `1px solid ${type === t.id ? 'var(--border-strong)' : 'var(--border-subtle)'}`,
+                  background: type === t.id ? 'var(--bg-elev-3)' : 'var(--bg-elev-1)',
+                  color: type === t.id ? 'var(--text)' : 'var(--text-2)', fontSize: 13, cursor: 'pointer',
+                }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </FieldRow>
+        <FieldRow label="Заголовок" column>
+          <FieldInput value={title} onChange={setTitle} placeholder="Коротко опишите проблему или идею" />
+        </FieldRow>
+        <FieldRow label="Подробности" column>
+          <textarea value={body} onChange={e => setBody(e.target.value)} rows={5}
+            placeholder="Расскажите подробнее…"
+            style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)', borderRadius: 8, fontSize: 13, color: 'var(--text)', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+        </FieldRow>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Button variant="primary" onClick={submit} disabled={sending || !title.trim() || !body.trim()}>
+            {sending ? 'Отправка…' : 'Отправить'}
+          </Button>
+          {status === 'sent' && <span style={{ fontSize: 12.5, color: 'var(--success)' }}>Спасибо, мы получили обращение!</span>}
+          {status === 'error' && <span style={{ fontSize: 12.5, color: 'var(--danger)' }}>Не удалось отправить, попробуйте позже</span>}
+        </div>
+      </Card>
+    </div>
+  );
+}
 
 export default function Settings() {
   const { user } = useAuth();
@@ -925,6 +992,7 @@ export default function Settings() {
             {sectionId === 'integrations'  && <IntegrationsSection />}
             {sectionId === 'security'      && <SecuritySection />}
             {sectionId === 'data'          && <DataSection />}
+            {sectionId === 'feedback'      && <FeedbackSection />}
           </div>
         </div>
       </main>

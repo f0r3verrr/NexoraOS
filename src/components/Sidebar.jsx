@@ -44,8 +44,9 @@ const RAIL_PERSONAL = [
   { key: 'homemod', path: '/personal/home',    icon: 'home',  label: 'Дом и подписки' },
 ];
 const RAIL_BOTTOM = [
-  { key: 'vault',    path: '/vault',     icon: 'lock',        label: 'Vault' },
-  { key: 'settings', path: '/settings', icon: 'settings',    label: 'Настройки' },
+  { key: 'vault',     path: '/vault',      icon: 'lock',     label: 'Vault' },
+  { key: 'whatsnew',  path: '/whats-new',  icon: 'bookmark', label: 'Что нового' },
+  { key: 'settings',  path: '/settings',   icon: 'settings', label: 'Настройки' },
 ];
 
 const PATH_TO_KEY = {
@@ -55,6 +56,7 @@ const PATH_TO_KEY = {
   '/files': 'files', '/finances': 'finances', '/crm': 'crm',
   '/goals': 'goals', '/cinema': 'cinema', '/settings': 'settings', '/vault': 'vault',
   '/personal/car': 'car', '/personal/partner': 'partner', '/personal/home': 'homemod',
+  '/whats-new': 'whatsnew',
 };
 
 function RailDot({ item, active }) {
@@ -1670,6 +1672,7 @@ function PanelByPath({ pathname }) {
     case '/gantt':     return <GanttPanel />;
     case '/settings':  return <SettingsPanel />;
     case '/vault':     return null;
+    case '/whats-new': return null;
     default:           return <HomePanel />;
   }
 }

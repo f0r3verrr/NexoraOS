@@ -241,6 +241,28 @@ export function Tabs({ items, active, onSelect }) {
   );
 }
 
+export function Switch({ checked, onChange, size = 'md' }) {
+  const s = size === 'sm' ? { w: 32, h: 18, knob: 14 } : { w: 36, h: 20, knob: 16 };
+  return (
+    <button
+      role="switch" aria-checked={checked}
+      onClick={() => onChange?.(!checked)}
+      style={{
+        width: s.w, height: s.h, borderRadius: 999, flex: 'none',
+        background: checked ? 'var(--success)' : 'var(--bg-elev-3)',
+        border: '1px solid ' + (checked ? 'var(--success)' : 'var(--border-subtle)'),
+        position: 'relative', cursor: 'pointer', transition: 'background 120ms, border-color 120ms',
+      }}
+    >
+      <span style={{
+        position: 'absolute', top: 1.5, left: checked ? s.w - s.knob - 3 : 2,
+        width: s.knob, height: s.knob, borderRadius: 999, background: '#fff',
+        transition: 'left 120ms ease-out', boxShadow: '0 1px 2px rgba(0,0,0,0.3)',
+      }} />
+    </button>
+  );
+}
+
 export function Progress({ value, color = 'var(--text-2)', height = 4 }) {
   return (
     <div style={{ height, width: '100%', background: 'var(--bg-elev-3)', borderRadius: 999, overflow: 'hidden' }}>

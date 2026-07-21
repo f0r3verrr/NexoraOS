@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'rea
 import { useAuth } from './contexts/AuthContext.jsx';
 import { TourProvider } from './contexts/TourContext.jsx';
 import { TourOverlay } from './components/TourOverlay.jsx';
+import { ChangelogProvider } from './contexts/ChangelogContext.jsx';
+import { ChangelogModalHost } from './components/ChangelogModal.jsx';
 import { useHiddenPages } from './hooks/useHiddenPages.js';
 import { pageKeyByPath } from './lib/pages.js';
 
@@ -27,20 +29,38 @@ import CinemaPublic from './screens/CinemaPublic.jsx';
 import PersonalCar  from './screens/PersonalCar.jsx';
 import PersonalGirl from './screens/PersonalGirl.jsx';
 import PersonalHome from './screens/PersonalHome.jsx';
+import WhatsNew from './screens/WhatsNew.jsx';
 import { PrivacyPolicy, Terms } from './screens/Legal.jsx';
-import Admin from './screens/Admin.jsx';
 import Landing from './screens/Landing.jsx';
 import ResetPassword from './screens/ResetPassword.jsx';
+
+import AdminLayout from './screens/admin/AdminLayout.jsx';
+import AdminDashboard from './screens/admin/AdminDashboard.jsx';
+import AdminUsers from './screens/admin/AdminUsers.jsx';
+import AdminUserDetail from './screens/admin/AdminUserDetail.jsx';
+import AdminSubscriptions from './screens/admin/AdminSubscriptions.jsx';
+import AdminFeatureFlags from './screens/admin/AdminFeatureFlags.jsx';
+import AdminChangelog from './screens/admin/AdminChangelog.jsx';
+import AdminNews from './screens/admin/AdminNews.jsx';
+import AdminFeedback from './screens/admin/AdminFeedback.jsx';
+import AdminAnalytics from './screens/admin/AdminAnalytics.jsx';
+import AdminStorage from './screens/admin/AdminStorage.jsx';
+import AdminLogs from './screens/admin/AdminLogs.jsx';
+import AdminErrors from './screens/admin/AdminErrors.jsx';
+import AdminSecurity from './screens/admin/AdminSecurity.jsx';
+import AdminStatus from './screens/admin/AdminStatus.jsx';
 
 /* admin.nexoraos.ru живёт в том же бандле, но со своим набором роутов */
 const IS_ADMIN_HOST = typeof window !== 'undefined' && window.location.hostname.startsWith('admin.');
 
-/* Redirects to /login if not authenticated; shows spinner while loading session */
+/* Redirects to /login if not authenticated; shows spinner while loading session.
+   На admin-хосте не нужны TourProvider/useHiddenPages — сразу отдаём <Outlet/>. */
 function AuthGuard() {
   const { session, loading } = useAuth();
 
   if (loading) return <AppLoader />;
   if (!session) return <Navigate to="/login" replace />;
+  if (IS_ADMIN_HOST) return <Outlet />;
   return <HiddenPageGuard />;
 }
 
@@ -53,7 +73,10 @@ function HiddenPageGuard() {
   if (key && hidden.includes(key)) return <Navigate to="/dashboard" replace />;
   return (
     <TourProvider>
-      <Outlet />
+      <ChangelogProvider>
+        <Outlet />
+        <ChangelogModalHost />
+      </ChangelogProvider>
       <TourOverlay />
     </TourProvider>
   );
@@ -108,7 +131,22 @@ export default function App() {
             <Route path="/login" element={<Login />} />
           </Route>
           <Route element={<AuthGuard />}>
-            <Route path="/" element={<Admin />} />
+            <Route element={<AdminLayout />}>
+              <Route path="/" element={<AdminDashboard />} />
+              <Route path="/users" element={<AdminUsers />} />
+              <Route path="/users/:id" element={<AdminUserDetail />} />
+              <Route path="/subscriptions" element={<AdminSubscriptions />} />
+              <Route path="/feature-flags" element={<AdminFeatureFlags />} />
+              <Route path="/changelog" element={<AdminChangelog />} />
+              <Route path="/news" element={<AdminNews />} />
+              <Route path="/feedback" element={<AdminFeedback />} />
+              <Route path="/analytics" element={<AdminAnalytics />} />
+              <Route path="/storage" element={<AdminStorage />} />
+              <Route path="/logs" element={<AdminLogs />} />
+              <Route path="/errors" element={<AdminErrors />} />
+              <Route path="/security" element={<AdminSecurity />} />
+              <Route path="/status" element={<AdminStatus />} />
+            </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -148,6 +186,7 @@ export default function App() {
           <Route path="/projects"      element={<Projects />} />
           <Route path="/projects/:id"  element={<ProjectDetail />} />
           <Route path="/settings"  element={<Settings />} />
+          <Route path="/whats-new" element={<WhatsNew />} />
           <Route path="/vault"     element={<Vault />} />
           <Route path="/cinema"    element={<Cinema />} />
           <Route path="/personal/car"     element={<PersonalCar />} />
