@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal, Field, fieldStyle } from '../../components/Modal.jsx';
-import { AttachmentPicker, AttachmentGrid } from '../../components/FeedbackAttachments.jsx';
+import { AttachmentButton, PendingAttachments, AttachmentGrid } from '../../components/FeedbackAttachments.jsx';
 import { uploadFeedbackFiles } from '../../lib/feedbackAttachments.js';
 import {
   useFeedbackAdmin, useSetFeedbackStatus, useSetFeedbackPriority, useSetFeedbackArchived,
@@ -109,8 +109,9 @@ function FeedbackDetail({ item, onClose }) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <AttachmentPicker files={files} onChange={setFiles} disabled={busy} />
+          <PendingAttachments files={files} onChange={setFiles} />
           <div style={{ display: 'flex', gap: 8 }}>
+            <AttachmentButton files={files} onChange={setFiles} disabled={busy} />
             <textarea
               value={body} onChange={e => setBody(e.target.value)} rows={2} placeholder="Написать пользователю…"
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}

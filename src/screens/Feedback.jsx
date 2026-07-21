@@ -10,7 +10,7 @@ import {
 } from '../hooks/useFeedback.js';
 import { fmtRel, fmtDateTime } from '../lib/adminFormat.js';
 import { uploadFeedbackFiles } from '../lib/feedbackAttachments.js';
-import { AttachmentPicker, AttachmentGrid } from '../components/FeedbackAttachments.jsx';
+import { AttachmentPicker, AttachmentButton, PendingAttachments, AttachmentGrid } from '../components/FeedbackAttachments.jsx';
 
 const TYPE_LABEL = { bug: 'Баг', feature: 'Фича', question: 'Вопрос', other: 'Другое' };
 const TYPE_TONE = { bug: 'danger', feature: 'success', question: 'info', other: 'neutral' };
@@ -210,8 +210,9 @@ function ThreadView({ ticketId, onBack }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '14px 4px 4px', borderTop: '1px solid var(--border-subtle)' }}>
-        <AttachmentPicker files={files} onChange={setFiles} disabled={busy} />
+        <PendingAttachments files={files} onChange={setFiles} />
         <div style={{ display: 'flex', gap: 10 }}>
+          <AttachmentButton files={files} onChange={setFiles} disabled={busy} />
           <textarea
             value={text} onChange={e => setText(e.target.value)} rows={1} placeholder="Написать сообщение…"
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }}

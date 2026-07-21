@@ -169,8 +169,9 @@ function PendingChip({ file, onRemove }) {
   );
 }
 
-/* Пикер файлов (фото/видео) — до MAX_FILES штук, контролируемый список File[]. */
-export function AttachmentPicker({ files, onChange, disabled }) {
+/* Кнопка-триггер (скрепка) — предназначена стоять слева от поля ввода
+   сообщения, отдельно от рядa превью уже выбранных файлов. */
+export function AttachmentButton({ files, onChange, disabled }) {
   const inputRef = useRef(null);
 
   const onSelect = e => {
@@ -180,22 +181,43 @@ export function AttachmentPicker({ files, onChange, disabled }) {
     onChange([...files, ...picked].slice(0, MAX_FILES));
   };
 
+  const full = files.length >= MAX_FILES;
   return (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+    <>
       <input ref={inputRef} type="file" accept="image/*,video/*" multiple hidden onChange={onSelect} />
       <button
         type="button" onClick={() => inputRef.current?.click()}
-        disabled={disabled || files.length >= MAX_FILES}
-        title={files.length >= MAX_FILES ? `Максимум ${MAX_FILES} файлов` : 'Прикрепить фото/видео'}
+        disabled={disabled || full}
+        title={full ? `Максимум ${MAX_FILES} файлов` : 'Прикрепить фото/видео'}
         style={{
           width: 34, height: 34, borderRadius: 9, border: '1px solid var(--border-subtle)', background: 'var(--bg-elev-1)',
           color: 'var(--text-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          cursor: disabled || files.length >= MAX_FILES ? 'default' : 'pointer', opacity: disabled || files.length >= MAX_FILES ? 0.5 : 1,
+          cursor: disabled || full ? 'default' : 'pointer', opacity: disabled || full ? 0.5 : 1,
         }}
       >
-        <Icon name="camera" size={15} />
+        <Icon name="paperclip" size={16} />
       </button>
+    </>
+  );
+}
+
+/* Ряд превью уже выбранных (ещё не отправленных) файлов. */
+export function PendingAttachments({ files, onChange }) {
+  if (!files.length) return null;
+  return (
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
       {files.map((f, i) => <PendingChip key={i} file={f} onRemove={() => onChange(files.filter((_, idx) => idx !== i))} />)}
+    </div>
+  );
+}
+
+/* Комбинированный пикер (кнопка + превью в один ряд) — для форм без
+   отдельного однострочного поля ввода (например, "Новое обращение"). */
+export function AttachmentPicker({ files, onChange, disabled }) {
+  return (
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+      <AttachmentButton files={files} onChange={onChange} disabled={disabled} />
+      <PendingAttachments files={files} onChange={onChange} />
     </div>
   );
 }
