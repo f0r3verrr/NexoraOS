@@ -713,7 +713,7 @@ function AddMovieModal({ entry, defaultStatus, onClose, onSave }) {
     <>
       <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,0.5)' }} onClick={onClose} />
       <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 401 }}>
-        <div style={{ width: 540, maxHeight: '90vh', background: 'var(--bg-elev-3)', border: '1px solid var(--border)', borderRadius: 14, boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ width: 540, maxWidth: '92vw', boxSizing: 'border-box', maxHeight: '90vh', background: 'var(--bg-elev-3)', border: '1px solid var(--border)', borderRadius: 14, boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <style>{`@keyframes cin-spin{to{transform:rotate(360deg)}}`}</style>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>

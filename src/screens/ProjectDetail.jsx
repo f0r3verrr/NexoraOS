@@ -371,11 +371,11 @@ function FilesTab({ projectId }) {
                   <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>{fmtSize(f.metadata?.size)}</span>
                   <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>{fmtRelDate(f.created_at)}</span>
                   <div style={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                    <button className="fa" onClick={() => { if (!f.url) return; const a = document.createElement('a'); a.href = f.url; a.download = displayName; a.target = '_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a); }}
+                    <button className="fa touch-reveal" onClick={() => { if (!f.url) return; const a = document.createElement('a'); a.href = f.url; a.download = displayName; a.target = '_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a); }}
                       style={{ opacity: 0, transition: 'opacity 120ms', width: 24, height: 24, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-2)', background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)' }}>
                       <Icon name="download" size={11} />
                     </button>
-                    <button className="fa" onClick={() => deleteFile.mutateAsync(f.fullPath)}
+                    <button className="fa touch-reveal" onClick={() => deleteFile.mutateAsync(f.fullPath)}
                       style={{ opacity: 0, transition: 'opacity 120ms', width: 24, height: 24, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--danger)', background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)' }}>
                       <Icon name="trash" size={11} />
                     </button>
