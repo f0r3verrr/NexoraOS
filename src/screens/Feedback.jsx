@@ -4,10 +4,13 @@ import { Sidebar, TopBar } from '../components/Sidebar.jsx';
 import { Button, Badge } from '../components/primitives.jsx';
 import { Modal, Field, fieldStyle } from '../components/Modal.jsx';
 import { Icon } from '../icons.jsx';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import {
   useMyFeedback, useFeedbackItem, useFeedbackThread, useCreateFeedback, useSendFeedbackReply,
 } from '../hooks/useFeedback.js';
 import { fmtRel, fmtDateTime } from '../lib/adminFormat.js';
+import { uploadFeedbackFiles } from '../lib/feedbackAttachments.js';
+import { AttachmentPicker, AttachmentGrid } from '../components/FeedbackAttachments.jsx';
 
 const TYPE_LABEL = { bug: 'Баг', feature: 'Фича', question: 'Вопрос', other: 'Другое' };
 const TYPE_TONE = { bug: 'danger', feature: 'success', question: 'info', other: 'neutral' };
@@ -27,16 +30,36 @@ function EmptyState({ icon, text }) {
 }
 
 function NewTicketModal({ onClose, onCreated }) {
+  const { user } = useAuth();
   const create = useCreateFeedback();
   const [type, setType] = useState('bug');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const submit = () => {
-    if (!title.trim() || !body.trim()) return;
-    create.mutate({ type, title: title.trim(), body: body.trim() }, {
-      onSuccess: (row) => onCreated(row.id),
-    });
+  const busy = create.isPending || uploading;
+
+  const submit = async () => {
+    if (!title.trim() || !body.trim() || busy) return;
+    setError(null);
+    const ticketId = crypto.randomUUID();
+    try {
+      let attachments = [];
+      if (files.length) {
+        setUploading(true);
+        attachments = await uploadFeedbackFiles(files, user.id, ticketId);
+      }
+      create.mutate({ id: ticketId, type, title: title.trim(), body: body.trim(), attachments }, {
+        onSuccess: (row) => onCreated(row.id),
+        onError: () => setError('Не удалось отправить, попробуйте позже'),
+      });
+    } catch (e) {
+      setError(e.message || 'Не удалось загрузить вложение');
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -63,10 +86,14 @@ function NewTicketModal({ onClose, onCreated }) {
           <textarea value={body} onChange={e => setBody(e.target.value)} rows={5} placeholder="Расскажите подробнее…"
             style={{ ...fieldStyle, height: 'auto', padding: '10px 12px', resize: 'vertical', fontFamily: 'inherit' }} />
         </Field>
+        <Field label="Вложения">
+          <AttachmentPicker files={files} onChange={setFiles} disabled={busy} />
+        </Field>
+        {error && <div style={{ fontSize: 12.5, color: 'var(--danger)' }}>{error}</div>}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <Button variant="ghost" onClick={onClose}>Отмена</Button>
-          <Button variant="primary" disabled={create.isPending || !title.trim() || !body.trim()} onClick={submit}>
-            {create.isPending ? 'Отправка…' : 'Отправить'}
+          <Button variant="primary" disabled={busy || !title.trim() || !body.trim()} onClick={submit}>
+            {uploading ? 'Загрузка файлов…' : create.isPending ? 'Отправка…' : 'Отправить'}
           </Button>
         </div>
       </div>
@@ -94,27 +121,35 @@ function TicketRow({ item, onOpen }) {
         </div>
         <div style={{ fontSize: 14, fontWeight: 550, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
       </div>
+      {item.attachments?.length > 0 && (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>
+          <Icon name="paperclip" size={13} />{item.attachments.length}
+        </span>
+      )}
       <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>{fmtRel(item.updated_at)}</span>
       <Icon name="chevron_right" size={16} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
     </button>
   );
 }
 
-function Bubble({ own, isAdmin, body, time }) {
+function Bubble({ own, isAdmin, body, attachments, time }) {
   return (
     <div style={{ display: 'flex', justifyContent: own ? 'flex-end' : 'flex-start' }}>
-      <div style={{ maxWidth: '72%', display: 'flex', flexDirection: 'column', gap: 4, alignItems: own ? 'flex-end' : 'flex-start' }}>
+      <div style={{ maxWidth: '72%', display: 'flex', flexDirection: 'column', gap: 6, alignItems: own ? 'flex-end' : 'flex-start' }}>
         {isAdmin && <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--p-openresto)' }}>Админ NexoraOS</span>}
-        <div style={{
-          padding: '10px 14px',
-          borderRadius: own ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-          background: own ? 'var(--text)' : 'var(--bg-elev-1)',
-          color: own ? 'var(--bg)' : 'var(--text)',
-          border: own ? 'none' : '1px solid var(--border-subtle)',
-          fontSize: 13.5, lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-        }}>
-          {body}
-        </div>
+        {body && (
+          <div style={{
+            padding: '10px 14px',
+            borderRadius: own ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+            background: own ? 'var(--text)' : 'var(--bg-elev-1)',
+            color: own ? 'var(--bg)' : 'var(--text)',
+            border: own ? 'none' : '1px solid var(--border-subtle)',
+            fontSize: 13.5, lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+          }}>
+            {body}
+          </div>
+        )}
+        <AttachmentGrid files={attachments} />
         <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{fmtDateTime(time)}</span>
       </div>
     </div>
@@ -122,18 +157,32 @@ function Bubble({ own, isAdmin, body, time }) {
 }
 
 function ThreadView({ ticketId, onBack }) {
+  const { user } = useAuth();
   const { data: item } = useFeedbackItem(ticketId);
   const { data: replies = [] } = useFeedbackThread(ticketId);
   const send = useSendFeedbackReply(ticketId);
   const [text, setText] = useState('');
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ block: 'end' }); }, [replies.length, item?.id]);
 
-  const submit = () => {
+  const busy = send.isPending || uploading;
+
+  const submit = async () => {
     const body = text.trim();
-    if (!body || send.isPending) return;
-    send.mutate(body, { onSuccess: () => setText('') });
+    if ((!body && !files.length) || busy) return;
+    try {
+      let attachments = [];
+      if (files.length) {
+        setUploading(true);
+        attachments = await uploadFeedbackFiles(files, user.id, ticketId);
+      }
+      send.mutate({ body, attachments }, { onSuccess: () => { setText(''); setFiles([]); } });
+    } finally {
+      setUploading(false);
+    }
   };
 
   if (!item) return null;
@@ -155,24 +204,27 @@ function ThreadView({ ticketId, onBack }) {
       </div>
 
       <div className="ws-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 4px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <Bubble own body={item.body} time={item.created_at} />
-        {replies.map(r => <Bubble key={r.id} own={!r.is_admin} isAdmin={r.is_admin} body={r.body} time={r.created_at} />)}
+        <Bubble own body={item.body} attachments={item.attachments} time={item.created_at} />
+        {replies.map(r => <Bubble key={r.id} own={!r.is_admin} isAdmin={r.is_admin} body={r.body} attachments={r.attachments} time={r.created_at} />)}
         <div ref={bottomRef} />
       </div>
 
-      <div style={{ display: 'flex', gap: 10, padding: '14px 4px 4px', borderTop: '1px solid var(--border-subtle)' }}>
-        <textarea
-          value={text} onChange={e => setText(e.target.value)} rows={1} placeholder="Написать сообщение…"
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }}
-          style={{
-            flex: 1, resize: 'none', padding: '10px 14px', background: 'var(--bg-elev-1)',
-            border: '1px solid var(--border-subtle)', borderRadius: 10, fontSize: 13.5, color: 'var(--text)',
-            fontFamily: 'inherit', outline: 'none', maxHeight: 120,
-          }}
-        />
-        <Button variant="primary" icon="send" disabled={!text.trim() || send.isPending} onClick={submit} style={{ alignSelf: 'flex-end' }}>
-          Отправить
-        </Button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '14px 4px 4px', borderTop: '1px solid var(--border-subtle)' }}>
+        <AttachmentPicker files={files} onChange={setFiles} disabled={busy} />
+        <div style={{ display: 'flex', gap: 10 }}>
+          <textarea
+            value={text} onChange={e => setText(e.target.value)} rows={1} placeholder="Написать сообщение…"
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }}
+            style={{
+              flex: 1, resize: 'none', padding: '10px 14px', background: 'var(--bg-elev-1)',
+              border: '1px solid var(--border-subtle)', borderRadius: 10, fontSize: 13.5, color: 'var(--text)',
+              fontFamily: 'inherit', outline: 'none', maxHeight: 120,
+            }}
+          />
+          <Button variant="primary" icon="send" disabled={(!text.trim() && !files.length) || busy} onClick={submit} style={{ alignSelf: 'flex-end' }}>
+            {uploading ? 'Загрузка…' : 'Отправить'}
+          </Button>
+        </div>
       </div>
     </div>
   );

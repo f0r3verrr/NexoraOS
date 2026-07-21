@@ -48,9 +48,9 @@ export function useCreateFeedback() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async ({ type, title, body }) => {
+    mutationFn: async ({ id, type, title, body, attachments = [] }) => {
       const { data, error } = await supabase.from('feedback_items')
-        .insert({ user_id: user.id, type, title, body }).select().single();
+        .insert({ id, user_id: user.id, type, title, body, attachments }).select().single();
       if (error) throw error;
       return data;
     },
@@ -61,8 +61,8 @@ export function useCreateFeedback() {
 export function useSendFeedbackReply(id) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (body) => {
-      const { error } = await supabase.rpc('reply_feedback', { p_id: id, p_body: body });
+    mutationFn: async ({ body, attachments = [] }) => {
+      const { error } = await supabase.rpc('reply_feedback', { p_id: id, p_body: body, p_attachments: attachments });
       if (error) throw error;
     },
     onSuccess: () => {

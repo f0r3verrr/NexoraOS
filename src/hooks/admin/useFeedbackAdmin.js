@@ -2,11 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase.js';
 import { useAdminAction } from './useAdminAction.js';
 
-export function useFeedbackAdmin(statusFilter) {
+export function useFeedbackAdmin(statusFilter, archived = false) {
   return useQuery({
-    queryKey: ['admin', 'feedback', statusFilter],
+    queryKey: ['admin', 'feedback', statusFilter, archived],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('admin_list_feedback', { status_filter: statusFilter || null });
+      const { data, error } = await supabase.rpc('admin_list_feedback', { status_filter: statusFilter || null, p_archived: archived });
       if (error) throw error;
       return data ?? [];
     },
@@ -28,9 +28,16 @@ export function useSetFeedbackPriority() {
   });
 }
 
+export function useSetFeedbackArchived() {
+  return useAdminAction(async ({ id, archived }) => {
+    const { error } = await supabase.rpc('admin_set_feedback_archived', { p_id: id, p_archived: archived });
+    if (error) throw error;
+  });
+}
+
 export function useReplyFeedback() {
-  return useAdminAction(async ({ id, body }) => {
-    const { error } = await supabase.rpc('admin_reply_feedback', { p_id: id, p_body: body });
+  return useAdminAction(async ({ id, body, attachments = [] }) => {
+    const { error } = await supabase.rpc('admin_reply_feedback', { p_id: id, p_body: body, p_attachments: attachments });
     if (error) throw error;
   });
 }
