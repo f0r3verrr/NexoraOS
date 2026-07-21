@@ -172,7 +172,7 @@ function GiftCard({ g, onToggle, onEdit, onDelete }) {
         <span style={{ padding: '2px 8px', borderRadius: 999, background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)' }}>{g.tag}</span>
         {used && <span>· подарено{g.used_on ? ` · ${g.used_on}` : ''}</span>}
       </div>
-      <div className="gift-actions" style={{ position: 'absolute', top: 8, right: 8, opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2 }}>
+      <div className="gift-actions touch-reveal" style={{ position: 'absolute', top: 8, right: 8, opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2 }}>
         <IconButton icon={used ? 'repeat' : 'check'} size="sm" title={used ? 'Вернуть в актуальные' : 'Подарено'} onClick={onToggle} />
         <IconButton icon="edit"  size="sm" title="Изменить" onClick={onEdit} />
         <IconButton icon="trash" size="sm" title="Удалить"  onClick={onDelete} />
@@ -302,7 +302,7 @@ export default function PersonalGirl() {
               <Button variant="primary" icon="plus" onClick={() => setProfileModal(true)}>Заполнить профиль</Button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 28, padding: '24px 28px', background: `linear-gradient(135deg, color-mix(in oklab, var(${C}) 14%, var(--bg-elev-1)) 0%, var(--bg-elev-1) 60%)`, border: `1px solid color-mix(in oklab, var(${C}) 25%, var(--border-subtle))`, borderRadius: 14, marginBottom: 20, position: 'relative', alignItems: 'center' }}>
+            <div className="rstack-lg" style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 28, padding: '24px 28px', background: `linear-gradient(135deg, color-mix(in oklab, var(${C}) 14%, var(--bg-elev-1)) 0%, var(--bg-elev-1) 60%)`, border: `1px solid color-mix(in oklab, var(${C}) 25%, var(--border-subtle))`, borderRadius: 14, marginBottom: 20, position: 'relative', alignItems: 'center' }}>
               <ModulePhoto module="partner-photo" shape="circle" size={220} accent={C} label="фото" />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -336,7 +336,7 @@ export default function PersonalGirl() {
           )}
 
           {/* размеры + любимое */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+          <div className="rstack-lg" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             <div style={{ padding: '18px 20px', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>Размеры</span>
@@ -395,7 +395,7 @@ export default function PersonalGirl() {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                 {filteredGifts.map(g => (
                   <GiftCard key={g.id} g={g}
                     onToggle={() => toggleGift(g)}
@@ -430,7 +430,7 @@ export default function PersonalGirl() {
                       <div style={{ flex: 1 }}><Progress value={p.progress} color={`var(${C})`} height={3} /></div>
                       <span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', minWidth: 32, textAlign: 'right' }}>{p.progress}%</span>
                     </div>
-                    <div className="plan-actions" style={{ opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                    <div className="plan-actions touch-reveal" style={{ opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                       <IconButton icon="arrow_down" size="sm" title="−10%" onClick={() => savePlan.mutate({ id: p.id, progress: Math.max(0, p.progress - 10) })} />
                       <IconButton icon="arrow_up_right" size="sm" title="+10%" onClick={() => savePlan.mutate({ id: p.id, progress: Math.min(100, p.progress + 10) })} />
                       <IconButton icon="edit"  size="sm" title="Изменить" onClick={() => setPlanModal(p)} />

@@ -139,7 +139,7 @@ function CountdownTile({ deadline, mileage, onEdit, onDelete }) {
         </span>
         {deadline.note && <span style={{ fontSize: 11, color: 'var(--text-2)', fontFamily: 'var(--font-mono)' }}>{deadline.note}</span>}
       </div>
-      <div className="dl-actions" style={{ position: 'absolute', top: 8, right: 8, opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2 }}>
+      <div className="dl-actions touch-reveal" style={{ position: 'absolute', top: 8, right: 8, opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2 }}>
         <IconButton icon="edit"  size="sm" title="Изменить" onClick={onEdit} />
         <IconButton icon="trash" size="sm" title="Удалить"  onClick={onDelete} />
       </div>
@@ -253,7 +253,7 @@ export default function PersonalCar() {
           <ModuleReminderBanner module="car" />
 
           {/* hero: машина + сканы документов */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 16, marginBottom: 20, alignItems: 'stretch' }}>
+          <div className="rstack-lg" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 16, marginBottom: 20, alignItems: 'stretch' }}>
             {pL ? <div /> : !profile ? (
               <div style={{ padding: '48px 24px', background: `linear-gradient(135deg, color-mix(in oklab, var(${C}) 12%, var(--bg-elev-1)) 0%, var(--bg-elev-1) 60%)`, border: `1px solid color-mix(in oklab, var(${C}) 25%, var(--border-subtle))`, borderRadius: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                 <span style={{ width: 48, height: 48, borderRadius: 12, background: `color-mix(in oklab, var(${C}) 16%, transparent)`, color: `var(${C})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -330,7 +330,7 @@ export default function PersonalCar() {
                 Добавь сроки ОСАГО, техосмотра и ТО — здесь будет обратный отсчёт
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
                 {deadlines.map(d => (
                   <CountdownTile key={d.id} deadline={d} mileage={profile?.mileage}
                     onEdit={() => setDeadlineModal(d)}
@@ -341,7 +341,7 @@ export default function PersonalCar() {
           </div>
 
           {/* журнал + затраты */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 16 }}>
+          <div className="rstack-lg" style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 16 }}>
             <div style={{ background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
               <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>Журнал ТО</span>
@@ -371,7 +371,7 @@ export default function PersonalCar() {
                       <span style={{ fontSize: 13, color: 'var(--text)', textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
                         {Number(s.cost).toLocaleString('ru')} ₽
                       </span>
-                      <div className="sv-actions" style={{ opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                      <div className="sv-actions touch-reveal" style={{ opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                         <IconButton icon="edit"  size="sm" onClick={() => setServiceModal(s)} />
                         <IconButton icon="trash" size="sm" onClick={() => deleteService.mutate(s.id)} />
                       </div>

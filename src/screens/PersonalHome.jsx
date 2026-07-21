@@ -253,7 +253,7 @@ function ProductChip({ product, onCycle, onEdit, onDelete }) {
       <button onClick={() => onCycle(product)} title="Клик — сменить статус" style={{ alignSelf: 'flex-start', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
         <Badge tone={meta.tone} dot>{meta.label}</Badge>
       </button>
-      <div className="chip-actions" style={{ position: 'absolute', top: 7, right: 7, opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2 }}>
+      <div className="chip-actions touch-reveal" style={{ position: 'absolute', top: 7, right: 7, opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2 }}>
         <IconButton icon="edit"  size="sm" onClick={() => onEdit(product)} />
         <IconButton icon="trash" size="sm" onClick={() => onDelete(product.id)} />
       </div>
@@ -419,14 +419,14 @@ export default function PersonalHome() {
           <ModuleReminderBanner module="home" />
 
           {/* метрики */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+          <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
             <MetricCard icon="repeat" accent="--p-home" label="Подписки в месяц" value={monthlyTotal.toLocaleString('ru')} unit="₽" sub={`${subs.filter(s => s.period === 'month').length} активных`} />
             <MetricCard icon="home" accent="--p-home" label={lastBill ? `ЖКХ · ${new Date(lastBill.month).toLocaleDateString('ru', { month: 'long' })}` : 'ЖКХ'} value={lastBill ? Number(lastBill.amount).toLocaleString('ru') : '—'} unit={lastBill ? '₽' : undefined} sub={lastBill ? (lastBill.paid ? 'оплачено' : 'к оплате') : 'нет счетов'} />
             <MetricCard icon="globe" accent="--p-openresto" label="Годовые платежи" value={yearlyTotal ? yearlyTotal.toLocaleString('ru') : '—'} unit={yearlyTotal ? '₽' : undefined} sub="домен, хостинг и т.п." />
             <MetricCard icon="zap" accent="--p-sites" label="Гарантий активно" value={String(activeWarrs)} sub={warrs.length > activeWarrs ? `${warrs.length - activeWarrs} истекло` : undefined} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginBottom: 16 }}>
+          <div className="rstack-lg" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginBottom: 16 }}>
             {/* подписки */}
             <div style={{ background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12, overflow: 'hidden', alignSelf: 'start' }}>
               <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -460,7 +460,7 @@ export default function PersonalHome() {
                         <span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 4 }}>/{s.period === 'year' ? 'г' : 'мес'}</span>
                       </span>
                       <span style={{ fontSize: 12, color: 'var(--text-2)', fontFamily: 'var(--font-mono)', paddingLeft: 14 }}>{fmtNext(s.next_charge)}</span>
-                      <div className="sub-actions" style={{ opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                      <div className="sub-actions touch-reveal" style={{ opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                         <IconButton icon="edit"  size="sm" onClick={() => setSubModal(s)} />
                         <IconButton icon="trash" size="sm" onClick={() => deleteSub.mutate(s.id)} />
                       </div>
@@ -521,7 +521,7 @@ export default function PersonalHome() {
                       style={{ position: 'relative', padding: '10px 12px', background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{a.label}</span>
                       <span style={{ fontSize: 13, color: 'var(--text)', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>{a.value}</span>
-                      <div className="acc-actions" style={{ position: 'absolute', top: 6, right: 6, opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2 }}>
+                      <div className="acc-actions touch-reveal" style={{ position: 'absolute', top: 6, right: 6, opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2 }}>
                         <IconButton icon="edit"  size="sm" onClick={() => setAccessModal(a)} />
                         <IconButton icon="trash" size="sm" onClick={() => deleteAccess.mutate(a.id)} />
                       </div>
@@ -533,7 +533,7 @@ export default function PersonalHome() {
           </div>
 
           {/* гарантии + продукты | чеки */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16 }}>
+          <div className="rstack-lg" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignSelf: 'start' }}>
           <div style={{ padding: '14px 18px', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -543,7 +543,7 @@ export default function PersonalHome() {
             {warrs.length === 0 ? (
               <div style={{ padding: '18px 0', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>Добавь технику — не потеряешь сроки гарантий</div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+              <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
                 {warrs.map(w => {
                   const expired = w.until && new Date(w.until) < new Date();
                   return (
@@ -564,7 +564,7 @@ export default function PersonalHome() {
                           {w.until ? ` · до ${new Date(w.until).toLocaleDateString('ru', { month: '2-digit', year: 'numeric' })}` : ''}
                         </span>
                       </div>
-                      <div className="wr-actions" style={{ position: 'absolute', bottom: 8, right: 8, opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2 }}>
+                      <div className="wr-actions touch-reveal" style={{ position: 'absolute', bottom: 8, right: 8, opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2 }}>
                         <IconButton icon="edit"  size="sm" onClick={() => setWarrantyModal(w)} />
                         <IconButton icon="trash" size="sm" onClick={() => deleteWarr.mutate(w.id)} />
                       </div>
