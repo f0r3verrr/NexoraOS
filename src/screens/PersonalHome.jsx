@@ -11,6 +11,7 @@ import {
   useUtilityBills, useSaveUtilityBill, useDeleteUtilityBill,
   useHomeAccesses, useSaveHomeAccess, useDeleteHomeAccess,
   useWarranties, useSaveWarranty, useDeleteWarranty,
+  useProducts, useSaveProduct, useDeleteProduct,
 } from '../hooks/useHome.js';
 
 const C = '--p-home';
@@ -21,6 +22,15 @@ const CAT_META = {
   'Развлечения':  { icon: 'video', color: '--p-girl' },
   'Облако':       { icon: 'globe', color: '--p-sites' },
 };
+
+const PRODUCT_CATS = ['Еда', 'Бытовая химия', 'Гигиена', 'Другое'];
+const STATUS_META = {
+  ok:  { label: 'Есть',          tone: 'success', next: 'low' },
+  low: { label: 'Заканчивается', tone: 'warn',     next: 'out' },
+  out: { label: 'Закончилось',   tone: 'danger',   next: 'ok' },
+};
+const PROD_TABS = ['Все', 'Есть', 'Заканчивается', 'Закончилось'];
+const PROD_TAB_TO_STATUS = { 'Есть': 'ok', 'Заканчивается': 'low', 'Закончилось': 'out' };
 
 function todayStr() {
   const d = new Date();
@@ -213,24 +223,79 @@ function WarrantyModal({ warranty, onClose }) {
   );
 }
 
+/* ─── Продукт ────────────────────────────────────────────── */
+function ProductModal({ product, onClose }) {
+  const save = useSaveProduct();
+  const [name,   setName]   = useState(product?.name ?? '');
+  const [cat,    setCat]    = useState(product?.category ?? 'Еда');
+  const [status, setStatus] = useState(product?.status ?? 'ok');
+  const [note,   setNote]   = useState(product?.note ?? '');
+  const [error,  setError]  = useState('');
+
+  const submit = async () => {
+    if (!name.trim()) { setError('Укажи название'); return; }
+    try {
+      await save.mutateAsync({ id: product?.id, name: name.trim(), category: cat, status, note: note.trim() || null });
+      onClose();
+    } catch (e) { setError(e?.message ?? 'Ошибка'); }
+  };
+
+  return (
+    <Modal title={product ? 'Изменить продукт' : 'Новый продукт'} sub="как список у холодильника" onClose={onClose}>
+      <Field label="Название"><input value={name} onChange={e => setName(e.target.value)} placeholder="Молоко" autoFocus style={fieldStyle} /></Field>
+      <Field label="Категория">
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {PRODUCT_CATS.map(c => (
+            <button key={c} onClick={() => setCat(c)}
+              style={{ height: 30, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: 'pointer', border: `1.5px solid ${cat === c ? `var(${C})` : 'var(--border-subtle)'}`, background: cat === c ? `color-mix(in oklab, var(${C}) 14%, transparent)` : 'transparent', color: cat === c ? `var(${C})` : 'var(--text-3)' }}>
+              {c}
+            </button>
+          ))}
+        </div>
+      </Field>
+      <Field label="Статус">
+        <div style={{ display: 'flex', gap: 6 }}>
+          {Object.entries(STATUS_META).map(([v, m]) => (
+            <button key={v} onClick={() => setStatus(v)}
+              style={{ flex: 1, height: 34, borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: 'pointer', border: `1.5px solid ${status === v ? `var(--${m.tone})` : 'var(--border-subtle)'}`, background: status === v ? `color-mix(in oklab, var(--${m.tone}) 14%, transparent)` : 'transparent', color: status === v ? `var(--${m.tone})` : 'var(--text-3)' }}>
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </Field>
+      <Field label="Заметка"><input value={note} onChange={e => setNote(e.target.value)} placeholder="какая марка, где покупать…" style={fieldStyle} /></Field>
+      {error && <div style={{ fontSize: 12, color: 'var(--danger)' }}>{error}</div>}
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <Button variant="ghost" onClick={onClose}>Отмена</Button>
+        <Button variant="primary" icon="check" onClick={submit} disabled={save.isPending}>Сохранить</Button>
+      </div>
+    </Modal>
+  );
+}
+
 /* ─── Экран ──────────────────────────────────────────────── */
 export default function PersonalHome() {
   const { data: subs = [] }     = useSubscriptions();
   const { data: bills = [] }    = useUtilityBills();
   const { data: accesses = [] } = useHomeAccesses();
   const { data: warrs = [] }    = useWarranties();
+  const { data: products = [] } = useProducts();
   const saveBill      = useSaveUtilityBill();
   const deleteBill    = useDeleteUtilityBill();
   const deleteSub     = useDeleteSubscription();
   const deleteAccess  = useDeleteHomeAccess();
   const deleteWarr    = useDeleteWarranty();
+  const saveProduct   = useSaveProduct();
+  const deleteProduct = useDeleteProduct();
 
   const [subModal,      setSubModal]      = useState(null);
   const [billModal,     setBillModal]     = useState(false);
   const [accessModal,   setAccessModal]   = useState(null);
   const [warrantyModal, setWarrantyModal] = useState(null);
+  const [productModal,  setProductModal]  = useState(null);
   const [confirmBill,   setConfirmBill]   = useState(null);
   const [tab,           setTab]           = useState('Все');
+  const [prodTab,       setProdTab]       = useState('Все');
 
   const monthlyTotal = subs.filter(s => s.period === 'month').reduce((a, s) => a + Number(s.amount), 0);
   const yearlyTotal  = subs.filter(s => s.period === 'year').reduce((a, s) => a + Number(s.amount), 0);
@@ -242,12 +307,19 @@ export default function PersonalHome() {
   const maxBill = Math.max(...last6.map(b => Number(b.amount)), 1);
   const unpaid = bills.find(b => !b.paid);
 
+  const filteredProducts = useMemo(
+    () => prodTab === 'Все' ? products : products.filter(p => p.status === PROD_TAB_TO_STATUS[prodTab]),
+    [products, prodTab]
+  );
+  const cycleStatus = (p) => saveProduct.mutate({ id: p.id, status: STATUS_META[p.status]?.next ?? 'ok' });
+
   return (
     <div className="app-surface" style={{ display: 'flex', height: '100%' }}>
       {subModal      && <SubModal sub={subModal === 'new' ? null : subModal} onClose={() => setSubModal(null)} />}
       {billModal     && <BillModal onClose={() => setBillModal(false)} />}
       {accessModal   && <AccessModal access={accessModal === 'new' ? null : accessModal} onClose={() => setAccessModal(null)} />}
       {warrantyModal && <WarrantyModal warranty={warrantyModal === 'new' ? null : warrantyModal} onClose={() => setWarrantyModal(null)} />}
+      {productModal  && <ProductModal product={productModal === 'new' ? null : productModal} onClose={() => setProductModal(null)} />}
       {confirmBill && (
         <ConfirmModal
           title="Удалить счёт?"
@@ -438,6 +510,46 @@ export default function PersonalHome() {
             </div>
             <ModuleFilesGrid module="home-receipts" accent={C} columns={3} hint="Фото чеков — пригодятся для гарантии и возвратов" />
           </div>
+          </div>
+
+          {/* продукты — как список у холодильника */}
+          <div style={{ marginTop: 16, padding: '14px 18px', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>Продукты</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Tabs items={PROD_TABS} active={prodTab} onSelect={setProdTab} />
+                <Button variant="ghost" size="sm" icon="plus" onClick={() => setProductModal('new')}>Добавить</Button>
+              </div>
+            </div>
+            {filteredProducts.length === 0 ? (
+              <div style={{ padding: '18px 0', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
+                {products.length === 0 ? 'Добавь первый продукт — что есть, что заканчивается, что купить' : 'Ничего в этой категории'}
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                {filteredProducts.map(p => {
+                  const meta = STATUS_META[p.status] ?? STATUS_META.ok;
+                  return (
+                    <div key={p.id}
+                      onMouseEnter={e => e.currentTarget.querySelector('.prod-actions').style.opacity = '1'}
+                      onMouseLeave={e => e.currentTarget.querySelector('.prod-actions').style.opacity = '0'}
+                      style={{ position: 'relative', padding: '10px 12px', background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 44 }}>{p.name}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <span style={{ fontSize: 11, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.category}{p.note ? ` · ${p.note}` : ''}</span>
+                        <button onClick={() => cycleStatus(p)} title="Клик — сменить статус" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}>
+                          <Badge tone={meta.tone} dot>{meta.label}</Badge>
+                        </button>
+                      </div>
+                      <div className="prod-actions" style={{ position: 'absolute', top: 8, right: 8, opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2 }}>
+                        <IconButton icon="edit"  size="sm" onClick={() => setProductModal(p)} />
+                        <IconButton icon="trash" size="sm" onClick={() => deleteProduct.mutate(p.id)} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </main>

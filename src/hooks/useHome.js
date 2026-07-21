@@ -65,3 +65,8 @@ export const useDeleteHomeAccess  = () => useRemove('home_accesses', 'access');
 export const useWarranties       = () => useList('warranties', 'warr', { col: 'until', asc: true });
 export const useSaveWarranty     = () => useSave('warranties', 'warr');
 export const useDeleteWarranty   = () => useRemove('warranties', 'warr');
+
+/* Продукты (холодильник/кладовка) */
+export const useProducts       = () => useList('home_products', 'products', { col: 'created_at', asc: false });
+export const useSaveProduct    = () => useSave('home_products', 'products');
+export const useDeleteProduct  = () => useRemove('home_products', 'products');

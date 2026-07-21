@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useCarProfile, useCarDeadlines } from './useCar.js';
 import { usePartnerProfile } from './usePartner.js';
-import { useSubscriptions, useWarranties, useUtilityBills } from './useHome.js';
+import { useSubscriptions, useWarranties, useUtilityBills, useProducts } from './useHome.js';
 import { useHiddenPages } from './useHiddenPages.js';
 import { plural } from '../lib/plural.js';
 
@@ -48,6 +48,7 @@ export function usePersonalReminders() {
   const { data: subs = [] }      = useSubscriptions();
   const { data: warrs = [] }     = useWarranties();
   const { data: bills = [] }     = useUtilityBills();
+  const { data: products = [] }  = useProducts();
 
   return useMemo(() => {
     const items = [];
@@ -99,8 +100,16 @@ export function usePersonalReminders() {
       if (unpaid) {
         items.push({ module: 'home', icon: 'home', tone: '--warn', label: 'Счёт ЖКХ не оплачен', sub: `${Number(unpaid.amount).toLocaleString('ru')} ₽`, to: '/personal/home', urgency: 5 });
       }
+      const outProducts = products.filter(p => p.status === 'out');
+      if (outProducts.length > 0) {
+        items.push({
+          module: 'home', icon: 'archive', tone: '--danger', label: 'Закончились продукты',
+          sub: outProducts.length === 1 ? outProducts[0].name : `${outProducts.length} позиций`,
+          to: '/personal/home', urgency: 2,
+        });
+      }
     }
 
     return items.sort((a, b) => a.urgency - b.urgency);
-  }, [hidden, carProfile, deadlines, partner, subs, warrs, bills]);
+  }, [hidden, carProfile, deadlines, partner, subs, warrs, bills, products]);
 }

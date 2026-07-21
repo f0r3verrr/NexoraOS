@@ -43,10 +43,10 @@ export function useCreateProject() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async ({ name, color_token = '--p-openresto', area = 'Личное' }) => {
+    mutationFn: async ({ name, color_token = '--p-openresto', area = 'Личное', ...rest }) => {
       const { data, error } = await supabase
         .from('projects')
-        .insert({ user_id: user.id, name, color_token, area })
+        .insert({ user_id: user.id, name, color_token, area, ...rest })
         .select()
         .single();
       if (error) throw error;

@@ -136,6 +136,39 @@ function StatusMsg({ type, children }) {
   );
 }
 
+/* ─── "В разработке" — метка и оверлей для нерабочего пока функционала ─── */
+
+function WipBadge({ text = 'В разработке' }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, fontWeight: 600,
+      padding: '3px 9px', borderRadius: 999, letterSpacing: '0.01em',
+      background: 'color-mix(in oklab, var(--warn) 16%, transparent)', color: 'var(--warn)',
+    }}>
+      <Icon name="clock" size={10} /> {text}
+    </span>
+  );
+}
+
+function WipLock({ children, message = 'Раздел сейчас в разработке' }) {
+  return (
+    <div style={{ position: 'relative' }}>
+      <div style={{ pointerEvents: 'none', opacity: 0.45, filter: 'grayscale(0.35)' }}>{children}</div>
+      <div style={{
+        position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 18,
+      }}>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 500,
+          padding: '8px 16px', borderRadius: 10, background: 'var(--bg-elev-2)', border: '1px solid var(--border)',
+          color: 'var(--text-2)', boxShadow: 'var(--shadow-2)',
+        }}>
+          <Icon name="clock" size={13} style={{ color: 'var(--warn)' }} /> {message}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Crop Modal ─────────────────────────────────────────── */
 
 function CropModal({ src, uploading, onConfirm, onCancel }) {
@@ -490,32 +523,35 @@ function AppearanceSection() {
       </Card>
 
       <Card gap={16}>
-        <CardLabel>Акцентный цвет</CardLabel>
-        <div style={{ display: 'flex', gap: 10 }}>
-          {ACCENTS.map(a => (
-            <div key={a.token} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <button title={a.label}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.18)'; e.currentTarget.style.boxShadow = `0 0 0 3px color-mix(in oklab, var(${a.token}) 35%, transparent)`; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = ''; }}
-                style={{ width: 34, height: 34, borderRadius: 999, background: `var(${a.token})`, border: '2px solid transparent', cursor: 'pointer', transition: 'transform 120ms, box-shadow 120ms' }}
-              />
-              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{a.label}</span>
-            </div>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <CardLabel>Акцентный цвет</CardLabel>
+          <WipBadge />
         </div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic' }}>
-          Кастомизация акцента — в следующих версиях
-        </div>
+        <WipLock message="Кастомизация акцента — в разработке">
+          <div style={{ display: 'flex', gap: 10 }}>
+            {ACCENTS.map(a => (
+              <div key={a.token} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                <button title={a.label} disabled
+                  style={{ width: 34, height: 34, borderRadius: 999, background: `var(${a.token})`, border: '2px solid transparent', cursor: 'default' }}
+                />
+                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{a.label}</span>
+              </div>
+            ))}
+          </div>
+        </WipLock>
       </Card>
 
       <Card gap={14}>
-        <CardLabel>Тема оформления</CardLabel>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <CardLabel>Тема оформления</CardLabel>
+          <WipBadge />
+        </div>
         <FieldRow label="Тёмная тема" hint="Единственная тема в текущей версии">
           <Toggle checked disabled />
         </FieldRow>
         <Sep />
         <FieldRow label="Компактный режим" hint="Уменьшить отступы в списках и карточках">
-          <Toggle checked={false} onChange={() => {}} />
+          <Toggle checked={false} disabled onChange={() => {}} />
         </FieldRow>
       </Card>
     </div>
@@ -598,17 +634,22 @@ function NotificationsSection() {
 
   return (
     <Card gap={16}>
-      <CardLabel>Уведомления</CardLabel>
-      <div style={{ display: 'flex', flexDirection: 'column', margin: '-10px 0' }}>
-        {items.map((item, i) => (
-          <div key={item.key}>
-            {i > 0 && <Sep />}
-            <FieldRow label={item.label} hint={item.hint}>
-              <Toggle checked={!!p[item.key]} onChange={v => upd(item.key, v)} />
-            </FieldRow>
-          </div>
-        ))}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <CardLabel>Уведомления</CardLabel>
+        <WipBadge />
       </div>
+      <WipLock message="Доставка уведомлений — в разработке">
+        <div style={{ display: 'flex', flexDirection: 'column', margin: '-10px 0' }}>
+          {items.map((item, i) => (
+            <div key={item.key}>
+              {i > 0 && <Sep />}
+              <FieldRow label={item.label} hint={item.hint}>
+                <Toggle checked={!!p[item.key]} onChange={v => upd(item.key, v)} disabled />
+              </FieldRow>
+            </div>
+          ))}
+        </div>
+      </WipLock>
     </Card>
   );
 }
@@ -628,6 +669,13 @@ function IntegrationsSection() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.55 }}>
+          Интеграции — в разработке, ничего в этом разделе пока не подключается по-настоящему.
+        </div>
+        <WipBadge />
+      </div>
+      <WipLock message="Интеграции сейчас в разработке">
       <Card gap={16}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: 'color-mix(in oklab, var(--p-sites) 16%, var(--bg-elev-2))', border: '1px solid color-mix(in oklab, var(--p-sites) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -651,10 +699,8 @@ function IntegrationsSection() {
             <div style={{ flex: 1 }}>
               <FieldInput value={tgToken} onChange={setTgToken} placeholder="1234567890:AAFxxxx…" mono />
             </div>
-            <button onClick={saveTg}
-              onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 14px -4px color-mix(in oklab, var(--text) 40%, transparent)'}
-              onMouseLeave={e => e.currentTarget.style.boxShadow = ''}
-              style={{ height: 36, padding: '0 14px', borderRadius: 8, background: saved ? 'color-mix(in oklab, var(--success) 20%, var(--bg-elev-2))' : 'var(--text)', color: saved ? 'var(--success)' : 'var(--bg)', fontSize: 13, fontWeight: 500, cursor: 'pointer', white: 'nowrap', flex: 'none', transition: 'background 150ms, box-shadow 150ms', border: 'none' }}>
+            <button onClick={saveTg} disabled
+              style={{ height: 36, padding: '0 14px', borderRadius: 8, background: saved ? 'color-mix(in oklab, var(--success) 20%, var(--bg-elev-2))' : 'var(--text)', color: saved ? 'var(--success)' : 'var(--bg)', fontSize: 13, fontWeight: 500, cursor: 'default', white: 'nowrap', flex: 'none', border: 'none' }}>
               {saved ? '✓ Сохранено' : 'Сохранить'}
             </button>
           </div>
@@ -737,6 +783,7 @@ function IntegrationsSection() {
           </div>
         ))}
       </Card>
+      </WipLock>
     </div>
   );
 }
@@ -850,18 +897,23 @@ function DataSection() {
       </Card>
 
       <Card gap={14}>
-        <CardLabel>Экспорт данных</CardLabel>
-        <FieldRow label="Все данные" hint="Задачи, заметки, цели, финансы — в формате JSON">
-          <Button variant="secondary" icon="download">Скачать</Button>
-        </FieldRow>
-        <Sep />
-        <FieldRow label="Только заметки" hint="Отдельный Markdown-файл для каждой заметки в ZIP">
-          <Button variant="secondary" icon="download">Скачать</Button>
-        </FieldRow>
-        <Sep />
-        <FieldRow label="Финансы" hint="Все заказы и транзакции в CSV">
-          <Button variant="secondary" icon="download">Скачать</Button>
-        </FieldRow>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <CardLabel>Экспорт данных</CardLabel>
+          <WipBadge />
+        </div>
+        <WipLock message="Экспорт — в разработке">
+          <FieldRow label="Все данные" hint="Задачи, заметки, цели, финансы — в формате JSON">
+            <Button variant="secondary" icon="download">Скачать</Button>
+          </FieldRow>
+          <Sep />
+          <FieldRow label="Только заметки" hint="Отдельный Markdown-файл для каждой заметки в ZIP">
+            <Button variant="secondary" icon="download">Скачать</Button>
+          </FieldRow>
+          <Sep />
+          <FieldRow label="Финансы" hint="Все заказы и транзакции в CSV">
+            <Button variant="secondary" icon="download">Скачать</Button>
+          </FieldRow>
+        </WipLock>
       </Card>
 
       <Card gap={14}>
@@ -877,17 +929,22 @@ function DataSection() {
       </Card>
 
       <Card gap={14}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-          <div style={{ width: 7, height: 7, borderRadius: 999, background: 'var(--danger)' }} />
-          <CardLabel>Опасная зона</CardLabel>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 7, height: 7, borderRadius: 999, background: 'var(--danger)' }} />
+            <CardLabel>Опасная зона</CardLabel>
+          </div>
+          <WipBadge />
         </div>
-        <FieldRow label="Очистить Inbox" hint="Удалить все обработанные элементы из Inbox">
-          <Button variant="danger">Очистить</Button>
-        </FieldRow>
-        <Sep />
-        <FieldRow label="Удалить аккаунт" hint="Удаляет все данные безвозвратно. Отменить невозможно.">
-          <Button variant="danger">Удалить аккаунт</Button>
-        </FieldRow>
+        <WipLock message="Пока недоступно">
+          <FieldRow label="Очистить Inbox" hint="Удалить все обработанные элементы из Inbox">
+            <Button variant="danger">Очистить</Button>
+          </FieldRow>
+          <Sep />
+          <FieldRow label="Удалить аккаунт" hint="Удаляет все данные безвозвратно. Отменить невозможно.">
+            <Button variant="danger">Удалить аккаунт</Button>
+          </FieldRow>
+        </WipLock>
       </Card>
     </div>
   );
