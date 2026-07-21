@@ -28,7 +28,12 @@ export function AuthProvider({ children }) {
       options: { data: { display_name: displayName } },
     });
 
-  const signOut = () => supabase.auth.signOut();
+  // scope:'local' — обычный логаут закрывает только эту сессию/устройство.
+  // Без scope supabase-js по умолчанию делает 'global' и обрывает refresh
+  // token у ВСЕХ сессий пользователя (другие вкладки/устройства получают
+  // "Invalid Refresh Token: Refresh Token Not Found" при следующем рефреше).
+  // Полный выход везде — отдельная кнопка в Settings (signOutEverywhere).
+  const signOut = () => supabase.auth.signOut({ scope: 'local' });
 
   return (
     <AuthContext.Provider value={{
