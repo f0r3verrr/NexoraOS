@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Icon } from '../icons.jsx';
 import { Button, IconButton, Badge, Tabs, SpinInput } from '../components/primitives.jsx';
 import { Sidebar, TopBar } from '../components/Sidebar.jsx';
+import { useIsCompact } from '../hooks/useViewport.js';
 import { Modal, Field, fieldStyle, ConfirmModal } from '../components/Modal.jsx';
 import { DatePicker } from '../components/DatePicker.jsx';
 import { ModuleFilesGrid } from '../components/ModuleFiles.jsx';
@@ -337,6 +338,7 @@ function ProductModal({ product, onClose }) {
 
 /* ─── Экран ──────────────────────────────────────────────── */
 export default function PersonalHome() {
+  const isCompact = useIsCompact();
   const { data: subs = [] }     = useSubscriptions();
   const { data: bills = [] }    = useUtilityBills();
   const { data: accesses = [] } = useHomeAccesses();
@@ -584,9 +586,11 @@ export default function PersonalHome() {
                 </span>
                 <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>Продукты</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Tabs items={PROD_TABS} active={prodTab} onSelect={setProdTab} />
-                <Button variant="ghost" size="sm" icon="plus" onClick={() => setProductModal('new')}>Добавить</Button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: isCompact ? '1 1 100%' : 'none' }}>
+                <div className="ws-scroll" style={{ overflowX: 'auto', flex: 1, minWidth: 0 }}>
+                  <Tabs items={PROD_TABS} active={prodTab} onSelect={setProdTab} />
+                </div>
+                <Button variant="ghost" size="sm" icon="plus" onClick={() => setProductModal('new')} style={{ flex: 'none' }}>{isCompact ? '' : 'Добавить'}</Button>
               </div>
             </div>
 

@@ -1138,12 +1138,12 @@ export default function Cinema() {
             {!isLoading && <ContinueWatchingRail entries={entries} onOpen={openDetail} />}
 
             {/* ── Sticky toolbar ── */}
-            <div style={{ position: 'sticky', top: 0, zIndex: 40, display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', marginBottom: 8, background: 'linear-gradient(oklch(0.135 0.005 80), oklch(0.135 0.005 80 / .92))', backdropFilter: 'blur(8px)', flexWrap: 'wrap' }}>
-              <div style={{ position: 'relative', flex: 1, minWidth: 200, maxWidth: 340 }}>
+            <div style={{ position: 'sticky', top: isCompact ? 56 : 0, zIndex: 40, display: 'flex', flexDirection: isCompact ? 'column' : 'row', alignItems: isCompact ? 'stretch' : 'center', gap: isCompact ? 10 : 14, padding: '14px 0', marginBottom: 8, background: 'linear-gradient(oklch(0.135 0.005 80), oklch(0.135 0.005 80 / .92))', backdropFilter: 'blur(8px)', flexWrap: isCompact ? 'nowrap' : 'wrap' }}>
+              <div style={{ position: 'relative', flex: isCompact ? 'none' : 1, width: isCompact ? '100%' : undefined, minWidth: isCompact ? 0 : 200, maxWidth: isCompact ? '100%' : 340, boxSizing: 'border-box' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.52 0.007 80)" strokeWidth="2" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
                 <input value={q} onChange={e => setQ(e.target.value)} placeholder="Поиск по коллекции…" style={{ width: '100%', height: 42, padding: '0 14px 0 40px', borderRadius: 12, background: 'oklch(0.18 0.006 80)', border: '1px solid oklch(0.26 0.007 80)', color: 'oklch(0.92 0.004 80)', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
               </div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', flex: 1 }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', flex: isCompact ? 'none' : 1, width: isCompact ? '100%' : undefined }}>
                 {[{ key: 'all', label: 'Все', count: statusCounts.all, color: null }, ...STATUSES.map(s => ({ key: s.key, label: s.label, count: statusCounts[s.key] || 0, color: s.color }))].map(t => {
                   const active = status === t.key;
                   return (
@@ -1154,12 +1154,12 @@ export default function Cinema() {
                   );
                 })}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 2 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: isCompact ? 0 : 2, width: isCompact ? '100%' : undefined }}>
                 <button onClick={() => setFavOnly(v => !v)} title="Избранное" style={{ width: 42, height: 42, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: favOnly ? 'rgba(244,63,94,.14)' : 'oklch(0.18 0.006 80)', border: `1px solid ${favOnly ? 'rgba(244,63,94,.4)' : 'oklch(0.26 0.007 80)'}`, color: favOnly ? '#f43f5e' : 'oklch(0.6 0.007 80)', transition: 'all .15s' }}>
                   <svg width="17" height="17" viewBox="0 0 24 24" fill={favOnly ? '#f43f5e' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M12 20s-7-4.4-7-10a4.5 4.5 0 0 1 8.5-2A4.5 4.5 0 0 1 22 10c0 5.6-10 10-10 10Z"/></svg>
                 </button>
-                <div style={{ position: 'relative', height: 42 }}>
-                  <select value={sort} onChange={e => setSort(e.target.value)} style={{ height: 42, padding: '0 34px 0 14px', borderRadius: 11, background: 'oklch(0.18 0.006 80)', border: '1px solid oklch(0.26 0.007 80)', color: 'oklch(0.82 0.006 80)', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer', outline: 'none', appearance: 'none' }}>
+                <div style={{ position: 'relative', height: 42, flex: isCompact ? 1 : 'none', minWidth: 0 }}>
+                  <select value={sort} onChange={e => setSort(e.target.value)} style={{ width: isCompact ? '100%' : undefined, height: 42, padding: '0 34px 0 14px', borderRadius: 11, background: 'oklch(0.18 0.006 80)', border: '1px solid oklch(0.26 0.007 80)', color: 'oklch(0.82 0.006 80)', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer', outline: 'none', appearance: 'none', boxSizing: 'border-box' }}>
                     <option value="recent">Недавние</option>
                     <option value="rating">По оценке</option>
                     <option value="title">По названию</option>
