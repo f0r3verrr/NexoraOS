@@ -119,7 +119,7 @@ function FeedbackDetail({ item, onClose }) {
             <textarea
               value={body} onChange={e => setBody(e.target.value)} rows={1} placeholder="Написать пользователю…"
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-              style={{ ...fieldStyle, flex: 1, height: 34, padding: '0 12px', resize: 'none', boxSizing: 'border-box' }}
+              style={{ ...fieldStyle, flex: 1, height: 34, padding: '8px 12px', lineHeight: '16px', resize: 'none', boxSizing: 'border-box' }}
             />
             <AdminButton variant="primary" disabled={(!body.trim() && !files.length) || busy} onClick={send}>
               {uploading ? 'Загрузка…' : 'Отправить'}
