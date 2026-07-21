@@ -1,15 +1,19 @@
 import { useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../icons.jsx';
+import { useIsCompact } from '../hooks/useViewport.js';
 
-/* Общая обёртка модалки: backdrop + карточка + заголовок */
+/* Общая обёртка модалки: backdrop + карточка + заголовок.
+   maxWidth:'92vw' — иначе на телефоне (375px) модалка с фикс. width={440+}
+   вылезает за край экрана; на compact ещё и padding поменьше. */
 export function Modal({ title, sub, width = 440, onClose, children }) {
   const mousedownOnBackdrop = useRef(false);
+  const isCompact = useIsCompact();
   return createPortal(
-    <div style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isCompact ? 12 : 0, boxSizing: 'border-box' }}
       onMouseDown={e => { mousedownOnBackdrop.current = e.target === e.currentTarget; }}
       onClick={e => { if (e.target === e.currentTarget && mousedownOnBackdrop.current) onClose(); }}>
-      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, width, maxHeight: '86vh', overflowY: 'auto', boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: isCompact ? 14 : 16, padding: isCompact ? 18 : 28, width, maxWidth: '92vw', boxSizing: 'border-box', maxHeight: '86vh', overflowY: 'auto', boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text)' }}>{title}</div>

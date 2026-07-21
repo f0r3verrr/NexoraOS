@@ -183,3 +183,37 @@ input:autofill {
 .md-preview table { width: 100%; border-collapse: collapse; margin: 0 0 1em; font-size: 13px; }
 .md-preview th,.md-preview td { border: 1px solid var(--border-subtle); padding: 6px 12px; text-align: left; }
 .md-preview th { background: var(--bg-elev-2); font-weight: 600; }
+
+/* ---- Мобильная/адаптивная вёрстка: общие утилиты ---- */
+
+/* Кнопки-действия строки (edit/trash и т.п.), которые раньше показывались
+   только по onMouseEnter/onMouseLeave (querySelector+style.opacity) — на
+   тач-экране такого события не бывает, кнопки были недостижимы. Экраны
+   переводятся на этот класс по мере адаптации (взамен старого JS-паттерна). */
+.touch-reveal { opacity: 0; transition: opacity 120ms; }
+.touch-reveal:is(:hover, :focus-within) { opacity: 1; }
+@media (hover: none) { .touch-reveal { opacity: 1; } }
+
+/* Готовые адаптивные сетки метрик/карточек — на экранах >1023px N колонок,
+   на планшете сжимается до 2, на телефоне (<640px) — в один столбец.
+   Используются взамен инлайновых gridTemplateColumns по мере адаптации
+   конкретных экранов (Dashboard, AdminDashboard и т.д.). */
+.rgrid-2, .rgrid-3, .rgrid-4, .rgrid-5, .rgrid-6 { display: grid; gap: 12px; }
+.rgrid-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.rgrid-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.rgrid-4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+.rgrid-5 { grid-template-columns: repeat(5, minmax(0,1fr)); }
+.rgrid-6 { grid-template-columns: repeat(6, minmax(0,1fr)); }
+
+@media (max-width: 1023px) {
+  .rgrid-3, .rgrid-4, .rgrid-5, .rgrid-6 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 639px) {
+  .rgrid-2, .rgrid-3, .rgrid-4, .rgrid-5, .rgrid-6 { grid-template-columns: 1fr; }
+}
+
+/* Двухколоночная раскладка "список/таймлайн + узкая боковая карточка" —
+   на compact-ширинах боковая колонка стекается под основную. */
+@media (max-width: 1023px) {
+  .rstack-lg { display: flex !important; flex-direction: column !important; }
+}

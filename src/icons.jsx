@@ -1,4 +1,5 @@
 const ICON_PATHS = {
+  menu:        <path d="M4 6h16M4 12h16M4 18h16"/>,
   home:        <><path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h14V9.5"/></>,
   inbox:       <><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13l3.5 7v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-7l3.5-7z"/></>,
   sun_today:   <><circle cx="12" cy="12" r="3.5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></>,

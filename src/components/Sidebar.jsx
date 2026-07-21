@@ -1,8 +1,11 @@
 ﻿import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Icon } from '../icons.jsx';
 import { Avatar, IconButton } from './primitives.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { useIsCompact } from '../hooks/useViewport.js';
+import { useMobileNav } from '../contexts/MobileNavContext.jsx';
 import { useProjects } from '../hooks/useProjects.js';
 import { useInboxItems, useSnoozedItems } from '../hooks/useInbox.js';
 import { useHiddenPages } from '../hooks/useHiddenPages.js';
@@ -1680,8 +1683,109 @@ function PanelByPath({ pathname }) {
   }
 }
 
+/* ---- Мобильный Drawer: та же навигация рейки + панель текущей страницы,
+   но в один выезжающий столбец (вместо рейки 80px + панели 260px рядом) ---- */
+function MobileNavRow({ item, active, onNavigate }) {
+  return (
+    <button
+      onClick={() => { onNavigate(item.path); }}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12, width: '100%', height: 44,
+        padding: '0 14px', borderRadius: 10, border: 'none', textAlign: 'left', cursor: 'pointer',
+        background: active ? 'color-mix(in oklab, var(--p-openresto) 14%, var(--bg-elev-3))' : 'transparent',
+        color: active ? 'var(--text)' : 'var(--text-2)', fontSize: 14,
+      }}
+    >
+      <Icon name={item.icon} size={18} />
+      <span style={{ flex: 1 }}>{item.label}</span>
+      {item.badge && (
+        <span style={{
+          minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999,
+          background: 'var(--danger)', color: 'white', fontSize: 10.5, fontWeight: 600,
+          fontFamily: 'var(--font-mono)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        }}>{item.badge}</span>
+      )}
+    </button>
+  );
+}
+
+function MobileDrawer({ pathname, onClose }) {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const activeKey = PATH_TO_KEY[pathname] || (pathname.startsWith('/projects/') ? 'projects' : 'home');
+
+  const { data: inboxItems = [] } = useInboxItems();
+  const { data: todayTasks = [] } = useTodayTasks();
+  const { data: hidden = [] }     = useHiddenPages();
+  const inboxCount = inboxItems.length;
+  const todayCount = todayTasks.filter(t => !t.done).length;
+
+  const visible = (items) => items.filter(n => !hidden.includes(n.key));
+  const railTop = visible(RAIL_TOP).map(n => {
+    if (n.key === 'inbox') return { ...n, badge: inboxCount || undefined };
+    if (n.key === 'today') return { ...n, badge: todayCount || undefined };
+    return n;
+  });
+  const groups = [railTop, visible(RAIL_LIBRARY), visible(RAIL_PERSONAL), visible(RAIL_BOTTOM)].filter(g => g.length > 0);
+
+  const goTo = (path) => { onClose(); if (path) navigate(path); };
+  const label = user?.user_metadata?.display_name || user?.email || 'Пользователь';
+
+  return createPortal(
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex' }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }} />
+      <div style={{
+        position: 'relative', width: 'min(85vw, 300px)', height: '100%', background: 'var(--bg-elev-1)',
+        borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column',
+        boxShadow: '0 0 40px rgba(0,0,0,0.4)', animation: 'nx-drawer-in 180ms ease-out',
+      }}>
+        <style>{`@keyframes nx-drawer-in { from { transform: translateX(-16px); opacity: 0.6 } to { transform: translateX(0); opacity: 1 } }`}</style>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 14px', borderBottom: '1px solid var(--border-subtle)', flex: 'none' }}>
+          <img src="/favicon.png" alt="" style={{ width: 30, height: 30, borderRadius: 8, objectFit: 'cover' }} />
+          <span style={{ flex: 1, fontSize: 14.5, fontWeight: 600, color: 'var(--text)' }}>NexoraOS</span>
+          <button onClick={onClose} style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: 'var(--bg-elev-2)', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <Icon name="x" size={16} />
+          </button>
+        </div>
+
+        <div className="ws-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '10px 10px 14px' }}>
+          {groups.map((group, gi) => (
+            <div key={gi} style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 10 }}>
+              {group.map(item => <MobileNavRow key={item.key} item={item} active={item.key === activeKey} onNavigate={goTo} />)}
+            </div>
+          ))}
+
+          <div style={{ height: 1, background: 'var(--border-subtle)', margin: '6px 4px 14px' }} />
+          <PanelByPath pathname={pathname} />
+        </div>
+
+        <div style={{ padding: '12px 14px', borderTop: '1px solid var(--border-subtle)', flex: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
+          {user?.user_metadata?.avatar_url ? (
+            <img src={user.user_metadata.avatar_url} alt="" style={{ width: 30, height: 30, borderRadius: 999, objectFit: 'cover' }} />
+          ) : (
+            <Avatar initials={label.slice(0, 1).toUpperCase()} color="var(--p-openresto)" size={30} />
+          )}
+          <span style={{ flex: 1, fontSize: 13, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+          <button onClick={async () => { onClose(); await signOut(); navigate('/login'); }}
+            title="Выйти" style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: 'transparent', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <Icon name="log_out" size={16} />
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export function Sidebar() {
   const { pathname } = useLocation();
+  const isCompact = useIsCompact();
+  const { open, setOpen } = useMobileNav();
+
+  if (isCompact) {
+    return open ? <MobileDrawer pathname={pathname} onClose={() => setOpen(false)} /> : null;
+  }
   return (
     <>
       <SidebarRail />
@@ -1692,22 +1796,32 @@ export function Sidebar() {
 
 /* ---- TopBar ---- */
 export function TopBar({ title, breadcrumb, right, sub }) {
+  const isCompact = useIsCompact();
+  const { setOpen } = useMobileNav();
   return (
     <div style={{
-      height: 56, display: 'flex', alignItems: 'center', gap: 16,
-      padding: '0 24px',
+      height: 56, display: 'flex', alignItems: 'center', gap: isCompact ? 10 : 16,
+      padding: isCompact ? '0 14px' : '0 24px',
       borderBottom: '1px solid var(--border-subtle)',
       boxShadow: '0 1px 10px -3px color-mix(in oklab, oklch(0 0 0) 22%, transparent)',
       background: 'var(--bg)', flex: 'none',
     }}>
+      {isCompact && (
+        <button onClick={() => setOpen(true)} style={{
+          width: 36, height: 36, flex: 'none', borderRadius: 9, border: '1px solid var(--border-subtle)',
+          background: 'var(--bg-elev-1)', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+        }}>
+          <Icon name="menu" size={17} />
+        </button>
+      )}
       <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2, flex: 1, minWidth: 0 }}>
         {breadcrumb && <span style={{ fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>{breadcrumb}</span>}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-          <span style={{ fontSize: 17, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.01em' }}>{title}</span>
-          {sub && <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{sub}</span>}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, minWidth: 0, overflow: 'hidden' }}>
+          <span style={{ fontSize: 17, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
+          {sub && <span style={{ fontSize: 13, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1 }}>{sub}</span>}
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{right}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: isCompact ? 'wrap' : 'nowrap', justifyContent: 'flex-end' }}>{right}</div>
     </div>
   );
 }

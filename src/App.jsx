@@ -3,6 +3,7 @@ import { useAuth } from './contexts/AuthContext.jsx';
 import { TourProvider } from './contexts/TourContext.jsx';
 import { TourOverlay } from './components/TourOverlay.jsx';
 import { ChangelogProvider } from './contexts/ChangelogContext.jsx';
+import { MobileNavProvider } from './contexts/MobileNavContext.jsx';
 import { ChangelogModalHost } from './components/ChangelogModal.jsx';
 import { useHiddenPages } from './hooks/useHiddenPages.js';
 import { pageKeyByPath } from './lib/pages.js';
@@ -73,13 +74,15 @@ function HiddenPageGuard() {
   const key = pageKeyByPath(pathname);
   if (key && hidden.includes(key)) return <Navigate to="/dashboard" replace />;
   return (
-    <TourProvider>
-      <ChangelogProvider>
-        <Outlet />
-        <ChangelogModalHost />
-      </ChangelogProvider>
-      <TourOverlay />
-    </TourProvider>
+    <MobileNavProvider>
+      <TourProvider>
+        <ChangelogProvider>
+          <Outlet />
+          <ChangelogModalHost />
+        </ChangelogProvider>
+        <TourOverlay />
+      </TourProvider>
+    </MobileNavProvider>
   );
 }
 
