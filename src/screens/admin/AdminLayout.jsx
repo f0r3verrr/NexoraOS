@@ -62,12 +62,7 @@ export default function AdminLayout() {
         background: 'var(--bg-elev-1)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 20px 18px' }}>
-          <span style={{
-            width: 32, height: 32, borderRadius: 9, flexShrink: 0,
-            background: 'linear-gradient(135deg, var(--p-openresto), var(--p-youmin))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 700, fontSize: 15, color: 'var(--bg)',
-          }}>N</span>
+          <img src="/favicon.png" alt="" style={{ width: 32, height: 32, borderRadius: 9, flexShrink: 0, objectFit: 'cover' }} />
           <div>
             <div style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.2 }}>NexoraOS</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.2 }}>Admin</div>
@@ -130,7 +125,7 @@ export default function AdminLayout() {
       {/* MAIN */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <header style={{
-          position: 'sticky', top: 0, zIndex: 10, height: 72, flexShrink: 0,
+          position: 'sticky', top: 0, zIndex: 10, height: 60, flexShrink: 0,
           display: 'flex', alignItems: 'center', gap: 16, padding: '0 28px',
           borderBottom: '1px solid var(--border-subtle)',
           background: 'color-mix(in oklab, var(--bg) 85%, transparent)', backdropFilter: 'blur(14px)',
@@ -187,7 +182,7 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <main style={{ flex: 1, padding: '24px 28px 60px' }}>
+        <main style={{ flex: 1, padding: '18px 24px 24px' }}>
           <Outlet />
         </main>
       </div>

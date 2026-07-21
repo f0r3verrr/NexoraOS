@@ -1,54 +1,108 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Icon } from '../icons.jsx';
 import { Modal } from './Modal.jsx';
-import { Button } from './primitives.jsx';
+import { Button, Badge } from './primitives.jsx';
 import { useChangelogModal } from '../contexts/ChangelogContext.jsx';
+import { normalizeUrl } from '../lib/url.js';
 
-const PRIORITY_LABEL = { low: 'Низкий', normal: 'Обновление', high: 'Важно' };
+const PRIORITY_TONE = { low: 'neutral', normal: 'info', high: 'danger' };
+const PRIORITY_LABEL = { low: 'Патч', normal: 'Обновление', high: 'Важно' };
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('ru', { day: 'numeric', month: 'long' });
+}
+
+function KindIcon({ kind }) {
+  const isNews = kind === 'news';
+  return (
+    <span style={{
+      width: 34, height: 34, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: isNews ? 'color-mix(in oklab, var(--info) 16%, transparent)' : 'color-mix(in oklab, var(--p-openresto) 16%, transparent)',
+      color: isNews ? 'var(--info)' : 'var(--p-openresto)',
+    }}>
+      <Icon name={isNews ? 'globe' : 'bookmark'} size={16} />
+    </span>
+  );
+}
 
 export function ChangelogModalHost() {
-  const { open, unread, dismiss } = useChangelogModal();
-  if (!open || unread.length === 0) return null;
+  const { open, items, dismiss } = useChangelogModal();
+  if (!open || items.length === 0) return null;
 
-  if (unread.length === 1) {
-    const c = unread[0];
+  if (items.length === 1) {
+    const item = items[0];
+    const isNews = item._kind === 'news';
     return (
-      <Modal title={c.title} sub={`${c.version} · ${PRIORITY_LABEL[c.priority] ?? c.priority}`} width={480} onClose={dismiss}>
-        {c.cover_image_url && (
-          <img src={c.cover_image_url} alt="" style={{ width: '100%', borderRadius: 10, display: 'block' }} />
-        )}
-        <div className="md-preview">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{c.description}</ReactMarkdown>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-          {c.button_text && c.button_link && (
-            <a href={c.button_link} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-              <Button variant="secondary">{c.button_text}</Button>
-            </a>
+      <Modal onClose={dismiss} width={480} title="">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: -8 }}>
+          {item.cover_image_url && (
+            <img src={item.cover_image_url} alt="" style={{ width: 'calc(100% + 56px)', margin: '-8px -28px 0', display: 'block', borderRadius: '12px 12px 0 0', maxHeight: 200, objectFit: 'cover' }} />
           )}
-          <Button variant="primary" onClick={dismiss}>Закрыть</Button>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <KindIcon kind={item._kind} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                {!isNews && <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: 'var(--bg-elev-3)', color: 'var(--text-2)', fontFamily: 'var(--font-mono)' }}>{item.version}</span>}
+                {isNews && <Badge tone="info">{item.category}</Badge>}
+                {!isNews && <Badge tone={PRIORITY_TONE[item.priority]}>{PRIORITY_LABEL[item.priority]}</Badge>}
+                <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{fmtDate(isNews ? item.created_at : item.release_date)}</span>
+              </div>
+              <div style={{ fontSize: 17, fontWeight: 600, marginTop: 6, letterSpacing: '-0.01em' }}>{item.title}</div>
+            </div>
+          </div>
+          <div className="md-preview">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.description}</ReactMarkdown>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            {!isNews && item.button_text && item.button_link && (
+              <a href={normalizeUrl(item.button_link)} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                <Button variant="secondary">{item.button_text}</Button>
+              </a>
+            )}
+            <Button variant="primary" onClick={dismiss}>Понятно</Button>
+          </div>
         </div>
       </Modal>
     );
   }
 
   return (
-    <Modal title="Что нового" sub={`Вы пропустили ${unread.length} обновлени${unread.length < 5 ? 'я' : 'й'}`} width={480} onClose={dismiss}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '50vh', overflowY: 'auto' }}>
-        {unread.map(c => (
-          <div key={c.id} style={{ paddingBottom: 14, borderBottom: '1px solid var(--border-subtle)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: 'var(--bg-elev-3)', color: 'var(--text-2)', fontFamily: 'var(--font-mono)' }}>{c.version}</span>
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 550, marginBottom: 4 }}>{c.title}</div>
-            <div className="md-preview" style={{ fontSize: 12.5 }}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{c.description}</ReactMarkdown>
-            </div>
+    <Modal onClose={dismiss} width={500} title="">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: -6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ width: 40, height: 40, borderRadius: 11, background: 'linear-gradient(135deg, var(--p-openresto), var(--p-youmin))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Icon name="bookmark" size={18} style={{ color: 'var(--bg)' }} />
+          </span>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 600 }}>Что нового</div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>Вы пропустили {items.length} обновлени{items.length < 5 ? 'я' : 'й'}, пока вас не было</div>
           </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
-        <Button variant="primary" onClick={dismiss}>Прочитать всё</Button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '48vh', overflowY: 'auto', marginTop: 14 }}>
+          {items.map(item => {
+            const isNews = item._kind === 'news';
+            return (
+              <div key={`${item._kind}-${item.id}`} style={{ display: 'flex', gap: 12, padding: 14, borderRadius: 12, background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)' }}>
+                <KindIcon kind={item._kind} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                    {!isNews && <span style={{ fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: 'var(--bg-elev-3)', color: 'var(--text-2)', fontFamily: 'var(--font-mono)' }}>{item.version}</span>}
+                    {isNews && <Badge tone="info">{item.category}</Badge>}
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{fmtDate(isNews ? item.created_at : item.release_date)}</span>
+                  </div>
+                  <div style={{ fontSize: 13.5, fontWeight: 550 }}>{item.title}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+          <Button variant="primary" onClick={dismiss}>Прочитать всё</Button>
+        </div>
       </div>
     </Modal>
   );
