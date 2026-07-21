@@ -494,10 +494,10 @@ function AddHabitModal({ onClose }) {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, boxSizing: 'border-box' }}
       onMouseDown={e => { mousedownOnBackdrop.current = e.target === e.currentTarget; }}
       onClick={e => { if (e.target === e.currentTarget && mousedownOnBackdrop.current) onClose(); }}>
-      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, width: 360, boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, width: 360, maxWidth: '100%', boxSizing: 'border-box', boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text)' }}>Новая привычка</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <label style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>Название</label>
@@ -534,7 +534,10 @@ function HabitsTracker({ filteredIds = null }) {
   return (
     <>
       {showAdd && <AddHabitModal onClose={() => setShowAdd(false)} />}
-      <div style={{ background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12, overflow: 'auto' }}>
+        {/* Фикс-px колонки (7 дней недели по 32px) — на узких экранах вместо
+            сплющивания имени привычки карточка скроллится по горизонтали. */}
+        <div style={{ minWidth: 480 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr repeat(7, 32px) 56px 28px', padding: '10px 14px', borderBottom: '1px solid var(--border-subtle)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.04em', textTransform: 'uppercase', gap: 4, alignItems: 'center' }}>
           <div>Привычка</div>
           {WEEK_DAYS.map(d => <div key={d} style={{ textAlign: 'center' }}>{d}</div>)}
@@ -596,7 +599,7 @@ function HabitsTracker({ filteredIds = null }) {
                     {streak > 0 ? `🔥${streak}` : '—'}
                   </span>
                 </div>
-                <button onClick={() => deleteHabit.mutate(h.id)}
+                <button onClick={() => deleteHabit.mutate(h.id)} className="touch-reveal"
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 120ms' }}
                   onMouseEnter={e => (e.currentTarget.style.opacity = 1)}
                   onMouseLeave={e => (e.currentTarget.style.opacity = 0)}>
@@ -610,6 +613,7 @@ function HabitsTracker({ filteredIds = null }) {
         <button onClick={() => setShowAdd(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', color: 'var(--text-3)', fontSize: 13, borderTop: '1px solid var(--border-subtle)' }}>
           <Icon name="plus" size={14} /> Добавить привычку
         </button>
+        </div>
       </div>
     </>
   );
@@ -646,7 +650,7 @@ function GoalAnalytics({ goals, habits, logsMap }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Overview */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         {[
           { l: 'Всего целей',      v: total,         c: 'var(--text)' },
           { l: 'Выполнено',        v: completed,     c: 'var(--success)' },
@@ -660,7 +664,7 @@ function GoalAnalytics({ goals, habits, logsMap }) {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         {/* By category */}
         {byCat.length > 0 && (
           <div style={{ background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12, padding: '16px 20px' }}>
@@ -826,7 +830,7 @@ export default function Goals() {
             {showAnalytics ? (
               <GoalAnalytics goals={goals} habits={habits} logsMap={logsMap} />
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16 }}>
+              <div className="dash-grid12" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16 }}>
                 {/* Goals column */}
                 <div style={{ gridColumn: 'span 7', display: 'flex', flexDirection: 'column', gap: 12 }}>
 

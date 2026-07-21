@@ -607,7 +607,7 @@ export default function Journal() {
 
         <div className="ws-scroll" style={{ flex: 1, overflowY: 'auto', padding: '24px 28px 32px' }}>
           {/* Stats row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+          <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
             {statCards.map(s => (
               <div key={s.l} style={{ padding: '14px 18px', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
                 <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 8 }}>{s.l}</div>
@@ -634,7 +634,7 @@ export default function Journal() {
             }
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16 }}>
+          <div className="rstack-lg" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16 }}>
             {/* Today entry */}
             <div ref={todayRef}>
               <TodayEntry focusRef={focusRef} />
