@@ -236,10 +236,10 @@ function OrderModal({ order, onClose }) {
   const select_sx = { ...INPUT_SX, padding: '0 10px', cursor: 'pointer' };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, boxSizing: 'border-box' }}
       onMouseDown={e => { bgRef.current = e.target === e.currentTarget; }}
       onClick={e => { if (e.target === e.currentTarget && bgRef.current) onClose(); }}>
-      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, width: 480, boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, width: 480, maxWidth: '100%', boxSizing: 'border-box', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--text)' }}>{isEdit ? 'Редактировать заказ' : 'Новый заказ'}</span>
           {isEdit && (
@@ -320,10 +320,10 @@ function ExpenseModal({ tx, onClose }) {
   const doDelete = async () => { await del.mutateAsync(tx.id); onClose(); };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, boxSizing: 'border-box' }}
       onMouseDown={e => { bgRef.current = e.target === e.currentTarget; }}
       onClick={e => { if (e.target === e.currentTarget && bgRef.current) onClose(); }}>
-      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, width: 420, boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, width: 420, maxWidth: '100%', boxSizing: 'border-box', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--text)' }}>{isEdit ? 'Редактировать расход' : 'Новый расход'}</span>
           {isEdit && (
@@ -377,9 +377,9 @@ function ExpenseModal({ tx, onClose }) {
 function BudgetModal({ current, onSave, onClose }) {
   const [val, setVal] = useState(String(current || ''));
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, boxSizing: 'border-box' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, width: 340, boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, width: 340, maxWidth: '100%', boxSizing: 'border-box', boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 16 }}>
         <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>Цель дохода на месяц</span>
         <FormField label="Сумма (₽)">
           <SpinInput value={val} onChange={setVal} placeholder="100 000" autoFocus min={0} step={5000}
@@ -448,7 +448,7 @@ function OverviewTab({ orders, transactions, budget, onEditBudget }) {
   return (
     <div className="ws-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 28px 32px' }}>
       {/* Metrics */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         <MetricCard label="Доход за месяц"  value={`${fmt(thisMonthInc)} ₽`} color="var(--success)"  sub={budget > 0 ? `цель: ${fmt(budget)} ₽` : undefined} />
         <MetricCard label="Расходы за месяц" value={`${fmt(thisMonthExp)} ₽`} color="var(--danger)"  />
         <MetricCard label="Прибыль за месяц" value={`${fmt(profit)} ₽`}       color={profit >= 0 ? 'var(--success)' : 'var(--danger)'} />
@@ -482,7 +482,7 @@ function OverviewTab({ orders, transactions, budget, onEditBudget }) {
       )}
 
       {/* Charts row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
         <div style={{ background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12, padding: '16px 18px' }}>
           <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 14 }}>Доходы vs расходы</div>
           <BarChart data={barData} />
@@ -500,7 +500,7 @@ function OverviewTab({ orders, transactions, budget, onEditBudget }) {
       </div>
 
       {/* Quick stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         {[
           { label: 'Средний чек', value: paidOrders.length > 0 ? `${fmt(Math.round(totalIncome / paidOrders.length))} ₽` : '—' },
           { label: 'Всего оплачено', value: ru.orders(paidOrders.length) },
@@ -569,6 +569,11 @@ function OrdersTab({ orders, isLoading, onEdit, onNew }) {
         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{filtered.length} из {orders.length}</span>
       </div>
 
+      {/* Фикс-px колонки — на узких экранах скроллим таблицу целиком по
+          горизонтали (шапка и строки в одном minWidth-контейнере, чтобы
+          колонки не расходились при скролле) */}
+      <div style={{ flex: 1, minHeight: 0, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ minWidth: 760, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {/* Table header */}
       <div style={{ display: 'grid', gridTemplateColumns: grid, padding: '8px 28px', borderBottom: '1px solid var(--border-subtle)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.04em', textTransform: 'uppercase', flex: 'none' }}>
         <div>Описание</div><div>Клиент</div><div>Проект</div><div>Сумма</div><div>Статус</div><div>Дедлайн</div><div>Действия</div>
@@ -626,6 +631,8 @@ function OrdersTab({ orders, isLoading, onEdit, onNew }) {
             );
           })
         )}
+      </div>
+      </div>
       </div>
     </div>
   );

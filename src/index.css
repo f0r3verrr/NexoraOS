@@ -201,7 +201,11 @@ input:autofill {
    переводятся на этот класс по мере адаптации (взамен старого JS-паттерна). */
 .touch-reveal { opacity: 0; transition: opacity 120ms; }
 .touch-reveal:is(:hover, :focus-within) { opacity: 1; }
-@media (hover: none) { .touch-reveal { opacity: 1; } }
+/* !important — большинство мест в кодовой базе задают opacity:0 инлайн-стилем
+   (та же логика, что и здесь, просто через JS onMouseEnter/Leave); обычное
+   правило класса такой инлайн не перебьёт, а на тач-устройстве его и некому
+   переключить обратно в 1. */
+@media (hover: none) { .touch-reveal { opacity: 1 !important; } }
 
 /* Готовые адаптивные сетки метрик/карточек — на экранах >1023px N колонок,
    на планшете сжимается до 2, на телефоне (<640px) — в один столбец.

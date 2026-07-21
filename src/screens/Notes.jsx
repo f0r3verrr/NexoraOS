@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Icon } from '../icons.jsx';
 import { Sidebar, TopBar } from '../components/Sidebar.jsx';
+import { useIsCompact } from '../hooks/useViewport.js';
 import {
   useNotes, useAllNotes, useFolders,
   useCreateNote, useUpdateNote, useDeleteNote,
@@ -153,6 +154,7 @@ function TBtn({ icon, label, active, activeColor, danger, onClick, title }) {
 
 /* ── Note editor ─────────────────────────────────────────────── */
 function NoteEditor({ note, onClose, focusMode, onToggleFocus }) {
+  const isCompact = useIsCompact();
   const [title,     setTitle]     = useState(note.title);
   const [body,      setBody]      = useState(note.body ?? '');
   const [preview,   setPreview]   = useState(false);
@@ -265,6 +267,12 @@ function NoteEditor({ note, onClose, focusMode, onToggleFocus }) {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {/* Toolbar */}
         <div style={{ padding: '8px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, flexWrap: 'wrap' }}>
+          {isCompact && !focusMode && (
+            <button onClick={() => onClose()} title="Назад к списку"
+              style={{ width: 28, height: 28, marginRight: 2, borderRadius: 7, border: '1px solid var(--border-subtle)', background: 'var(--bg-elev-1)', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="chevron_left" size={15} />
+            </button>
+          )}
           {note.project && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-3)', marginRight: 4 }}>
               <span style={{ width: 7, height: 7, borderRadius: 2, background: `var(${note.project.color_token})` }} />
@@ -465,6 +473,7 @@ export default function Notes() {
   const [searchQuery,   setSearchQuery]   = useState('');
   const [searchOpen,    setSearchOpen]    = useState(false);
   const [focusMode,     setFocusMode]     = useState(false);
+  const isCompact = useIsCompact();
 
   const { data: notes = [],      isLoading } = useNotes(activeFolder);
   const { data: allNotes = [] }              = useAllNotes();
@@ -543,8 +552,9 @@ export default function Notes() {
         />
 
         <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-          {/* ── Left panel: folders ── */}
-          {!focusMode && (
+          {/* ── Left panel: folders — на compact прячем (папки доступны как
+              горизонтальные чипы над списком заметок ниже) ── */}
+          {!focusMode && !isCompact && (
             <div className="ws-scroll" style={{ width: 220, flex: 'none', borderRight: '1px solid var(--border-subtle)', overflowY: 'auto', padding: '8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
               <FolderRow label="Все заметки" icon="layers" badge={allNotes.length} active={activeFolder === null} onClick={() => { setActiveFolder(null); setActiveNoteId(null); }} />
 
@@ -588,9 +598,23 @@ export default function Notes() {
             </div>
           )}
 
-          {/* ── Center panel: notes list ── */}
-          {!focusMode && (
-            <div className="ws-scroll" style={{ width: 280, flex: 'none', borderRight: '1px solid var(--border-subtle)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          {/* ── Center panel: notes list — на compact на весь экран, пока не
+              открыта заметка (тогда список прячется, редактор занимает всё) ── */}
+          {!focusMode && (!isCompact || !activeNoteId) && (
+            <div className="ws-scroll" style={{ width: isCompact ? '100%' : 280, flex: isCompact ? 1 : 'none', minWidth: 0, borderRight: '1px solid var(--border-subtle)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+              {/* Папки — на compact горизонтальные чипы вместо отдельной колонки */}
+              {isCompact && (
+                <div style={{ display: 'flex', gap: 6, padding: '10px 10px', borderBottom: '1px solid var(--border-subtle)', overflowX: 'auto', flexShrink: 0 }}>
+                  <button onClick={() => setActiveFolder(null)} style={{ flex: 'none', padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: activeFolder === null ? 'var(--bg-elev-3)' : 'var(--bg-elev-2)', color: activeFolder === null ? 'var(--text)' : 'var(--text-2)', border: `1px solid ${activeFolder === null ? 'var(--border)' : 'var(--border-subtle)'}` }}>
+                    Все · {allNotes.length}
+                  </button>
+                  {folders.map(f => (
+                    <button key={f} onClick={() => setActiveFolder(f)} style={{ flex: 'none', padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: activeFolder === f ? 'var(--bg-elev-3)' : 'var(--bg-elev-2)', color: activeFolder === f ? 'var(--text)' : 'var(--text-2)', border: `1px solid ${activeFolder === f ? 'var(--border)' : 'var(--border-subtle)'}` }}>
+                      {f} · {folderCounts[f] ?? 0}
+                    </button>
+                  ))}
+                </div>
+              )}
               {/* Search bar */}
               <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                 {searchOpen ? (
@@ -644,11 +668,12 @@ export default function Notes() {
             </div>
           )}
 
-          {/* ── Editor ── */}
-          {activeNote
-            ? <NoteEditor note={activeNote} onClose={handleEditorClose} focusMode={focusMode} onToggleFocus={() => setFocusMode(m => !m)} />
-            : <EmptyEditor onNew={handleNewNote} />
-          }
+          {/* ── Editor — на compact рендерится только когда заметка открыта ── */}
+          {(!isCompact || activeNoteId) && (
+            activeNote
+              ? <NoteEditor note={activeNote} onClose={handleEditorClose} focusMode={focusMode} onToggleFocus={() => setFocusMode(m => !m)} />
+              : <EmptyEditor onNew={handleNewNote} />
+          )}
         </div>
       </main>
     </div>

@@ -212,6 +212,10 @@ export default function Files() {
                   </div>
                 </div>
 
+                {/* Фикс-px колонки — на узких экранах таблица скроллится
+                    по горизонтали целиком, не сплющивается */}
+                <div style={{ overflowX: 'auto' }}>
+                <div style={{ minWidth: 520 }}>
                 {/* Header row */}
                 <div style={{ display: 'grid', gridTemplateColumns: '32px 1fr 100px 80px 80px 72px', padding: '8px 18px', borderBottom: '1px solid var(--border-subtle)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                   <div /><div>Имя</div><div>Тип</div><div>Размер</div><div>Добавлен</div><div />
@@ -263,7 +267,7 @@ export default function Files() {
                         <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>{fmtDate(f.created_at)}</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
                           <button
-                            className="row-action"
+                            className="row-action touch-reveal"
                             onClick={() => handleDownload(f)}
                             title="Скачать"
                             style={{ opacity: 0, transition: 'opacity 120ms', width: 28, height: 28, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-2)', background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)' }}
@@ -271,7 +275,7 @@ export default function Files() {
                             <Icon name="download" size={13} />
                           </button>
                           <button
-                            className="row-action"
+                            className="row-action touch-reveal"
                             onClick={() => handleDelete(f.fullPath)}
                             title="Удалить"
                             style={{ opacity: 0, transition: 'opacity 120ms', width: 28, height: 28, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--danger)', background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)' }}
@@ -283,6 +287,8 @@ export default function Files() {
                     );
                   })
                 )}
+                </div>
+                </div>
               </div>
             </>
           )}
