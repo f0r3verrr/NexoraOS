@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Icon } from '../icons.jsx';
 import { Button } from '../components/primitives.jsx';
 import { Sidebar, TopBar } from '../components/Sidebar.jsx';
+import { useIsCompact } from '../hooks/useViewport.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
 import { useStorageStats } from '../hooks/useFiles.js';
@@ -964,6 +965,7 @@ const SECTIONS = [
 
 export default function Settings() {
   const { user } = useAuth();
+  const isCompact = useIsCompact();
   const [searchParams] = useSearchParams();
   const sectionId = searchParams.get('section') || 'profile';
   const active = SECTIONS.find(s => s.id === sectionId) || SECTIONS[0];
@@ -973,7 +975,7 @@ export default function Settings() {
       <Sidebar />
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, background: 'var(--bg)' }}>
         <TopBar title="Настройки" sub={active.label} />
-        <div className="ws-scroll" style={{ flex: 1, overflowY: 'auto', padding: '28px 36px 48px' }}>
+        <div className="ws-scroll" style={{ flex: 1, overflowY: 'auto', padding: isCompact ? '16px 14px 28px' : '28px 36px 48px' }}>
           <div style={{ maxWidth: 580 }}>
             {sectionId === 'profile'       && <ProfileSection user={user} />}
             {sectionId === 'appearance'    && <AppearanceSection />}

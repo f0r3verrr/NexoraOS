@@ -5,6 +5,7 @@ import { Icon } from '../icons.jsx';
 import { Button, IconButton, Badge, ProjectTag, Checkbox, Kbd } from '../components/primitives.jsx';
 import { DatePicker } from '../components/DatePicker.jsx';
 import { Sidebar, TopBar } from '../components/Sidebar.jsx';
+import { useIsCompact } from '../hooks/useViewport.js';
 import { useProjects } from '../hooks/useProjects.js';
 import {
   useTodayTasks, useUndatedTasks, useOverdueTasks, useFrogTask,
@@ -149,11 +150,11 @@ function TaskModal({ initialTask, defaultDueAt, onClose }) {
   const sx = { height: 36, padding: '0 12px', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 8, fontSize: 13, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', width: '100%' };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, boxSizing: 'border-box' }}
       onMouseDown={e => { mousedownOnBackdrop.current = e.target === e.currentTarget; }}
       onClick={e => { if (e.target === e.currentTarget && mousedownOnBackdrop.current) onClose(); }}>
       <style>{`.cal-time::-webkit-calendar-picker-indicator{display:none}.cal-time::-webkit-inner-spin-button{display:none}`}</style>
-      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, width: 440, boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, width: 440, maxWidth: '100%', boxSizing: 'border-box', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--text)' }}>{initialTask ? 'Редактировать задачу' : 'Новая задача'}</span>
@@ -450,8 +451,9 @@ function DayTimeline() {
   const allDayEvts = events.filter(e => e.all_day);
   const timedEvts  = events.filter(e => !e.all_day);
 
+  const isCompact = useIsCompact();
   return (
-    <aside style={{ width: 256, flex: 'none', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <aside style={{ width: isCompact ? '100%' : 256, minHeight: isCompact ? 320 : undefined, flex: 'none', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <header style={{ padding: '12px 14px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flex: 'none' }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>
@@ -548,6 +550,7 @@ const GROUP_LABELS = { time: 'время', project: 'проект', priority: '�
 
 /* ─── Today ──────────────────────────────────────────────── */
 export default function Today() {
+  const isCompact = useIsCompact();
   const [searchParams, setSearchParams] = useSearchParams();
   const [groupBy,        setGroupBy]        = useState(searchParams.get('group') || 'time');
   const [showDone,       setShowDone]       = useState(false);
@@ -691,7 +694,7 @@ export default function Today() {
             />
           )}
 
-          <div style={{ flex: 1, display: 'flex', gap: 16, padding: '18px 24px 24px', minHeight: 0 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: isCompact ? 'column' : 'row', gap: 16, padding: isCompact ? '14px 14px 18px' : '18px 24px 24px', minHeight: 0, overflowY: isCompact ? 'auto' : 'visible' }}>
             {/* ── Left: tasks ── */}
             <div className="ws-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', minWidth: 0 }}>
 

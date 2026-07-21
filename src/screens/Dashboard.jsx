@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Icon } from '../icons.jsx';
 import { Button, IconButton, Badge, ProjectTag, Checkbox, Tabs, Progress } from '../components/primitives.jsx';
 import { Sidebar, TopBar } from '../components/Sidebar.jsx';
+import { useIsCompact } from '../hooks/useViewport.js';
 import { useTodayTasks, useAllTasks, useFrogTask, useToggleTask, useUpdateTask, useCreateTask, parseTaskInput, useOverdueCount } from '../hooks/useTasks.js';
 import { useProjects } from '../hooks/useProjects.js';
 import { useDayEvents, useWeekEvents } from '../hooks/useEvents.js';
@@ -772,6 +773,7 @@ function HabitsWidget() {
 /* ─── Main ───────────────────────────────────────────────── */
 export default function Dashboard() {
   const navigate = useNavigate();
+  const isCompact = useIsCompact();
   const { data: tasks = [], isLoading: tL }    = useTodayTasks();
   const { data: allTasks = [] }                = useAllTasks();
   const { data: frog }                         = useFrogTask();
@@ -828,16 +830,16 @@ export default function Dashboard() {
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, background: 'var(--bg)' }}>
         <TopBar title="Дашборд" sub="что мне сейчас важно" right={<NotifBell />} />
 
-        <div className="ws-scroll" style={{ flex: 1, overflowY: 'auto', padding: '24px 28px 28px' }}>
+        <div className="ws-scroll" style={{ flex: 1, overflowY: 'auto', padding: isCompact ? '16px 14px 20px' : '24px 28px 28px' }}>
           <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}`}</style>
 
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, marginBottom: 24, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <span style={{ fontSize: 12, color: 'var(--text-3)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                 {new Date().toLocaleDateString('ru', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </span>
-              <h1 style={{ fontSize: 30, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.025em', margin: 0, lineHeight: 1.15, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <h1 style={{ fontSize: isCompact ? 22 : 30, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.025em', margin: 0, lineHeight: 1.15, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <span>
                   {greeting}.
                   <span style={{ color: 'var(--text-3)' }}>
@@ -864,7 +866,7 @@ export default function Dashboard() {
           </div>
 
           {/* Metrics */}
-          <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+          <div className="dash-metrics" style={{ marginBottom: 20 }}>
             <MetricCard label="Задач на сегодня" value={tL ? '…' : String(tasks.length)} unit={doneTasks.length ? `/ ${doneTasks.length} готово` : undefined} loading={tL} onClick={() => navigate('/today')} hint="→ Сегодня">
               <Progress value={tasks.length ? Math.round(doneTasks.length / tasks.length * 100) : 0} color={doneTasks.length === tasks.length && tasks.length > 0 ? 'var(--success)' : 'var(--p-openresto)'} height={4} />
             </MetricCard>
@@ -885,8 +887,8 @@ export default function Dashboard() {
               <span style={{ width: 44, height: 44, borderRadius: 12, background: `color-mix(in oklab, var(${frogColor}) 24%, transparent)`, color: `var(${frogColor})`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none', boxShadow: `0 0 16px -4px color-mix(in oklab, var(${frogColor}) 40%, transparent)` }}>
                 <Icon name="zap" size={20} stroke={1.5} />
               </span>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 11, color: `var(${frogColor})`, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 500 }}>Лягушка дня</span>
                   {frog.kanban_status === 'doing' && <Badge tone="info" icon="zap">в работе</Badge>}
                   {frog.project && <ProjectTag projectToken={frog.project.color_token} label={frog.project.name} />}
@@ -906,26 +908,26 @@ export default function Dashboard() {
           )}
 
           {/* Tasks + Schedule */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16, marginBottom: 16 }}>
+          <div className="dash-grid12" style={{ marginBottom: 16 }}>
             <TasksCard />
             <ScheduleWidget />
           </div>
 
           {/* Projects + Quick notes */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16, marginBottom: 16 }}>
+          <div className="dash-grid12" style={{ marginBottom: 16 }}>
             <ProjectsCard />
             <QuickNotesWidget />
           </div>
 
           {/* Inbox + Goals + Upcoming */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16, marginBottom: 16 }}>
+          <div className="dash-grid12" style={{ marginBottom: 16 }}>
             <InboxWidget />
             <GoalsWidget />
             <UpcomingWidget />
           </div>
 
           {/* Recent + Mood + Habits */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16 }}>
+          <div className="dash-grid12">
             <RecentWidget />
             <MoodWidget />
             <HabitsWidget />

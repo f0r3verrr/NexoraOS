@@ -4,6 +4,7 @@ import { Icon } from '../icons.jsx';
 import { Button, IconButton, Tabs } from '../components/primitives.jsx';
 import { DatePicker } from '../components/DatePicker.jsx';
 import { Sidebar, TopBar } from '../components/Sidebar.jsx';
+import { useIsCompact } from '../hooks/useViewport.js';
 import { useWeekEvents, useDayEvents, useMonthEvents, useCreateEvent, useUpdateEvent, useDeleteEvent } from '../hooks/useEvents.js';
 import { useProjects } from '../hooks/useProjects.js';
 import { ru } from '../lib/plural.js';
@@ -96,13 +97,13 @@ function EventModal({ defaultDate, defaultHour, initialEvent, onClose }) {
   const sx = { height: 36, padding: '0 12px', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 8, fontSize: 13, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', width: '100%' };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, boxSizing: 'border-box' }}
       onMouseDown={e => { mousedownOnBackdrop.current = e.target === e.currentTarget; }}
       onClick={e => { if (e.target === e.currentTarget && mousedownOnBackdrop.current) onClose(); }}>
       {/* Hide browser time-input chrome */}
       <style>{`.cal-time::-webkit-calendar-picker-indicator{display:none;opacity:0}.cal-time::-webkit-inner-spin-button{display:none}`}</style>
 
-      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, width: 450, boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '90vh', overflowY: 'auto' }}>
+      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, width: 450, maxWidth: '100%', boxSizing: 'border-box', boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '90vh', overflowY: 'auto' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--text)' }}>{initialEvent ? 'Редактировать событие' : 'Новое событие'}</span>
@@ -200,10 +201,10 @@ function EventDetailModal({ event, onClose, onEdit, onDelete }) {
   const recurLabel = RECUR_LABELS[event.recurrence];
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, boxSizing: 'border-box' }}
       onMouseDown={e => { mousedownOnBackdrop.current = e.target === e.currentTarget; }}
       onClick={e => { if (e.target === e.currentTarget && mousedownOnBackdrop.current) onClose(); }}>
-      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 14, padding: '20px 22px', width: 380, boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 0 }}>
+      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 14, padding: '20px 22px', width: 380, maxWidth: '100%', boxSizing: 'border-box', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 0 }}>
 
         {/* Color accent strip + header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
@@ -519,7 +520,61 @@ function CalProjRow({ label, color, checked, onToggle }) {
 }
 
 /* ─── Calendar ───────────────────────────────────────────── */
+/* ─── Agenda: список событий вместо грида — для узких экранов, где
+   недельная/месячная сетка (COL_W=64 + N равных колонок) становится
+   нечитаемой ─── */
+function AgendaView({ events, todayStr, onEventClick }) {
+  const groups = useMemo(() => {
+    const map = new Map();
+    for (const e of events) {
+      const day = isoDate(new Date(e.start_at));
+      if (!map.has(day)) map.set(day, []);
+      map.get(day).push(e);
+    }
+    return [...map.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([day, evts]) => ({ day, evts: evts.sort((a, b) => new Date(a.start_at) - new Date(b.start_at)) }));
+  }, [events]);
+
+  if (groups.length === 0) {
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 24 }}>
+        <Icon name="calendar" size={22} style={{ color: 'var(--text-muted)' }} />
+        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Событий нет</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ws-scroll" style={{ flex: 1, overflowY: 'auto', padding: '12px 14px 20px' }}>
+      {groups.map(({ day, evts }) => (
+        <div key={day} style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: day === todayStr ? 'var(--p-openresto)' : 'var(--text-3)', letterSpacing: '0.03em', textTransform: 'uppercase', marginBottom: 8, padding: '0 4px' }}>
+            {new Date(day + 'T12:00:00').toLocaleDateString('ru', { weekday: 'short', day: 'numeric', month: 'long' })}{day === todayStr ? ' · сегодня' : ''}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {evts.map(e => {
+              const color = e.project?.color_token || e.color_token || '--p-openresto';
+              return (
+                <div key={e.id} onClick={() => onEventClick(e)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}>
+                  <span style={{ width: 3, alignSelf: 'stretch', borderRadius: 2, background: `var(${color})`, flex: 'none' }} />
+                  <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', flex: 'none', minWidth: 40 }}>
+                    {e.all_day ? 'весь день' : fmtTime(e.start_at)}
+                  </span>
+                  <span style={{ fontSize: 13.5, color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Calendar() {
+  const isCompact = useIsCompact();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -660,8 +715,10 @@ export default function Calendar() {
           />
 
           <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-            {/* Project filter sidebar */}
-            {projects.length > 0 && (
+            {/* Project filter sidebar — на compact прячем, чтобы не отъедать
+                ширину у самого календаря на телефоне (управление проектами
+                остаётся доступно на десктопе) */}
+            {!isCompact && projects.length > 0 && (
               <aside style={{ width: 196, flex: 'none', borderRight: '1px solid var(--border-subtle)', padding: '14px 10px', display: 'flex', flexDirection: 'column', gap: 2, background: 'var(--bg)', overflowY: 'auto' }}>
                 <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.07em', textTransform: 'uppercase', padding: '4px 6px 6px', fontWeight: 600 }}>Мои календари</span>
                 <CalProjRow label="Личный" color="--p-openresto" checked={!hiddenSet.has('none')} onToggle={() => toggleProject('none')} />
@@ -680,15 +737,25 @@ export default function Calendar() {
               </aside>
             )}
 
-            {view === 'week' && (
+            {isCompact ? (
+              <div style={{ position: 'relative', flex: 1, minWidth: 0, display: 'flex' }}>
+                <AgendaView events={filteredEvents} todayStr={todayStr} onEventClick={handleEventClick} />
+                <button onClick={() => setShowModal({ date: anchorDate, hour: new Date().getHours() })} title="Новое событие"
+                  style={{
+                    position: 'absolute', right: 16, bottom: 16, width: 48, height: 48, borderRadius: 999,
+                    background: 'var(--text)', color: 'var(--bg)', border: 'none', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--shadow-modal)',
+                  }}>
+                  <Icon name="plus" size={20} />
+                </button>
+              </div>
+            ) : view === 'week' ? (
               <WeekView weekStart={weekStart} events={filteredEvents} todayStr={todayStr}
                 onSlotClick={setShowModal} onDelete={handleDelete} onEventClick={handleEventClick} />
-            )}
-            {view === 'day' && (
+            ) : view === 'day' ? (
               <DayView dateStr={anchorDate} events={filteredEvents} todayStr={todayStr}
                 onSlotClick={setShowModal} onDelete={handleDelete} onEventClick={handleEventClick} />
-            )}
-            {view === 'month' && (
+            ) : (
               <MonthView year={monthYear.year} month={monthYear.month} events={filteredEvents} todayStr={todayStr}
                 onDayClick={dateStr => { updateAnchor(dateStr); setView('day'); }}
                 onDelete={handleDelete} onEventClick={handleEventClick} />

@@ -61,7 +61,7 @@ export default function AdminDashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* Метрики */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0,1fr))', gap: 12 }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0,1fr))', gap: 12 }}>
         <Metric label="Пользователи" icon="users" value={isLoading ? '…' : stats?.total_users ?? 0}
           delta={stats ? `+${stats.new_7d} за 7 дней` : undefined} deltaColor="var(--success)" />
         <Metric label="Активные (7 дней)" icon="activity" accent="var(--success)" value={isLoading ? '…' : stats?.active_7d ?? 0}
@@ -77,7 +77,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Чарты + статус */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: 12, alignItems: 'stretch' }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr', gap: 12, alignItems: 'stretch' }}>
         <Card gap={10} style={{ padding: 16 }}>
           <CardHeader title="Регистрации" action={<DateRangePicker presetId={presetId} onChange={setPresetId} />} />
           <LineChartArea values={reg.values} labels={reg.labels} color="var(--accent-teal)" height={84} />
@@ -104,7 +104,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Пользователи / хранилище / жалобы */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', gap: 12, alignItems: 'stretch' }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', gap: 12, alignItems: 'stretch' }}>
         <Card gap={8} style={{ padding: 16 }}>
           <CardHeader title="Последние пользователи" action={<Link to="/users" style={{ fontSize: 12, color: 'var(--accent-teal)', textDecoration: 'none' }}>Все →</Link>} />
           {users.slice(0, 4).map(u => (
@@ -146,7 +146,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Логи / feature flags */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 12 }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 12 }}>
         <Card gap={6} style={{ padding: 16 }}>
           <CardHeader title="Последние логи" />
           {logs.map((log, i) => (

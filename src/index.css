@@ -217,3 +217,26 @@ input:autofill {
 @media (max-width: 1023px) {
   .rstack-lg { display: flex !important; flex-direction: column !important; }
 }
+
+/* Dashboard.jsx: 12-колоночный грид виджетов (gridColumn:'span N' на каждом
+   ребёнке) — на compact сжимается в один столбец; grid-column:auto сбрасывает
+   инлайновый span, не трогая сами карточки. */
+.dash-grid12 { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+@media (max-width: 1023px) {
+  .dash-grid12 { grid-template-columns: 1fr; }
+  .dash-grid12 > * { grid-column: auto !important; }
+}
+
+/* Dashboard.jsx: ряд из 4 метрик — на телефоне 2×2 вместо сплющенных в нитку. */
+.dash-metrics { display: flex; gap: 12px; }
+@media (max-width: 639px) {
+  .dash-metrics { flex-wrap: wrap; }
+  .dash-metrics > * { flex: 1 1 calc(50% - 6px); min-width: 140px; }
+}
+
+/* Общий collapse для гридов с произвольными fr-пропорциями (админка и
+   другие экраны) — класс переопределяет только gridTemplateColumns внутри
+   брейкпоинтов (!important бьёт инлайновый style), сам инлайн-грид (display,
+   gap, пропорции колонок на десктопе) не трогается. */
+@media (max-width: 1023px) { .admin-rgrid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; } }
+@media (max-width: 639px)  { .admin-rgrid { grid-template-columns: 1fr !important; } }
