@@ -264,6 +264,18 @@ function ProductChip({ product, onCycle, onEdit, onDelete }) {
 
 function FridgeShelf({ category, items, onCycle, onEdit, onDelete, last }) {
   const color = PRODUCT_CAT_COLOR[category] ?? '--text-muted';
+  // Подкатегории — свободный текст от пользователя (напр. мясо/фрукты/сладкое
+  // внутри "Еда"). Без подкатегории продукты идут одной группой первыми.
+  const subgroups = useMemo(() => {
+    const map = new Map();
+    for (const p of items) {
+      const key = p.subcategory?.trim() || '';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(p);
+    }
+    return [...map.entries()].sort(([a], [b]) => a ? (b ? a.localeCompare(b, 'ru') : 1) : (b ? -1 : 0));
+  }, [items]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
@@ -271,8 +283,17 @@ function FridgeShelf({ category, items, onCycle, onEdit, onDelete, last }) {
         <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-3)' }}>{category}</span>
         <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{items.length}</span>
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, paddingBottom: 14 }}>
-        {items.map(p => <ProductChip key={p.id} product={p} onCycle={onCycle} onEdit={onEdit} onDelete={onDelete} />)}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 14 }}>
+        {subgroups.map(([subcat, subItems]) => (
+          <div key={subcat || '_'}>
+            {subcat && (
+              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-muted)', marginBottom: 6, paddingLeft: 1 }}>{subcat}</div>
+            )}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              {subItems.map(p => <ProductChip key={p.id} product={p} onCycle={onCycle} onEdit={onEdit} onDelete={onDelete} />)}
+            </div>
+          </div>
+        ))}
       </div>
       {/* стеклянная полка холодильника */}
       {!last && (
@@ -289,16 +310,26 @@ function FridgeShelf({ category, items, onCycle, onEdit, onDelete, last }) {
 /* ─── Продукт ────────────────────────────────────────────── */
 function ProductModal({ product, onClose }) {
   const save = useSaveProduct();
+  const { data: allProducts = [] } = useProducts();
   const [name,   setName]   = useState(product?.name ?? '');
   const [cat,    setCat]    = useState(product?.category ?? 'Еда');
+  const [subcat, setSubcat] = useState(product?.subcategory ?? '');
   const [status, setStatus] = useState(product?.status ?? 'ok');
   const [note,   setNote]   = useState(product?.note ?? '');
   const [error,  setError]  = useState('');
 
+  const subcatSuggestions = useMemo(() => {
+    const set = new Set();
+    for (const p of allProducts) {
+      if (p.category === cat && p.subcategory) set.add(p.subcategory);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'ru'));
+  }, [allProducts, cat]);
+
   const submit = async () => {
     if (!name.trim()) { setError('Укажи название'); return; }
     try {
-      await save.mutateAsync({ id: product?.id, name: name.trim(), category: cat, status, note: note.trim() || null });
+      await save.mutateAsync({ id: product?.id, name: name.trim(), category: cat, subcategory: subcat.trim() || null, status, note: note.trim() || null });
       onClose();
     } catch (e) { setError(e?.message ?? 'Ошибка'); }
   };
@@ -315,6 +346,12 @@ function ProductModal({ product, onClose }) {
             </button>
           ))}
         </div>
+      </Field>
+      <Field label="Подкатегория">
+        <input value={subcat} onChange={e => setSubcat(e.target.value)} placeholder="необязательно — напр. Фрукты" list="product-subcat-suggestions" style={fieldStyle} />
+        <datalist id="product-subcat-suggestions">
+          {subcatSuggestions.map(s => <option key={s} value={s} />)}
+        </datalist>
       </Field>
       <Field label="Статус">
         <div style={{ display: 'flex', gap: 6 }}>
