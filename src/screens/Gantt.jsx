@@ -203,7 +203,7 @@ function ModalWrap({ onClose, children }) {
   }, [onClose]);
   return createPortal(
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, boxSizing: 'border-box' }}
       onMouseDown={e => { ref.current = e.target === e.currentTarget; }}
       onClick={e => { if (e.target === e.currentTarget && ref.current) onClose(); }}>
       {children}
@@ -214,7 +214,7 @@ function ModalWrap({ onClose, children }) {
 
 function ModalBox({ children, width = 380 }) {
   return (
-    <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width, boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width, maxWidth: '100%', boxSizing: 'border-box', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 16 }}>
       {children}
     </div>
   );
@@ -495,7 +495,7 @@ function TaskDrawer({ item, projects, deps = [], onAddDependency, onDeleteDepend
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 45, background: 'rgba(0,0,0,0.3)' }} />
       <div style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, width: 360, zIndex: 46,
+        position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(360px, 100vw)', zIndex: 46,
         background: 'var(--bg-elev-1)', borderLeft: '1px solid var(--border)',
         boxShadow: '-8px 0 32px -8px rgba(0,0,0,0.5)',
         display: 'flex', flexDirection: 'column',
