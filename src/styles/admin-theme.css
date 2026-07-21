@@ -37,6 +37,10 @@
 
   background: var(--bg);
   color: var(--text);
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
 }
+/* .admin-root опирается на цепочку html/body/#root { height:100% } из index.css —
+   надёжнее, чем 100vh, который в некоторых webview/DevTools-контекстах не совпадает
+   с реально видимой областью (отсюда и был обрезанный низ сайдбара). */
+html:has(.admin-root), body:has(.admin-root) { overflow: hidden; }

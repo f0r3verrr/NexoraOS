@@ -54,7 +54,7 @@ export default function AdminLayout() {
   const badgeTotal = (badges?.openFeedback ?? 0) + (badges?.openErrors ?? 0);
 
   return (
-    <div className="admin-root" style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <div className="admin-root" style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
       {/* SIDEBAR — фиксированная высота экрана, сама никогда не скроллится целиком
           (только внутренний <nav>), поэтому кнопка выхода всегда на виду */}
       <aside style={{
