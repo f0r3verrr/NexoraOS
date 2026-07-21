@@ -9,6 +9,7 @@ import { useKanbanTasks, useMoveTask, useToggleTask, useCreateTask, useUpdateTas
 import { useKanbanColumns, useCreateKanbanColumn, useUpdateKanbanColumn, useDeleteKanbanColumn } from '../hooks/useKanbanColumns.js';
 import { useProjects } from '../hooks/useProjects.js';
 import { useSubtasks, useCreateSubtask, useToggleSubtask, useDeleteSubtask } from '../hooks/useSubtasks.js';
+import { useIsCompact } from '../hooks/useViewport.js';
 
 const DEFAULT_COLUMNS = [
   { id: 'backlog',     title: 'Бэклог',       color: '--text-muted' },
@@ -43,10 +44,10 @@ function CreateTaskModal({ defaultStatus, columns = DEFAULT_COLUMNS, onClose }) 
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, boxSizing: 'border-box' }}
       onMouseDown={e => { mousedownOnBackdrop.current = e.target === e.currentTarget; }}
       onClick={e => { if (e.target === e.currentTarget && mousedownOnBackdrop.current) onClose(); }}>
-      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: 380, boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: 380, maxWidth: '100%', boxSizing: 'border-box', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>
           Новая задача — {columns.find(c => c.id === defaultStatus)?.title}
         </div>
@@ -143,10 +144,10 @@ function TaskDetailModal({ task, projects, columns = DEFAULT_COLUMNS, onClose })
   const doneCount = subtasks.filter(s => s.done).length;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 55, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 55, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, boxSizing: 'border-box' }}
       onMouseDown={e => { mousedownOnBackdrop.current = e.target === e.currentTarget; }}
       onClick={e => { if (e.target === e.currentTarget && mousedownOnBackdrop.current) onClose(); }}>
-      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: 480, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="modal-enter" style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, width: 480, maxWidth: '100%', boxSizing: 'border-box', maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-modal)', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Title + close */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
@@ -256,18 +257,30 @@ function TaskDetailModal({ task, projects, columns = DEFAULT_COLUMNS, onClose })
 }
 
 /* ---- Task card ---- */
-function KanbanCard({ task, onDragStart, onOpen }) {
+function KanbanCard({ task, onDragStart, onOpen, columns }) {
   const toggle = useToggleTask();
   const move   = useMoveTask();
+  const isCompact = useIsCompact();
+  const [moveOpen, setMoveOpen] = useState(false);
+  const moveRef = useRef(null);
+
+  useEffect(() => {
+    if (!moveOpen) return;
+    const handler = (e) => { if (!moveRef.current?.contains(e.target)) setMoveOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [moveOpen]);
+
+  const otherColumns = (columns ?? []).filter(c => c.id !== task.kanban_status);
 
   return (
     <div
-      draggable
+      draggable={!isCompact}
       onDragStart={() => onDragStart(task.id)}
       onClick={() => onOpen(task)}
       onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'var(--shadow-2)'; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.boxShadow = ''; }}
-      style={{ background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)', borderRadius: 10, padding: '12px 14px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 10, userSelect: 'none', transition: 'border-color 120ms, box-shadow 150ms' }}
+      style={{ position: 'relative', background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)', borderRadius: 10, padding: '12px 14px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 10, userSelect: 'none', transition: 'border-color 120ms, box-shadow 150ms' }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
         <span onClick={e => { e.stopPropagation(); toggle.mutate({ id: task.id, done: !task.done }); }} style={{ cursor: 'pointer', marginTop: 1 }}>
@@ -276,6 +289,28 @@ function KanbanCard({ task, onDragStart, onOpen }) {
         <span style={{ fontSize: 13, color: task.done ? 'var(--text-muted)' : 'var(--text)', lineHeight: 1.4, flex: 1, textDecoration: task.done ? 'line-through' : 'none' }}>
           {task.title}
         </span>
+        {/* На тач-экранах перетаскивание между колонками недоступно (HTML5 DnD
+            не работает без мыши) — вместо этого кнопка "Переместить в…" */}
+        {isCompact && (
+          <div ref={moveRef} style={{ position: 'relative', flex: 'none' }}>
+            <button onClick={e => { e.stopPropagation(); setMoveOpen(o => !o); }}
+              style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)', borderRadius: 6, background: moveOpen ? 'var(--bg-elev-3)' : 'transparent' }}>
+              <Icon name="more" size={14} />
+            </button>
+            {moveOpen && (
+              <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 40, background: 'var(--bg-elev-3)', border: '1px solid var(--border)', borderRadius: 10, padding: 4, minWidth: 170, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+                <div style={{ padding: '5px 10px 6px', fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Переместить в</div>
+                {otherColumns.map(c => (
+                  <button key={c.id} onClick={() => { move.mutate({ id: task.id, kanban_status: c.id }); setMoveOpen(false); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', borderRadius: 6, fontSize: 13, color: 'var(--text-2)', background: 'transparent' }}>
+                    <span style={{ width: 7, height: 7, borderRadius: 999, background: `var(${c.color})`, flex: 'none' }} />
+                    {c.title}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         {task.project && <ProjectTag projectToken={task.project.color_token} label={task.project.name} size="sm" />}
@@ -291,7 +326,7 @@ function KanbanCard({ task, onDragStart, onOpen }) {
 }
 
 /* ---- Column ---- */
-function KanbanColumn({ col, tasks, dragId, onDragStart, onDrop, onAddClick, onOpenTask, onRename, onDelete }) {
+function KanbanColumn({ col, tasks, dragId, onDragStart, onDrop, onAddClick, onOpenTask, onRename, onDelete, columns }) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [menuOpen,   setMenuOpen]   = useState(false);
   const [renaming,   setRenaming]   = useState(false);
@@ -391,7 +426,7 @@ function KanbanColumn({ col, tasks, dragId, onDragStart, onDrop, onAddClick, onO
         minHeight: 120,
       }}>
         {tasks.map(task => (
-          <KanbanCard key={task.id} task={task} onDragStart={onDragStart} onOpen={onOpenTask} />
+          <KanbanCard key={task.id} task={task} onDragStart={onDragStart} onOpen={onOpenTask} columns={columns} />
         ))}
         <button
           onClick={() => onAddClick(col.id)}
@@ -810,6 +845,7 @@ export default function Kanban() {
                 <KanbanColumn
                   key={col.id}
                   col={col}
+                  columns={allColumns}
                   tasks={filtered.filter(t => t.kanban_status === col.id)}
                   dragId={dragId}
                   onDragStart={(id) => setDragId(id)}

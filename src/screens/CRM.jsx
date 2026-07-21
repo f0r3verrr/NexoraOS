@@ -1,8 +1,10 @@
 ﻿import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { Icon } from '../icons.jsx';
 import { Button, IconButton, Badge, Avatar, SpinInput } from '../components/primitives.jsx';
 import { Sidebar, TopBar } from '../components/Sidebar.jsx';
+import { useIsCompact } from '../hooks/useViewport.js';
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact } from '../hooks/useContacts.js';
 import { useProjects } from '../hooks/useProjects.js';
 import { useSegments } from '../hooks/useSegments.js';
@@ -583,10 +585,11 @@ function DetailPanel({ contact, onEdit, onClose }) {
 
   useEffect(() => { setTab('overview'); }, [contact.id]);
 
+  const isCompact = useIsCompact();
   const TABS = [{ id: 'overview', label: 'Обзор' }, { id: 'activity', label: 'Активность' }, { id: 'tasks', label: 'Задачи' }];
 
-  return (
-    <aside className="ws-scroll" style={{ width: 310, flex: 'none', overflowY: 'auto', padding: '16px 14px 28px', borderLeft: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+  const inner = (
+    <>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
         <Avatar initials={initials(contact.name)} color={`var(${colorToken})`} size={40} />
@@ -623,6 +626,26 @@ function DetailPanel({ contact, onEdit, onClose }) {
       {tab === 'overview'  && <OverviewTab contact={contact} onStatusChange={s => update.mutate({ id: contact.id, status: s })} />}
       {tab === 'activity'  && <ActivityTab contactId={contact.id} />}
       {tab === 'tasks'     && <TasksTab    contactId={contact.id} />}
+    </>
+  );
+
+  /* На compact — детали контакта полноэкранным оверлеем (список+доска не
+     помещаются рядом с 310px-панелью), а не узкой колонкой сбоку. Закрытие —
+     тот же "x" в шапке, что и на десктопе. */
+  if (isCompact) {
+    return createPortal(
+      <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--bg)' }}>
+        <div className="ws-scroll" style={{ height: '100%', overflowY: 'auto', padding: '16px 14px 28px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {inner}
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
+  return (
+    <aside className="ws-scroll" style={{ width: 310, flex: 'none', overflowY: 'auto', padding: '16px 14px 28px', borderLeft: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {inner}
     </aside>
   );
 }
@@ -640,14 +663,26 @@ const STATUS_ACCENT = {
 function PipelineCard({ contact, isActive, isDragging, onClick, onDragStart, onDragEnd, selected, onToggleSelect, selectionMode }) {
   const colorToken = contact.project?.color_token ?? '--p-openresto';
   const money      = fmtMoney(contact.deal_amount);
+  const isCompact  = useIsCompact();
+  const update     = useUpdateContact();
+  const [moveOpen, setMoveOpen] = useState(false);
+  const moveRef = useRef(null);
+
+  useEffect(() => {
+    if (!moveOpen) return;
+    const handler = (e) => { if (!moveRef.current?.contains(e.target)) setMoveOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [moveOpen]);
 
   return (
     <div
-      draggable={!selectionMode}
+      draggable={!selectionMode && !isCompact}
       onClick={selectionMode ? () => onToggleSelect(contact.id) : onClick}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       style={{
+        position: 'relative',
         background: isActive || selected ? 'var(--bg-elev-2)' : 'var(--bg-elev-1)',
         border: `1px solid ${selected ? 'var(--info)' : isActive ? 'var(--border)' : 'var(--border-subtle)'}`,
         borderRadius: 10, padding: '11px 13px',
@@ -670,6 +705,27 @@ function PipelineCard({ contact, isActive, isDragging, onClick, onDragStart, onD
           <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contact.name}</div>
         </div>
         {money && <span style={{ fontSize: 11, color: 'var(--success)', fontFamily: 'var(--font-mono)', fontWeight: 500, flex: 'none' }}>{money}</span>}
+        {/* Тач-экраны не поддерживают HTML5 DnD — на compact даём кнопку смены статуса */}
+        {isCompact && !selectionMode && (
+          <div ref={moveRef} style={{ position: 'relative', flex: 'none' }}>
+            <button onClick={e => { e.stopPropagation(); setMoveOpen(o => !o); }}
+              style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)', borderRadius: 6, background: moveOpen ? 'var(--bg-elev-3)' : 'transparent' }}>
+              <Icon name="more" size={14} />
+            </button>
+            {moveOpen && (
+              <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 40, background: 'var(--bg-elev-3)', border: '1px solid var(--border)', borderRadius: 10, padding: 4, minWidth: 160, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+                <div style={{ padding: '5px 10px 6px', fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Переместить в</div>
+                {STATUSES.filter(s => s !== contact.status).map(s => (
+                  <button key={s} onClick={() => { update.mutate({ id: contact.id, status: s }); setMoveOpen(false); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', borderRadius: 6, fontSize: 13, color: 'var(--text-2)', background: 'transparent' }}>
+                    <span style={{ width: 7, height: 7, borderRadius: 999, background: STATUS_ACCENT[s], flex: 'none' }} />
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       {(contact.email || contact.phone) && (
         <div style={{ fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 5, pointerEvents: 'none' }}>
@@ -772,7 +828,10 @@ function TableView({ contacts, activeId, setActiveId, hasPanel, selectedIds, onT
   const cols = hasPanel ? colsWide : colsAll;
 
   return (
-    <div className="ws-scroll" style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
+    <div className="ws-scroll" style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+      {/* Строки таблицы — фикс-px колонки (не резинятся), на узких экранах
+          таблица целиком скроллится по горизонтали вместо сплющивания. */}
+      <div style={{ minWidth: 560 }}>
       <div style={{ display: 'grid', gridTemplateColumns: cols, padding: '8px 20px', borderBottom: '1px solid var(--border-subtle)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.04em', textTransform: 'uppercase', alignItems: 'center', gap: 8 }}>
         {selectionMode && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -851,6 +910,7 @@ function TableView({ contacts, activeId, setActiveId, hasPanel, selectedIds, onT
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
