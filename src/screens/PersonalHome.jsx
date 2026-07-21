@@ -247,6 +247,9 @@ function ProductChip({ product, onCycle, onEdit, onDelete }) {
       }}
     >
       <span style={{ fontSize: 12.5, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 30 }}>{product.name}</span>
+      {product.note && (
+        <span style={{ fontSize: 10.5, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.note}</span>
+      )}
       <button onClick={() => onCycle(product)} title="Клик — сменить статус" style={{ alignSelf: 'flex-start', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
         <Badge tone={meta.tone} dot>{meta.label}</Badge>
       </button>
@@ -529,9 +532,10 @@ export default function PersonalHome() {
             </div>
           </div>
 
-          {/* гарантии + чеки */}
+          {/* гарантии + продукты | чеки */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16 }}>
-          <div style={{ padding: '14px 18px', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12, alignSelf: 'start' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignSelf: 'start' }}>
+          <div style={{ padding: '14px 18px', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>Гарантии на технику</span>
               <Button variant="ghost" size="sm" icon="plus" onClick={() => setWarrantyModal('new')}>Добавить</Button>
@@ -571,18 +575,8 @@ export default function PersonalHome() {
             )}
           </div>
 
-          {/* чеки — живут только в этом модуле */}
-          <div style={{ padding: '14px 18px', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12, alignSelf: 'start', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>Чеки</span>
-              <span style={{ fontSize: 11, color: 'var(--text-3)' }}>техника · ремонт · ЖКХ</span>
-            </div>
-            <ModuleFilesGrid module="home-receipts" accent={C} columns={3} hint="Фото чеков — пригодятся для гарантии и возвратов" />
-          </div>
-          </div>
-
-          {/* продукты — полки холодильника */}
-          <div style={{ marginTop: 16, borderRadius: 16, border: '1px solid var(--border-subtle)', overflow: 'hidden', background: 'var(--bg-elev-1)' }}>
+          {/* продукты — полки холодильника, рядом с гарантиями (компактнее, чем отдельным блоком) */}
+          <div style={{ borderRadius: 16, border: '1px solid var(--border-subtle)', overflow: 'hidden', background: 'var(--bg-elev-1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '14px 18px', flexWrap: 'wrap', borderBottom: '1px solid var(--border-subtle)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                 <span style={{ width: 26, height: 26, borderRadius: 8, background: 'color-mix(in oklab, var(--info) 16%, transparent)', color: 'var(--info)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -614,6 +608,17 @@ export default function PersonalHome() {
                 ))
               )}
             </div>
+          </div>
+          </div>
+
+          {/* чеки — живут только в этом модуле */}
+          <div style={{ padding: '14px 18px', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12, alignSelf: 'start', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>Чеки</span>
+              <span style={{ fontSize: 11, color: 'var(--text-3)' }}>техника · ремонт · ЖКХ</span>
+            </div>
+            <ModuleFilesGrid module="home-receipts" accent={C} columns={3} hint="Фото чеков — пригодятся для гарантии и возвратов" />
+          </div>
           </div>
         </div>
       </main>
