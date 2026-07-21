@@ -142,7 +142,7 @@ function WipBadge({ text = 'В разработке' }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, fontWeight: 600,
-      padding: '3px 9px', borderRadius: 999, letterSpacing: '0.01em',
+      padding: '3px 9px', borderRadius: 999, letterSpacing: '0.01em', whiteSpace: 'nowrap', flexShrink: 0,
       background: 'color-mix(in oklab, var(--warn) 16%, transparent)', color: 'var(--warn)',
     }}>
       <Icon name="clock" size={10} /> {text}
@@ -158,7 +158,7 @@ function WipLock({ children, message = 'Раздел сейчас в разра�
         position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 18,
       }}>
         <span style={{
-          display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 500,
+          display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 500, whiteSpace: 'nowrap',
           padding: '8px 16px', borderRadius: 10, background: 'var(--bg-elev-2)', border: '1px solid var(--border)',
           color: 'var(--text-2)', boxShadow: 'var(--shadow-2)',
         }}>

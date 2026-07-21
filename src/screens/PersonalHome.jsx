@@ -31,6 +31,12 @@ const STATUS_META = {
 };
 const PROD_TABS = ['Все', 'Есть', 'Заканчивается', 'Закончилось'];
 const PROD_TAB_TO_STATUS = { 'Есть': 'ok', 'Заканчивается': 'low', 'Закончилось': 'out' };
+const PRODUCT_CAT_COLOR = {
+  'Еда':            '--success',
+  'Бытовая химия':  '--info',
+  'Гигиена':        '--p-girl',
+  'Другое':         '--text-muted',
+};
 
 function todayStr() {
   const d = new Date();
@@ -223,6 +229,59 @@ function WarrantyModal({ warranty, onClose }) {
   );
 }
 
+/* ─── Полка холодильника ─────────────────────────────────── */
+function ProductChip({ product, onCycle, onEdit, onDelete }) {
+  const meta = STATUS_META[product.status] ?? STATUS_META.ok;
+  const isOut = product.status === 'out';
+  return (
+    <div
+      onMouseEnter={e => e.currentTarget.querySelector('.chip-actions').style.opacity = '1'}
+      onMouseLeave={e => e.currentTarget.querySelector('.chip-actions').style.opacity = '0'}
+      style={{
+        position: 'relative', display: 'flex', flexDirection: 'column', gap: 6,
+        minWidth: 112, padding: '9px 11px', borderRadius: 10,
+        background: isOut ? 'color-mix(in oklab, var(--bg-elev-2) 55%, transparent)' : 'var(--bg-elev-2)',
+        border: `1.5px ${isOut ? 'dashed' : 'solid'} color-mix(in oklab, var(--${meta.tone}) ${isOut ? 28 : 42}%, var(--border-subtle))`,
+        opacity: isOut ? 0.75 : 1,
+        boxShadow: '0 4px 8px -4px rgba(0,0,0,0.4)',
+      }}
+    >
+      <span style={{ fontSize: 12.5, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 30 }}>{product.name}</span>
+      <button onClick={() => onCycle(product)} title="Клик — сменить статус" style={{ alignSelf: 'flex-start', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+        <Badge tone={meta.tone} dot>{meta.label}</Badge>
+      </button>
+      <div className="chip-actions" style={{ position: 'absolute', top: 7, right: 7, opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2 }}>
+        <IconButton icon="edit"  size="sm" onClick={() => onEdit(product)} />
+        <IconButton icon="trash" size="sm" onClick={() => onDelete(product.id)} />
+      </div>
+    </div>
+  );
+}
+
+function FridgeShelf({ category, items, onCycle, onEdit, onDelete, last }) {
+  const color = PRODUCT_CAT_COLOR[category] ?? '--text-muted';
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <span style={{ width: 6, height: 6, borderRadius: 999, background: `var(${color})`, flexShrink: 0 }} />
+        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-3)' }}>{category}</span>
+        <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{items.length}</span>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, paddingBottom: 14 }}>
+        {items.map(p => <ProductChip key={p.id} product={p} onCycle={onCycle} onEdit={onEdit} onDelete={onDelete} />)}
+      </div>
+      {/* стеклянная полка холодильника */}
+      {!last && (
+        <div style={{
+          height: 2, borderRadius: 999, marginBottom: 16,
+          background: 'linear-gradient(90deg, transparent, color-mix(in oklab, var(--text) 20%, transparent) 12%, color-mix(in oklab, var(--text) 20%, transparent) 88%, transparent)',
+          boxShadow: '0 6px 10px -5px rgba(0,0,0,0.55)',
+        }} />
+      )}
+    </div>
+  );
+}
+
 /* ─── Продукт ────────────────────────────────────────────── */
 function ProductModal({ product, onClose }) {
   const save = useSaveProduct();
@@ -311,6 +370,16 @@ export default function PersonalHome() {
     () => prodTab === 'Все' ? products : products.filter(p => p.status === PROD_TAB_TO_STATUS[prodTab]),
     [products, prodTab]
   );
+  const productsByCat = useMemo(() => {
+    const map = {};
+    for (const p of filteredProducts) {
+      const cat = p.category || 'Другое';
+      if (!map[cat]) map[cat] = [];
+      map[cat].push(p);
+    }
+    return map;
+  }, [filteredProducts]);
+  const shelves = PRODUCT_CATS.filter(cat => productsByCat[cat]?.length > 0);
   const cycleStatus = (p) => saveProduct.mutate({ id: p.id, status: STATUS_META[p.status]?.next ?? 'ok' });
 
   return (
@@ -512,44 +581,39 @@ export default function PersonalHome() {
           </div>
           </div>
 
-          {/* продукты — как список у холодильника */}
-          <div style={{ marginTop: 16, padding: '14px 18px', background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>Продукты</span>
+          {/* продукты — полки холодильника */}
+          <div style={{ marginTop: 16, borderRadius: 16, border: '1px solid var(--border-subtle)', overflow: 'hidden', background: 'var(--bg-elev-1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '14px 18px', flexWrap: 'wrap', borderBottom: '1px solid var(--border-subtle)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                <span style={{ width: 26, height: 26, borderRadius: 8, background: 'color-mix(in oklab, var(--info) 16%, transparent)', color: 'var(--info)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="archive" size={13} />
+                </span>
+                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>Продукты</span>
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Tabs items={PROD_TABS} active={prodTab} onSelect={setProdTab} />
                 <Button variant="ghost" size="sm" icon="plus" onClick={() => setProductModal('new')}>Добавить</Button>
               </div>
             </div>
-            {filteredProducts.length === 0 ? (
-              <div style={{ padding: '18px 0', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
-                {products.length === 0 ? 'Добавь первый продукт — что есть, что заканчивается, что купить' : 'Ничего в этой категории'}
-              </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-                {filteredProducts.map(p => {
-                  const meta = STATUS_META[p.status] ?? STATUS_META.ok;
-                  return (
-                    <div key={p.id}
-                      onMouseEnter={e => e.currentTarget.querySelector('.prod-actions').style.opacity = '1'}
-                      onMouseLeave={e => e.currentTarget.querySelector('.prod-actions').style.opacity = '0'}
-                      style={{ position: 'relative', padding: '10px 12px', background: 'var(--bg-elev-2)', border: '1px solid var(--border-subtle)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 44 }}>{p.name}</span>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                        <span style={{ fontSize: 11, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.category}{p.note ? ` · ${p.note}` : ''}</span>
-                        <button onClick={() => cycleStatus(p)} title="Клик — сменить статус" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}>
-                          <Badge tone={meta.tone} dot>{meta.label}</Badge>
-                        </button>
-                      </div>
-                      <div className="prod-actions" style={{ position: 'absolute', top: 8, right: 8, opacity: 0, transition: 'opacity 120ms', display: 'flex', gap: 2 }}>
-                        <IconButton icon="edit"  size="sm" onClick={() => setProductModal(p)} />
-                        <IconButton icon="trash" size="sm" onClick={() => deleteProduct.mutate(p.id)} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+
+            <div style={{
+              padding: '18px 18px 6px',
+              background: 'linear-gradient(180deg, color-mix(in oklab, var(--info) 5%, transparent), transparent 45%)',
+            }}>
+              {shelves.length === 0 ? (
+                <div style={{ padding: '22px 0 30px', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
+                  {products.length === 0 ? 'Пусто в холодильнике — добавь первый продукт' : 'Ничего в этой категории'}
+                </div>
+              ) : (
+                shelves.map((cat, i) => (
+                  <FridgeShelf
+                    key={cat} category={cat} items={productsByCat[cat]}
+                    onCycle={cycleStatus} onEdit={setProductModal} onDelete={id => deleteProduct.mutate(id)}
+                    last={i === shelves.length - 1}
+                  />
+                ))
+              )}
+            </div>
           </div>
         </div>
       </main>
