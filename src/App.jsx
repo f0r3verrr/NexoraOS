@@ -107,20 +107,16 @@ function RootGate() {
 function AppLoader() {
   return (
     <div style={{
-      height: '100vh', width: '100vw',
+      position: 'fixed', inset: 0,
       background: 'var(--bg)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
+      overflow: 'hidden',
     }}>
-      <div style={{
-        width: 40, height: 40, borderRadius: 10,
-        background: 'linear-gradient(135deg, color-mix(in oklab, var(--p-openresto) 60%, var(--bg)), color-mix(in oklab, var(--p-youmin) 60%, var(--bg)))',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 18, fontWeight: 600, color: 'var(--text)',
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }`}</style>
+      <img src="/favicon.png" alt="NexoraOS" style={{
+        width: 56, height: 56, borderRadius: 14,
         animation: 'pulse 1.2s ease-in-out infinite',
-      }}>
-        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }`}</style>
-        N
-      </div>
+      }} />
     </div>
   );
 }
