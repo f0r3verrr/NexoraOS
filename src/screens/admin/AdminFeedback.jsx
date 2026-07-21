@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Modal, Field, fieldStyle } from '../../components/Modal.jsx';
 import {
-  useFeedbackAdmin, useSetFeedbackStatus, useSetFeedbackPriority, useReplyFeedback,
+  useFeedbackAdmin, useSetFeedbackStatus, useSetFeedbackPriority, useReplyFeedback, useFeedbackThread,
 } from '../../hooks/admin/useFeedbackAdmin.js';
 import { Badge, AdminButton, EmptyState } from './AdminUI.jsx';
-import { fmtRel } from '../../lib/adminFormat.js';
+import { fmtRel, fmtDateTime } from '../../lib/adminFormat.js';
 
 const TYPE_LABEL = { bug: 'Баг', feature: 'Фича', question: 'Вопрос', other: 'Другое' };
 const TYPE_TONE = { bug: 'danger', feature: 'success', question: 'info', other: 'neutral' };
@@ -15,16 +15,45 @@ const COLUMNS = [
   { status: 'closed', label: 'Закрыто', dot: 'var(--success)' },
 ];
 
+function Bubble({ own, body, time }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: own ? 'flex-end' : 'flex-start' }}>
+      <div style={{ maxWidth: '78%', display: 'flex', flexDirection: 'column', gap: 4, alignItems: own ? 'flex-end' : 'flex-start' }}>
+        {!own && <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-muted)' }}>Пользователь</span>}
+        <div style={{
+          padding: '9px 13px',
+          borderRadius: own ? '13px 13px 4px 13px' : '13px 13px 13px 4px',
+          background: own ? 'var(--p-openresto)' : 'var(--bg-elev-3)',
+          color: own ? 'var(--bg)' : 'var(--text)',
+          fontSize: 13, lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+        }}>
+          {body}
+        </div>
+        <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{fmtDateTime(time)}</span>
+      </div>
+    </div>
+  );
+}
+
 function FeedbackDetail({ item, onClose }) {
   const setStatus = useSetFeedbackStatus();
   const setPriority = useSetFeedbackPriority();
   const reply = useReplyFeedback();
+  const { data: thread = [] } = useFeedbackThread(item.id);
   const [body, setBody] = useState('');
+  const bottomRef = useRef(null);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ block: 'end' }); }, [thread.length]);
+
+  const send = () => {
+    const text = body.trim();
+    if (!text || reply.isPending) return;
+    reply.mutate({ id: item.id, body: text }, { onSuccess: () => setBody('') });
+  };
 
   return (
-    <Modal title={item.title} sub={item.user_email} width={480} onClose={onClose}>
+    <Modal title={item.title} sub={item.user_email} width={520} onClose={onClose}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{item.body}</div>
         <div style={{ display: 'flex', gap: 10 }}>
           <Field label="Статус">
             <select defaultValue={item.status} onChange={e => setStatus.mutate({ id: item.id, status: e.target.value })} style={fieldStyle}>
@@ -37,12 +66,26 @@ function FeedbackDetail({ item, onClose }) {
             </select>
           </Field>
         </div>
-        <Field label="Ответить">
-          <textarea value={body} onChange={e => setBody(e.target.value)} rows={3} style={{ ...fieldStyle, height: 'auto', padding: '10px 12px', resize: 'vertical' }} />
-        </Field>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <AdminButton variant="primary" disabled={!body.trim()} onClick={() => { reply.mutate({ id: item.id, body }, { onSuccess: () => setBody('') }); }}>
-            Отправить ответ
+
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 340, overflowY: 'auto',
+          padding: '4px 4px 2px', background: 'var(--bg-elev-1)', borderRadius: 12, border: '1px solid var(--border-subtle)',
+        }}>
+          <div style={{ padding: '10px 10px 0' }}><Bubble body={item.body} time={item.created_at} /></div>
+          <div style={{ padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {thread.map(r => <Bubble key={r.id} own={r.is_admin} body={r.body} time={r.created_at} />)}
+          </div>
+          <div ref={bottomRef} />
+        </div>
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <textarea
+            value={body} onChange={e => setBody(e.target.value)} rows={2} placeholder="Написать пользователю…"
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+            style={{ ...fieldStyle, flex: 1, height: 'auto', padding: '10px 12px', resize: 'vertical' }}
+          />
+          <AdminButton variant="primary" disabled={!body.trim() || reply.isPending} onClick={send} style={{ alignSelf: 'flex-end' }}>
+            Отправить
           </AdminButton>
         </div>
       </div>

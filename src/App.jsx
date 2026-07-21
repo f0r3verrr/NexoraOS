@@ -30,6 +30,7 @@ import PersonalCar  from './screens/PersonalCar.jsx';
 import PersonalGirl from './screens/PersonalGirl.jsx';
 import PersonalHome from './screens/PersonalHome.jsx';
 import WhatsNew from './screens/WhatsNew.jsx';
+import Feedback from './screens/Feedback.jsx';
 import { PrivacyPolicy, Terms } from './screens/Legal.jsx';
 import Landing from './screens/Landing.jsx';
 import ResetPassword from './screens/ResetPassword.jsx';
@@ -187,6 +188,7 @@ export default function App() {
           <Route path="/projects/:id"  element={<ProjectDetail />} />
           <Route path="/settings"  element={<Settings />} />
           <Route path="/whats-new" element={<WhatsNew />} />
+          <Route path="/feedback" element={<Feedback />} />
           <Route path="/vault"     element={<Vault />} />
           <Route path="/cinema"    element={<Cinema />} />
           <Route path="/personal/car"     element={<PersonalCar />} />

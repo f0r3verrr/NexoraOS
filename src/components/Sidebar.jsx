@@ -46,7 +46,7 @@ const RAIL_PERSONAL = [
 const RAIL_BOTTOM = [
   { key: 'vault',     path: '/vault',      icon: 'lock',     label: 'Vault' },
   { key: 'whatsnew',  path: '/whats-new',  icon: 'bookmark', label: 'Что нового' },
-  { key: 'feedback',  path: '/settings?section=feedback', icon: 'send', label: 'Обратная связь' },
+  { key: 'feedback',  path: '/feedback',   icon: 'message',  label: 'Обратная связь' },
   { key: 'settings',  path: '/settings',   icon: 'settings', label: 'Настройки' },
 ];
 
@@ -58,6 +58,7 @@ const PATH_TO_KEY = {
   '/goals': 'goals', '/cinema': 'cinema', '/settings': 'settings', '/vault': 'vault',
   '/personal/car': 'car', '/personal/partner': 'partner', '/personal/home': 'homemod',
   '/whats-new': 'whatsnew',
+  '/feedback': 'feedback',
 };
 
 function RailDot({ item, active }) {
@@ -1674,6 +1675,7 @@ function PanelByPath({ pathname }) {
     case '/settings':  return <SettingsPanel />;
     case '/vault':     return null;
     case '/whats-new': return null;
+    case '/feedback':  return null;
     default:           return <HomePanel />;
   }
 }

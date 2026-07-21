@@ -34,3 +34,19 @@ export function useReplyFeedback() {
     if (error) throw error;
   });
 }
+
+/* Полная лента сообщений тикета — опрашиваем, пока чат открыт, чтобы новые
+   сообщения пользователя приходили без ручного обновления страницы. */
+export function useFeedbackThread(id) {
+  return useQuery({
+    queryKey: ['admin', 'feedback-thread', id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_list_feedback_thread', { p_id: id });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!id,
+    refetchInterval: 4000,
+    retry: false,
+  });
+}
