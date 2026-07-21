@@ -6,6 +6,7 @@ import { Avatar, IconButton } from './primitives.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useIsCompact } from '../hooks/useViewport.js';
 import { useMobileNav } from '../contexts/MobileNavContext.jsx';
+import { useSwipeToClose } from '../hooks/useSwipeToClose.js';
 import { useProjects } from '../hooks/useProjects.js';
 import { useInboxItems, useSnoozedItems } from '../hooks/useInbox.js';
 import { useHiddenPages } from '../hooks/useHiddenPages.js';
@@ -1730,11 +1731,12 @@ function MobileDrawer({ pathname, onClose }) {
 
   const goTo = (path) => { onClose(); if (path) navigate(path); };
   const label = user?.user_metadata?.display_name || user?.email || 'Пользователь';
+  const swipeRef = useSwipeToClose(onClose);
 
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex' }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }} />
-      <div style={{
+      <div ref={swipeRef} style={{
         position: 'relative', width: 'min(85vw, 300px)', height: '100%', background: 'var(--bg-elev-1)',
         borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column',
         boxShadow: '0 0 40px rgba(0,0,0,0.4)', animation: 'nx-drawer-in 180ms ease-out',
@@ -1750,14 +1752,14 @@ function MobileDrawer({ pathname, onClose }) {
         </div>
 
         <div className="ws-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '10px 10px 14px' }}>
+          {/* Только глобальная навигация — контент страничных панелей
+              (PanelByPath: список Inbox, мини-календарь и т.п.) сюда не
+              выносим: он живёт на самой странице, а не в меню навигации. */}
           {groups.map((group, gi) => (
             <div key={gi} style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 10 }}>
               {group.map(item => <MobileNavRow key={item.key} item={item} active={item.key === activeKey} onNavigate={goTo} />)}
             </div>
           ))}
-
-          <div style={{ height: 1, background: 'var(--border-subtle)', margin: '6px 4px 14px' }} />
-          <PanelByPath pathname={pathname} />
         </div>
 
         <div style={{ padding: '12px 14px', borderTop: '1px solid var(--border-subtle)', flex: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>

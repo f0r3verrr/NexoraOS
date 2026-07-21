@@ -57,6 +57,15 @@ body {
   background: var(--bg);
   zoom: 1.1;
 }
+/* Масштаб 1.1 — предпочтение для десктопа (регулируется слайдером в
+   Настройках, но 1.1 — дефолт). На узких экранах он ломает адаптивную
+   вёрстку: брейкпоинты (@media) считаются от РЕАЛЬНОЙ ширины viewport, а
+   контент рендерится уже увеличенным на 10% поверх нее — ряды, рассчитанные
+   "впритык" под фактическую ширину экрана, вылезают за край. Мобильный вид
+   и так не нуждается в этом масштабировании (свой native pinch-zoom). */
+@media (max-width: 1023px) {
+  body { zoom: 1 !important; }
+}
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: none; box-shadow: none; }
 button:focus, input:focus, textarea:focus, select:focus { outline: none; box-shadow: none; }

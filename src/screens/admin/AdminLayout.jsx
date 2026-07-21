@@ -6,6 +6,7 @@ import { Icon } from '../../icons.jsx';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { supabase } from '../../lib/supabase.js';
 import { useIsCompact } from '../../hooks/useViewport.js';
+import { useSwipeToClose } from '../../hooks/useSwipeToClose.js';
 import { ADMIN_NAV, ADMIN_GROUPS, adminNavByPath } from '../../lib/adminNav.js';
 import '../../styles/admin-theme.css';
 
@@ -115,10 +116,11 @@ function AdminNavContent({ activeKey, badges, onNavigate }) {
 }
 
 function AdminMobileDrawer({ activeKey, badges, onClose }) {
+  const swipeRef = useSwipeToClose(onClose);
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex' }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }} />
-      <div style={{
+      <div ref={swipeRef} style={{
         position: 'relative', width: 'min(85vw, 280px)', height: '100%', background: 'var(--bg-elev-1)',
         borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column',
         boxShadow: '0 0 40px rgba(0,0,0,0.4)',
