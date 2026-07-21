@@ -211,7 +211,7 @@ function ThreadView({ ticketId, onBack }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '14px 4px 4px', borderTop: '1px solid var(--border-subtle)' }}>
         <PendingAttachments files={files} onChange={setFiles} />
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <AttachmentButton files={files} onChange={setFiles} disabled={busy} />
           <textarea
             value={text} onChange={e => setText(e.target.value)} rows={1} placeholder="Написать сообщение…"
@@ -219,10 +219,10 @@ function ThreadView({ ticketId, onBack }) {
             style={{
               flex: 1, resize: 'none', padding: '10px 14px', background: 'var(--bg-elev-1)',
               border: '1px solid var(--border-subtle)', borderRadius: 10, fontSize: 13.5, color: 'var(--text)',
-              fontFamily: 'inherit', outline: 'none', maxHeight: 120,
+              fontFamily: 'inherit', outline: 'none', maxHeight: 120, boxSizing: 'border-box',
             }}
           />
-          <Button variant="primary" icon="send" disabled={(!text.trim() && !files.length) || busy} onClick={submit} style={{ alignSelf: 'flex-end' }}>
+          <Button variant="primary" icon="send" disabled={(!text.trim() && !files.length) || busy} onClick={submit}>
             {uploading ? 'Загрузка…' : 'Отправить'}
           </Button>
         </div>

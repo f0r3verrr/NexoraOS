@@ -110,14 +110,14 @@ function FeedbackDetail({ item, onClose }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <PendingAttachments files={files} onChange={setFiles} />
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <AttachmentButton files={files} onChange={setFiles} disabled={busy} />
             <textarea
-              value={body} onChange={e => setBody(e.target.value)} rows={2} placeholder="Написать пользователю…"
+              value={body} onChange={e => setBody(e.target.value)} rows={1} placeholder="Написать пользователю…"
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-              style={{ ...fieldStyle, flex: 1, height: 'auto', padding: '10px 12px', resize: 'vertical' }}
+              style={{ ...fieldStyle, flex: 1, height: 34, padding: '0 12px', resize: 'none', boxSizing: 'border-box' }}
             />
-            <AdminButton variant="primary" disabled={(!body.trim() && !files.length) || busy} onClick={send} style={{ alignSelf: 'flex-end' }}>
+            <AdminButton variant="primary" disabled={(!body.trim() && !files.length) || busy} onClick={send}>
               {uploading ? 'Загрузка…' : 'Отправить'}
             </AdminButton>
           </div>
