@@ -19,6 +19,10 @@ const COLUMNS = [
   { status: 'closed', label: 'Закрыто', dot: 'var(--success)' },
 ];
 
+function userLabel(it) {
+  return it.user_name ? `${it.user_name} · ${it.user_email}` : it.user_email;
+}
+
 function Bubble({ own, body, attachments, time }) {
   return (
     <div style={{ display: 'flex', justifyContent: own ? 'flex-end' : 'flex-start' }}>
@@ -73,7 +77,7 @@ function FeedbackDetail({ item, onClose }) {
   };
 
   return (
-    <Modal title={item.title} sub={item.user_email} width={540} onClose={onClose}>
+    <Modal title={item.title} sub={userLabel(item)} width={540} onClose={onClose}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
           <Field label="Статус">
@@ -179,8 +183,8 @@ function FeedbackColumn({ col, items, dragId, onDragStart, onDrop, onOpen, onArc
               <Badge tone="neutral">{PRIORITY_LABEL[it.priority]}</Badge>
             </div>
             <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.4 }}>{it.title}</div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>{it.user_email}</span>
+            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userLabel(it)}</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {it.attachments?.length > 0 && (
                   <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Icon name="paperclip" size={11} />{it.attachments.length}</span>
@@ -207,7 +211,7 @@ function ArchiveList({ items, isLoading, onOpen, onRestore }) {
         }} onClick={() => onOpen(it)}>
           <Badge tone={TYPE_TONE[it.type]}>{TYPE_LABEL[it.type]}</Badge>
           <div style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
-          <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{it.user_email}</span>
+          <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{userLabel(it)}</span>
           <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{fmtRel(it.created_at)}</span>
           <AdminButton variant="secondary" onClick={e => { e.stopPropagation(); onRestore(it.id); }}>
             Восстановить

@@ -190,7 +190,7 @@ export function AttachmentButton({ files, onChange, disabled }) {
         disabled={disabled || full}
         title={full ? `Максимум ${MAX_FILES} файлов` : 'Прикрепить фото/видео'}
         style={{
-          width: 34, height: 34, borderRadius: 9, border: '1px solid var(--border-subtle)', background: 'var(--bg-elev-1)',
+          width: 34, height: 34, boxSizing: 'border-box', borderRadius: 9, border: '1px solid var(--border-subtle)', background: 'var(--bg-elev-1)',
           color: 'var(--text-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           cursor: disabled || full ? 'default' : 'pointer', opacity: disabled || full ? 0.5 : 1,
         }}
