@@ -102,7 +102,7 @@ export default function AdminFeatureFlags() {
       ) : flags.length === 0 ? (
         <EmptyState icon="zap" text="Фич пока нет — создайте первую" />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 14 }}>
+        <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 14 }}>
           {flags.map(fl => (
             <div key={fl.id} style={{ padding: 18, borderRadius: 16, background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 14 }}>
               <span style={{ width: 40, height: 40, borderRadius: 11, background: 'color-mix(in oklab, var(--p-openresto) 16%, transparent)', color: 'var(--p-openresto)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

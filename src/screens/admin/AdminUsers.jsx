@@ -30,7 +30,7 @@ export default function AdminUsers() {
       ) : users.length === 0 ? (
         <EmptyState icon="users" text="Никого не найдено" />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 14 }}>
+        <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 14 }}>
           {users.map(u => {
             const isBanned = u.banned_until && new Date(u.banned_until) > new Date();
             const isActiveToday = fmtRel(u.last_sign_in_at) === 'сегодня';

@@ -68,7 +68,7 @@ export default function AdminNews() {
       ) : news.length === 0 ? (
         <EmptyState icon="globe" text="Новостей пока нет" />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 14 }}>
+        <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 14 }}>
           {news.map(n => (
             <div key={n.id} style={{ padding: 20, borderRadius: 16, background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

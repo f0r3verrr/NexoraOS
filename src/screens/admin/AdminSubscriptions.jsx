@@ -8,7 +8,7 @@ export default function AdminSubscriptions() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 14 }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 14 }}>
         {MOCK_SUB_STATS.map(s => (
           <div key={s.label} style={{ padding: 18, borderRadius: 16, background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)' }}>
             <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 10 }}>{s.label}</div>
@@ -30,7 +30,7 @@ export default function AdminSubscriptions() {
         </div>
       </Card>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 16 }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 16 }}>
         {MOCK_PLANS.map(p => (
           <div key={p.name} style={{
             padding: 24, borderRadius: 18, display: 'flex', flexDirection: 'column', gap: 16,

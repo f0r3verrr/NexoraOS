@@ -31,7 +31,7 @@ export default function AdminAnalytics() {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 14 }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 14 }}>
         {[
           { label: 'DAU', value: data?.dau ?? 0 },
           { label: 'WAU', value: data?.wau ?? 0 },

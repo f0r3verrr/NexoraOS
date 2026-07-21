@@ -112,7 +112,7 @@ export default function AdminUserDetail() {
       </Card>
 
       {/* Статы */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 14 }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 14 }}>
         {[
           { label: 'Проекты', value: u.stats.projects },
           { label: 'Задачи', value: u.stats.tasks },

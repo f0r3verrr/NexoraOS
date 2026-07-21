@@ -39,7 +39,7 @@ export default function AdminStorage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="admin-rgrid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <Card style={{ alignItems: 'center' }}>
           <div style={{ alignSelf: 'flex-start', fontSize: 14.5, fontWeight: 550 }}>Хранилище по типам</div>
           {isLoading ? <EmptyState text="Загрузка…" /> : segments.length === 0 ? <EmptyState text="Нет данных" /> : (

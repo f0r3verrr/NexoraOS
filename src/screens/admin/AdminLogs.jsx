@@ -27,21 +27,25 @@ export default function AdminLogs() {
         </div>
       </div>
 
-      <div style={{ padding: '8px 20px', borderRadius: 16, background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)' }}>
+      <div style={{ padding: '8px 20px', borderRadius: 16, background: 'var(--bg-elev-1)', border: '1px solid var(--border-subtle)', overflowX: 'auto' }}>
         {isLoading ? (
           <EmptyState icon="list" text="Загрузка..." />
         ) : filtered.length === 0 ? (
           <EmptyState icon="list" text="Логов пока нет" />
-        ) : filtered.map((log, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '150px 160px 1fr', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--bg-elev-2)', alignItems: 'center' }}>
-            <span style={{ fontSize: 11.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{fmtDateTime(log.occurred_at)}</span>
-            <span style={{ fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.actor}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Badge tone={ACTION_TONE[log.action] ?? 'neutral'}>{log.action}</Badge>
-              {log.details && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{log.details}</span>}
-            </span>
+        ) : (
+          <div style={{ minWidth: 480 }}>
+          {filtered.map((log, i) => (
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: '150px 160px 1fr', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--bg-elev-2)', alignItems: 'center' }}>
+              <span style={{ fontSize: 11.5, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{fmtDateTime(log.occurred_at)}</span>
+              <span style={{ fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.actor}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Badge tone={ACTION_TONE[log.action] ?? 'neutral'}>{log.action}</Badge>
+                {log.details && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{log.details}</span>}
+              </span>
+            </div>
+          ))}
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
