@@ -18,6 +18,7 @@ import { useHabits } from '../hooks/useHabits.js';
 import { useFiles } from '../hooks/useFiles.js';
 import { useOrders } from '../hooks/useOrders.js';
 import { useCinema } from '../hooks/useCinema.js';
+import { useFeedbackUnreadCount } from '../hooks/useFeedback.js';
 import { useContacts } from '../hooks/useContacts.js';
 import { useSegments, useCreateSegment, useUpdateSegment, useDeleteSegment } from '../hooks/useSegments.js';
 import { useJournalEntries, useJournalStreak } from '../hooks/useJournal.js';
@@ -120,6 +121,7 @@ function SidebarRail() {
   const { data: inboxItems = [] } = useInboxItems();
   const { data: todayTasks = [] } = useTodayTasks();
   const { data: hidden = [] }     = useHiddenPages();
+  const { data: feedbackUnread = 0 } = useFeedbackUnreadCount();
   const inboxCount = inboxItems.length;
   const todayCount = todayTasks.filter(t => !t.done).length;
 
@@ -132,7 +134,10 @@ function SidebarRail() {
   });
   const railLibrary  = visible(RAIL_LIBRARY);
   const railPersonal = visible(RAIL_PERSONAL);
-  const railBottom   = visible(RAIL_BOTTOM);
+  const railBottom   = visible(RAIL_BOTTOM).map(n => {
+    if (n.key === 'feedback') return { ...n, badge: feedbackUnread || undefined };
+    return n;
+  });
 
   return (
     <div style={{
@@ -1718,6 +1723,7 @@ function MobileDrawer({ pathname, onClose }) {
   const { data: inboxItems = [] } = useInboxItems();
   const { data: todayTasks = [] } = useTodayTasks();
   const { data: hidden = [] }     = useHiddenPages();
+  const { data: feedbackUnread = 0 } = useFeedbackUnreadCount();
   const inboxCount = inboxItems.length;
   const todayCount = todayTasks.filter(t => !t.done).length;
 
@@ -1727,7 +1733,11 @@ function MobileDrawer({ pathname, onClose }) {
     if (n.key === 'today') return { ...n, badge: todayCount || undefined };
     return n;
   });
-  const groups = [railTop, visible(RAIL_LIBRARY), visible(RAIL_PERSONAL), visible(RAIL_BOTTOM)].filter(g => g.length > 0);
+  const railBottom = visible(RAIL_BOTTOM).map(n => {
+    if (n.key === 'feedback') return { ...n, badge: feedbackUnread || undefined };
+    return n;
+  });
+  const groups = [railTop, visible(RAIL_LIBRARY), visible(RAIL_PERSONAL), railBottom].filter(g => g.length > 0);
 
   const goTo = (path) => { onClose(); if (path) navigate(path); };
   const label = user?.user_metadata?.display_name || user?.email || 'Пользователь';

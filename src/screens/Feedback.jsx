@@ -7,7 +7,7 @@ import { Modal, Field, fieldStyle } from '../components/Modal.jsx';
 import { Icon } from '../icons.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import {
-  useMyFeedback, useFeedbackItem, useFeedbackThread, useCreateFeedback, useSendFeedbackReply,
+  useMyFeedback, useFeedbackItem, useFeedbackThread, useCreateFeedback, useSendFeedbackReply, useMarkFeedbackRead,
 } from '../hooks/useFeedback.js';
 import { fmtRel, fmtDateTime } from '../lib/adminFormat.js';
 import { uploadFeedbackFiles } from '../lib/feedbackAttachments.js';
@@ -162,12 +162,14 @@ function ThreadView({ ticketId, onBack }) {
   const { data: item } = useFeedbackItem(ticketId);
   const { data: replies = [] } = useFeedbackThread(ticketId);
   const send = useSendFeedbackReply(ticketId);
+  const markRead = useMarkFeedbackRead();
   const [text, setText] = useState('');
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ block: 'end' }); }, [replies.length, item?.id]);
+  useEffect(() => { markRead.mutate(ticketId); }, [ticketId]);
 
   const busy = send.isPending || uploading;
 

@@ -17,6 +17,36 @@ export function useMyFeedback() {
   });
 }
 
+/* Число тикетов с непрочитанным ответом админа — бейдж на иконке в сайдбаре.
+   Опрашиваем как счётчики Inbox/Today, чтобы бейдж обновлялся без reload. */
+export function useFeedbackUnreadCount() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['feedback', 'unread-count'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_unread_feedback_count');
+      if (error) throw error;
+      return data ?? 0;
+    },
+    enabled: !!user,
+    refetchInterval: 15000,
+  });
+}
+
+export function useMarkFeedbackRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase.rpc('mark_feedback_read', { p_id: id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['feedback', 'unread-count'] });
+      qc.invalidateQueries({ queryKey: ['feedback', 'mine'] });
+    },
+  });
+}
+
 export function useFeedbackItem(id) {
   return useQuery({
     queryKey: ['feedback', 'item', id],
