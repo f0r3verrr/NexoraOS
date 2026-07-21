@@ -54,11 +54,12 @@ export default function AdminLayout() {
   const badgeTotal = (badges?.openFeedback ?? 0) + (badges?.openErrors ?? 0);
 
   return (
-    <div className="admin-root" style={{ display: 'flex', minHeight: '100vh' }}>
-      {/* SIDEBAR */}
+    <div className="admin-root" style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      {/* SIDEBAR — фиксированная высота экрана, сама никогда не скроллится целиком
+          (только внутренний <nav>), поэтому кнопка выхода всегда на виду */}
       <aside style={{
         width: 240, flexShrink: 0, borderRight: '1px solid var(--border-subtle)',
-        display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0,
+        display: 'flex', flexDirection: 'column', height: '100%',
         background: 'var(--bg-elev-1)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 20px 18px' }}>
@@ -69,7 +70,7 @@ export default function AdminLayout() {
           </div>
         </div>
 
-        <nav style={{ flex: 1, overflowY: 'auto', padding: '4px 12px 12px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <nav style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '4px 12px 12px', display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>
             {top.map(item => <NavItem key={item.key} item={item} active={item.key === activeKey} />)}
           </div>
@@ -122,10 +123,10 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* MAIN */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      {/* MAIN — единственная скроллящаяся зона; сайдбар и хедер всегда на месте */}
+      <div style={{ flex: 1, minWidth: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
         <header style={{
-          position: 'sticky', top: 0, zIndex: 10, height: 60, flexShrink: 0,
+          zIndex: 10, height: 60, flexShrink: 0,
           display: 'flex', alignItems: 'center', gap: 16, padding: '0 28px',
           borderBottom: '1px solid var(--border-subtle)',
           background: 'color-mix(in oklab, var(--bg) 85%, transparent)', backdropFilter: 'blur(14px)',
@@ -182,7 +183,7 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <main style={{ flex: 1, padding: '18px 24px 24px' }}>
+        <main className="ws-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '18px 24px 24px' }}>
           <Outlet />
         </main>
       </div>
