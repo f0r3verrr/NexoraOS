@@ -15,14 +15,17 @@ import { Card, CardHeader, Metric, Badge, EmptyState } from './AdminUI.jsx';
 import { fmtBytes, fmtDateTime, fmtRel } from '../../lib/adminFormat.js';
 
 function seriesFromRange(rows, start, end) {
+  // Шаг и ключ — в UTC (Postgres группирует created_at::date тоже в UTC,
+  // "SHOW timezone" = UTC на сервере), иначе для часовых поясов восточнее
+  // UTC подписи съезжают на сутки относительно реальных данных.
   const map = new Map((rows ?? []).map(r => [r.d, r.c]));
   const values = [], labels = [];
-  const cur = new Date(start);
+  const cur = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
   while (cur <= end) {
     const key = cur.toISOString().slice(0, 10);
     values.push(map.get(key) ?? 0);
-    labels.push(cur.toLocaleDateString('ru', { day: 'numeric', month: 'short' }));
-    cur.setDate(cur.getDate() + 1);
+    labels.push(cur.toLocaleDateString('ru', { day: 'numeric', month: 'short', timeZone: 'UTC' }));
+    cur.setUTCDate(cur.getUTCDate() + 1);
   }
   return { values, labels };
 }

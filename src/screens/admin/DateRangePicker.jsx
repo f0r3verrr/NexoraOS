@@ -1,32 +1,42 @@
 import { useState } from 'react';
 import { Icon } from '../../icons.jsx';
 
-function startOfWeek(d) {
-  const x = new Date(d); x.setHours(0, 0, 0, 0);
-  const dow = x.getDay();
+/*
+ * Postgres на сервере хранит/группирует created_at::date в UTC (SHOW
+ * timezone = UTC). Раньше здесь считали границы в ЛОКАЛЬНОМ времени
+ * браузера (getDate/setDate/getHours), а потом сериализовали в
+ * "YYYY-MM-DD" через toISOString() (UTC) — для часовых поясов восточнее
+ * UTC (Москва и т.д.) локальная полночь оказывается предыдущим днём в
+ * UTC, и весь диапазон/подписи сдвигались на сутки относительно
+ * реальных данных. Поэтому вся арифметика здесь — в UTC.
+ */
+function utcMidnight(d) { return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); }
+function addDaysUTC(d, n) { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n); return x; }
+function startOfWeekUTC(d) {
+  const x = utcMidnight(d);
+  const dow = x.getUTCDay();
   const diff = dow === 0 ? -6 : 1 - dow; // неделя с понедельника
-  x.setDate(x.getDate() + diff);
-  return x;
+  return addDaysUTC(x, diff);
 }
-function endOfWeek(d) { const s = startOfWeek(d); const e = new Date(s); e.setDate(s.getDate() + 6); return e; }
-function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
-function endOfMonth(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0); }
-function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); d.setHours(0, 0, 0, 0); return d; }
+function endOfWeekUTC(d) { return addDaysUTC(startOfWeekUTC(d), 6); }
+function startOfMonthUTC(d) { return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)); }
+function endOfMonthUTC(d) { return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)); }
+function daysAgoUTC(n) { return addDaysUTC(utcMidnight(new Date()), -n); }
 
-const now = () => new Date();
+const nowUTC = () => new Date();
 
 export const PRESETS = [
-  { id: 'today',     label: 'Сегодня',        range: () => ({ start: daysAgo(0), end: now() }) },
-  { id: 'week',      label: 'Текущая неделя', range: () => ({ start: startOfWeek(now()), end: now() }) },
-  { id: 'lastWeek',  label: 'Прошлая неделя', range: () => { const w = startOfWeek(daysAgo(7)); return { start: w, end: endOfWeek(w) }; } },
-  { id: 'month',     label: 'Текущий месяц',  range: () => ({ start: startOfMonth(now()), end: now() }) },
-  { id: 'lastMonth', label: 'Прошлый месяц',  range: () => { const m = new Date(now().getFullYear(), now().getMonth() - 1, 1); return { start: startOfMonth(m), end: endOfMonth(m) }; } },
-  { id: '7d',        label: '7 дней',         range: () => ({ start: daysAgo(6), end: now() }) },
-  { id: '30d',       label: '30 дней',        range: () => ({ start: daysAgo(29), end: now() }) },
-  { id: '90d',       label: '90 дней',        range: () => ({ start: daysAgo(89), end: now() }) },
+  { id: 'today',     label: 'Сегодня',        range: () => ({ start: daysAgoUTC(0), end: nowUTC() }) },
+  { id: 'week',      label: 'Текущая неделя', range: () => ({ start: startOfWeekUTC(nowUTC()), end: nowUTC() }) },
+  { id: 'lastWeek',  label: 'Прошлая неделя', range: () => { const w = startOfWeekUTC(daysAgoUTC(7)); return { start: w, end: endOfWeekUTC(w) }; } },
+  { id: 'month',     label: 'Текущий месяц',  range: () => ({ start: startOfMonthUTC(nowUTC()), end: nowUTC() }) },
+  { id: 'lastMonth', label: 'Прошлый месяц',  range: () => { const m = new Date(Date.UTC(nowUTC().getUTCFullYear(), nowUTC().getUTCMonth() - 1, 1)); return { start: startOfMonthUTC(m), end: endOfMonthUTC(m) }; } },
+  { id: '7d',        label: '7 дней',         range: () => ({ start: daysAgoUTC(6), end: nowUTC() }) },
+  { id: '30d',       label: '30 дней',        range: () => ({ start: daysAgoUTC(29), end: nowUTC() }) },
+  { id: '90d',       label: '90 дней',        range: () => ({ start: daysAgoUTC(89), end: nowUTC() }) },
 ];
 
-function fmt(d) { return d.toLocaleDateString('ru', { day: 'numeric', month: 'short' }); }
+function fmt(d) { return d.toLocaleDateString('ru', { day: 'numeric', month: 'short', timeZone: 'UTC' }); }
 
 export function DateRangePicker({ presetId, onChange }) {
   const [open, setOpen] = useState(false);

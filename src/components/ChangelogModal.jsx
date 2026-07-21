@@ -36,9 +36,10 @@ export function ChangelogModalHost() {
     const isNews = item._kind === 'news';
     return (
       <Modal onClose={dismiss} width={480} title="">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: -8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {item.cover_image_url && (
-            <img src={item.cover_image_url} alt="" style={{ width: 'calc(100% + 56px)', margin: '-8px -28px 0', display: 'block', borderRadius: '12px 12px 0 0', maxHeight: 200, objectFit: 'cover' }} />
+            <img src={item.cover_image_url} alt=""
+              style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 12, display: 'block' }} />
           )}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
             <KindIcon kind={item._kind} />
@@ -70,7 +71,7 @@ export function ChangelogModalHost() {
 
   return (
     <Modal onClose={dismiss} width={500} title="">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: -6 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ width: 40, height: 40, borderRadius: 11, background: 'linear-gradient(135deg, var(--p-openresto), var(--p-youmin))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Icon name="bookmark" size={18} style={{ color: 'var(--bg)' }} />
