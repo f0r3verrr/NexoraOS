@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Sidebar, TopBar } from '../components/Sidebar.jsx';
+import { useIsCompact } from '../hooks/useViewport.js';
 import { Icon } from '../icons.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
@@ -247,8 +248,8 @@ function ResetModal({ onClose, onReset }) {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="modal-enter" style={{ width: 400, background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: 'var(--shadow-modal)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, boxSizing: 'border-box' }}>
+      <div className="modal-enter" style={{ width: 400, maxWidth: '100%', boxSizing: 'border-box', background: 'var(--bg-elev-2)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: 'var(--shadow-modal)' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
           <div style={{ width: 38, height: 38, borderRadius: 10, background: 'color-mix(in oklab, var(--danger) 12%, transparent)', border: '1px solid color-mix(in oklab, var(--danger) 24%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--danger)', flex: 'none' }}>
             <Icon name="trash" size={17} />
@@ -435,6 +436,7 @@ function VaultGuard({ user, children }) {
 /* ─── Notes pane ─────────────────────────────────────────── */
 
 function NotesPane() {
+  const isCompact = useIsCompact();
   const { data: notes = [], isLoading } = useVaultNotes();
   const create = useCreateVaultNote();
   const update = useUpdateVaultNote();
@@ -482,8 +484,9 @@ function NotesPane() {
 
   return (
     <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-      {/* List */}
-      <div style={{ width: LIST_W, flex: 'none', borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* List — на compact на весь экран, пока запись не открыта */}
+      {(!isCompact || !selected) && (
+      <div style={{ width: isCompact ? '100%' : LIST_W, flex: isCompact ? 1 : 'none', minWidth: 0, borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', flex: 'none' }}>
           <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500 }}>
             {isLoading ? '…' : `${n} ${plural}`}
@@ -524,12 +527,20 @@ function NotesPane() {
           </div>
         )}
       </div>
+      )}
 
-      {/* Editor */}
-      {selected ? (
+      {/* Editor — на compact рендерится только когда заметка открыта */}
+      {(!isCompact || selected) && (selected ? (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ padding: '8px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 'none' }}>
-            <SaveBadge status={save} />
+          <div style={{ padding: '8px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 'none', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {isCompact && (
+                <button onClick={() => setSelId(null)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border-subtle)', background: 'var(--bg-elev-1)', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="chevron_left" size={15} />
+                </button>
+              )}
+              <SaveBadge status={save} />
+            </div>
             <DeleteBtn onClick={del_} />
           </div>
           <input value={lTitle} onChange={e => onT(e.target.value)} placeholder="Без названия"
@@ -540,7 +551,7 @@ function NotesPane() {
         </div>
       ) : (
         <EmptyDetail icon="note" text="Выбери заметку или создай новую" />
-      )}
+      ))}
     </div>
   );
 }
@@ -548,6 +559,7 @@ function NotesPane() {
 /* ─── Credentials pane ───────────────────────────────────── */
 
 function CredsPane() {
+  const isCompact = useIsCompact();
   const { data: creds = [], isLoading } = useVaultCreds();
   const create = useCreateVaultCred();
   const update = useUpdateVaultCred();
@@ -606,8 +618,9 @@ function CredsPane() {
 
   return (
     <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-      {/* List */}
-      <div style={{ width: LIST_W, flex: 'none', borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* List — на compact на весь экран, пока запись не открыта */}
+      {(!isCompact || !selected) && (
+      <div style={{ width: isCompact ? '100%' : LIST_W, flex: isCompact ? 1 : 'none', minWidth: 0, borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', flex: 'none' }}>
           <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500 }}>
             {isLoading ? '…' : `${n} ${plural}`}
@@ -647,12 +660,18 @@ function CredsPane() {
           </div>
         )}
       </div>
+      )}
 
-      {/* Detail */}
-      {selected ? (
+      {/* Detail — на compact рендерится только когда запись открыта */}
+      {(!isCompact || selected) && (selected ? (
         <div className="ws-scroll" style={{ flex: 1, overflowY: 'auto' }}>
           <div style={{ maxWidth: 520, padding: '28px 32px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
+              {isCompact && (
+                <button onClick={() => setSelId(null)} style={{ width: 32, height: 32, flex: 'none', borderRadius: 8, border: '1px solid var(--border-subtle)', background: 'var(--bg-elev-1)', color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="chevron_left" size={16} />
+                </button>
+              )}
               <div style={{ width: 44, height: 44, borderRadius: 12, flex: 'none', background: `color-mix(in oklab, ${accent} 16%, var(--bg-elev-3))`, border: `1px solid color-mix(in oklab, ${accent} 28%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: accent }}>
                 {(form.title || '?')[0].toUpperCase()}
               </div>
@@ -722,7 +741,7 @@ function CredsPane() {
         </div>
       ) : (
         <EmptyDetail icon="lock" text="Выбери аккаунт или добавь новый" />
-      )}
+      ))}
     </div>
   );
 }
